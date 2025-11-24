@@ -2,18 +2,9 @@
 
 import Link from "next/link";
 import { usePathname } from "next/navigation";
-import {
-  Home,
-  Zap,
-  Settings,
-  LogOut,
-  SlidersHorizontal,
-  Sun,
-  Moon,
-} from "lucide-react";
-import { useTheme } from "@/components/theme/ThemeProvider"; // <-- New import
+import { Home, Zap, Settings, LogOut, SlidersHorizontal } from "lucide-react";
+import { useTheme } from "@/components/theme/ThemeProvider";
 
-// Define the structure for a navigation item
 interface NavItem {
   name: string;
   href: string;
@@ -31,67 +22,70 @@ const navItems: NavItem[] = [
   { name: "Account Settings", href: "/account-settings", icon: Settings },
 ];
 
-// Reusable NavLink component
 const NavLink: React.FC<NavItem & { isActive: boolean }> = ({
   name,
   href,
   icon: Icon,
   isActive,
 }) => {
-  // Updated classes for theme awareness
-  const activeClasses = "bg-blue-600 text-white shadow-lg shadow-blue-600/50";
+  // Modern UI: subtle background for active state, clean text for inactive
+  const activeClasses =
+    "bg-blue-50 dark:bg-blue-900/20 text-blue-600 dark:text-blue-400 font-semibold";
   const inactiveClasses =
-    "text-gray-600 dark:text-gray-400 hover:bg-gray-200 dark:hover:bg-gray-800 hover:text-gray-900 dark:hover:text-white";
+    "text-gray-600 dark:text-gray-400 hover:bg-gray-50 dark:hover:bg-gray-800/50 hover:text-gray-900 dark:hover:text-gray-200";
 
   return (
     <Link
       href={href}
-      className={`flex items-center space-x-3 p-3 rounded-xl transition-colors duration-200 ${
+      className={`group flex items-center space-x-3 px-4 py-3 rounded-xl transition-all duration-200 ${
         isActive ? activeClasses : inactiveClasses
       }`}
     >
-      <Icon className="w-5 h-5" />
+      <Icon
+        className={`w-5 h-5 transition-transform duration-200 ${
+          isActive ? "scale-110" : "group-hover:scale-110"
+        }`}
+      />
       <span>{name}</span>
+      {isActive && (
+        <span className="ml-auto w-1.5 h-1.5 rounded-full bg-blue-600 dark:bg-blue-400 shadow-[0_0_8px_rgba(37,99,235,0.5)]" />
+      )}
     </Link>
   );
 };
 
 export const Sidebar: React.FC = () => {
   const pathname = usePathname();
-  const { toggleTheme, theme, Icon: ThemeIcon } = useTheme(); // <-- Use theme context
+  const { toggleTheme, theme, Icon: ThemeIcon } = useTheme();
 
-  // Function to check if the link is active
   const isLinkActive = (href: string) => {
-    // Check if the current path exactly matches the href
     if (pathname === href) return true;
-
-    // Check for nested routes (e.g., /configure-agent/123 should activate /configure-agent)
     if (href !== "/" && pathname.startsWith(href) && href !== "/dashboard")
       return true;
-
-    // Special case for dashboard root
     if (
       href === "/dashboard" &&
       (pathname === "/" || pathname === "/dashboard")
     )
       return true;
-
     return false;
   };
 
   return (
-    <aside className="w-64 bg-white dark:bg-gray-950 border-r border-gray-200 dark:border-gray-800 p-6 flex flex-col justify-between sticky top-0 h-screen transition-colors duration-300">
-      <div>
-        {/* Logo/App Name */}
-        <div className="flex items-center space-x-2 mb-8 border-b border-gray-200 dark:border-gray-800 pb-4">
-          <Zap className="w-6 h-6 text-blue-500" />
+    <aside className="w-72 bg-white dark:bg-gray-950 border-r border-gray-100 dark:border-gray-800 flex flex-col justify-between sticky top-0 h-screen transition-colors duration-300 z-50 shadow-sm">
+      <div className="p-6">
+        {/* Logo */}
+        <div className="flex items-center space-x-3 mb-10 pl-2">
+          <div className="p-2 bg-blue-600 rounded-lg shadow-lg shadow-blue-600/20">
+            <Zap className="w-5 h-5 text-white" />
+          </div>
           <h1 className="text-xl font-bold tracking-tight text-gray-900 dark:text-white">
-            Sahayata Agent
+            Sahayata
+            <span className="text-blue-600 dark:text-blue-400">Agent</span>
           </h1>
         </div>
 
-        {/* Navigation Links */}
-        <nav className="space-y-2">
+        {/* Navigation */}
+        <nav className="space-y-1.5">
           {navItems.map((item) => (
             <NavLink
               key={item.name}
@@ -102,25 +96,25 @@ export const Sidebar: React.FC = () => {
         </nav>
       </div>
 
-      {/* Logout Link and Theme Toggle */}
-      <div className="mt-8 pt-4 border-t border-gray-200 dark:border-gray-800 space-y-3">
-        {/* Theme Toggle Button */}
+      {/* Footer Controls */}
+      <div className="p-6 border-t border-gray-100 dark:border-gray-800 space-y-2">
         <button
           onClick={toggleTheme}
-          className="w-full flex items-center space-x-3 p-3 rounded-xl transition-colors duration-200 text-gray-600 dark:text-gray-400 hover:bg-gray-200 dark:hover:bg-gray-800 hover:text-gray-900 dark:hover:text-white"
-          aria-label={`Switch to ${theme === "light" ? "Dark" : "Light"} Mode`}
+          className="w-full flex items-center space-x-3 px-4 py-3 rounded-xl transition-all duration-200 text-gray-600 dark:text-gray-400 hover:bg-gray-50 dark:hover:bg-gray-800/50 hover:text-gray-900 dark:hover:text-white group"
         >
-          <ThemeIcon className="w-5 h-5" />
-          <span>Switch to {theme === "light" ? "Dark" : "Light"} Mode</span>
+          <ThemeIcon className="w-5 h-5 group-hover:rotate-12 transition-transform" />
+          <span className="text-sm font-medium">
+            Switch to {theme === "light" ? "Dark" : "Light"}
+          </span>
         </button>
 
-        {/* Logout Link */}
-        <NavLink
-          name="Logout"
+        <Link
           href="/logout"
-          icon={LogOut}
-          isActive={isLinkActive("/logout")}
-        />
+          className="flex items-center space-x-3 px-4 py-3 rounded-xl transition-all duration-200 text-gray-600 dark:text-gray-400 hover:bg-red-50 dark:hover:bg-red-900/20 hover:text-red-600 dark:hover:text-red-400 group"
+        >
+          <LogOut className="w-5 h-5 group-hover:-translate-x-1 transition-transform" />
+          <span className="text-sm font-medium">Log Out</span>
+        </Link>
       </div>
     </aside>
   );

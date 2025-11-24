@@ -7,18 +7,15 @@ import {
   User,
   Building,
   Zap,
+  ArrowUpRight,
 } from "lucide-react";
 
-// Mock data to simulate fetching from an API
 const metricsData = {
-  // Existing Summary Metrics
   messagesProcessed: 14500,
   documentsUploaded: 75,
   urlsCrawled: 420,
   agentStatus: "Active",
-  lastUpdated: "11/20/2025 4:21:16 PM",
-
-  // New Platform Statistics
+  lastUpdated: "11/20/2025 4:21 PM",
   numberOfAgents: 3,
   contacts: 12,
   organizations: 8,
@@ -26,122 +23,121 @@ const metricsData = {
 
 export default function DashboardPage() {
   return (
-    <div className="space-y-10">
-      {/* Dashboard Header */}
-      <header className="pb-4 border-b border-gray-200 dark:border-gray-800">
-        <h1 className="text-4xl font-bold tracking-tight text-gray-900 dark:text-white">
-          Dashboard
-        </h1>
-        <p className="text-gray-500 dark:text-gray-400 mt-1">
-          Overview of your Sahayata Agent platform
-        </p>
+    <div className="max-w-7xl mx-auto space-y-12 pb-10">
+      {/* Header */}
+      <header className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 pb-6 border-b border-gray-100 dark:border-gray-800">
+        <div>
+          <h1 className="text-3xl font-bold tracking-tight text-gray-900 dark:text-white">
+            Dashboard
+          </h1>
+          <p className="text-gray-500 dark:text-gray-400 mt-2">
+            Welcome back, here's what's happening today.
+          </p>
+        </div>
+        <div className="flex space-x-3">
+          {/* Example Action Button */}
+          <button className="px-4 py-2 bg-white dark:bg-gray-800 border border-gray-200 dark:border-gray-700 text-gray-700 dark:text-gray-300 rounded-lg text-sm font-medium hover:bg-gray-50 dark:hover:bg-gray-700 transition-colors">
+            Download Report
+          </button>
+        </div>
       </header>
 
-      {/* Quick Summary Section (Existing Cards) */}
-      <section className="space-y-4">
-        <h2 className="text-2xl font-semibold text-gray-900 dark:text-white">
-          Quick Summary
-        </h2>
-
-        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-6">
-          {/* 1. Active Agent Card (Custom Layout) */}
+      {/* Overview Grid */}
+      <section>
+        <div className="flex items-center justify-between mb-6">
+          <h2 className="text-xl font-bold text-gray-900 dark:text-white">
+            Overview
+          </h2>
+        </div>
+        <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-4 gap-6">
           <ActiveAgentCard
             status={metricsData.agentStatus as "Active" | "Inactive"}
             lastUpdated={metricsData.lastUpdated}
           />
-
-          {/* 2. Messages Processed Card */}
           <MetricCard
             title="Messages Processed"
             value={metricsData.messagesProcessed.toLocaleString()}
             icon={MessageSquare}
-            iconBgColor="text-green-600 dark:text-green-400"
+            iconBgColor="text-emerald-600 dark:text-emerald-400"
           />
-
-          {/* 3. Documents Uploaded Card */}
           <MetricCard
             title="Documents Uploaded"
             value={metricsData.documentsUploaded.toLocaleString()}
             icon={FileText}
-            iconBgColor="text-yellow-600 dark:text-yellow-400"
+            iconBgColor="text-amber-600 dark:text-amber-400"
           />
-
-          {/* 4. URLs Crawled Card */}
           <MetricCard
             title="URLs Crawled"
             value={metricsData.urlsCrawled.toLocaleString()}
             icon={Globe}
-            iconBgColor="text-red-600 dark:text-red-400"
+            iconBgColor="text-rose-600 dark:text-rose-400"
           />
         </div>
       </section>
 
-      {/* Platform Statistics Section (New Cards) */}
-      <section className="space-y-4 pt-4 border-t border-gray-100 dark:border-gray-900">
-        <h2 className="text-2xl font-semibold text-gray-900 dark:text-white">
-          Platform Statistics
-        </h2>
-
-        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6">
-          {/* 1. Number of Agents Card */}
-          <MetricCard
-            title="Number of Agents"
-            value={metricsData.numberOfAgents.toLocaleString()}
-            icon={Users}
-            iconBgColor="text-indigo-600 dark:text-indigo-400"
-          />
-
-          {/* 2. Contacts Card */}
-          <MetricCard
-            title="Contacts"
-            value={metricsData.contacts.toLocaleString()}
-            icon={User}
-            iconBgColor="text-pink-600 dark:text-pink-400"
-          />
-
-          {/* 3. Organizations Card */}
-          <MetricCard
-            title="Organizations"
-            value={metricsData.organizations.toLocaleString()}
-            icon={Building}
-            iconBgColor="text-cyan-600 dark:text-cyan-400"
-          />
-        </div>
-      </section>
-
-      {/* Quick Actions Section (New) */}
-      <section className="space-y-4 pt-4 border-t border-gray-100 dark:border-gray-900">
-        <h2 className="text-2xl font-semibold text-gray-900 dark:text-white">
-          Quick Actions
-        </h2>
-
-        {/* Updated background and text classes */}
-        <div className="bg-white dark:bg-gray-900 border border-gray-200 dark:border-gray-800 rounded-xl p-6 flex flex-col sm:flex-row items-center justify-between">
-          <p className="text-gray-700 dark:text-gray-300 mb-4 sm:mb-0">
-            Easily deploy changes or create a new agent instance.
-          </p>
-          <button className="py-2 px-4 bg-blue-600 hover:bg-blue-700 text-white font-medium rounded-lg transition-colors duration-150 w-full sm:w-auto">
-            Create / Update Demo Agent
-          </button>
-        </div>
-      </section>
-
-      {/* Test Your Agent Section (New) */}
-      <section className="space-y-4 pt-4 border-t border-gray-100 dark:border-gray-900">
-        <h2 className="text-2xl font-semibold text-gray-900 dark:text-white">
-          Test Your Agent
-        </h2>
-
-        {/* Updated background and border classes */}
-        <div className="bg-white dark:bg-gray-900 border border-gray-200 dark:border-gray-800 rounded-xl p-6 flex flex-col items-center justify-center text-gray-500 dark:text-gray-500 h-48">
-          {/* Updated placeholder background for QR code (should be light/dark aware) */}
-          <div className="w-24 h-24 bg-gray-100 dark:bg-gray-800 rounded-lg flex items-center justify-center mb-4 border border-gray-300 dark:border-gray-700">
-            {/* Placeholder for QR Code / WhatsApp logo */}
-            <Zap className="w-10 h-10 text-gray-400 dark:text-gray-600" />
+      {/* Platform Stats & Quick Actions */}
+      <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
+        {/* Platform Stats */}
+        <div className="lg:col-span-2 space-y-6">
+          <h2 className="text-xl font-bold text-gray-900 dark:text-white">
+            Platform Statistics
+          </h2>
+          <div className="grid grid-cols-1 sm:grid-cols-3 gap-6">
+            <MetricCard
+              title="Agents"
+              value={metricsData.numberOfAgents.toLocaleString()}
+              icon={Users}
+              iconBgColor="text-indigo-600 dark:text-indigo-400"
+            />
+            <MetricCard
+              title="Contacts"
+              value={metricsData.contacts.toLocaleString()}
+              icon={User}
+              iconBgColor="text-fuchsia-600 dark:text-fuchsia-400"
+            />
+            <MetricCard
+              title="Organizations"
+              value={metricsData.organizations.toLocaleString()}
+              icon={Building}
+              iconBgColor="text-cyan-600 dark:text-cyan-400"
+            />
           </div>
-          <p className="text-sm">Scan to test your agent on WhatsApp</p>
         </div>
-      </section>
+
+        {/* Side Panel: Actions & Test */}
+        <div className="space-y-8">
+          <section>
+            <h2 className="text-xl font-bold text-gray-900 dark:text-white mb-6">
+              Quick Actions
+            </h2>
+            <div className="bg-gradient-to-br from-blue-600 to-blue-700 rounded-2xl p-6 shadow-lg text-white">
+              <h3 className="font-bold text-lg mb-2">Deploy New Agent</h3>
+              <p className="text-blue-100 text-sm mb-6">
+                Create a new instance or update existing configurations
+                instantly.
+              </p>
+              <button className="w-full py-2.5 bg-white text-blue-600 font-semibold rounded-xl hover:bg-blue-50 transition-colors flex items-center justify-center gap-2">
+                <span>Start Deployment</span>
+                <ArrowUpRight className="w-4 h-4" />
+              </button>
+            </div>
+          </section>
+
+          <section>
+            <h2 className="text-xl font-bold text-gray-900 dark:text-white mb-6">
+              Test Agent
+            </h2>
+            <div className="bg-white dark:bg-gray-900 border border-gray-100 dark:border-gray-800 rounded-2xl p-6 flex flex-col items-center justify-center text-center h-48 hover:border-blue-200 dark:hover:border-blue-800 transition-colors group cursor-pointer">
+              <div className="w-16 h-16 bg-gray-50 dark:bg-gray-800 rounded-2xl flex items-center justify-center mb-4 group-hover:scale-110 transition-transform duration-300">
+                <Zap className="w-8 h-8 text-gray-400 dark:text-gray-500 group-hover:text-blue-500 transition-colors" />
+              </div>
+              <p className="text-sm font-medium text-gray-600 dark:text-gray-400">
+                Scan via WhatsApp
+              </p>
+            </div>
+          </section>
+        </div>
+      </div>
     </div>
   );
 }

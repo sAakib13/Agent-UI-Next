@@ -1,21 +1,12 @@
 import React from "react";
-import {
-  AlertCircle,
-  MessageSquare,
-  FileText,
-  Globe,
-  Users,
-  User,
-  Building,
-} from "lucide-react";
+import { AlertCircle } from "lucide-react";
 
-// Define the shape of the props for flexibility
 interface MetricCardProps {
   title: string;
   value: string | number;
   icon: React.ElementType;
-  iconBgColor: string; // Tailwind class for icon background (e.g., 'text-blue-400')
-  children?: React.ReactNode; // For the 'Active Demo Agent' details/button
+  iconBgColor: string;
+  children?: React.ReactNode;
 }
 
 export const MetricCard: React.FC<MetricCardProps> = ({
@@ -25,73 +16,68 @@ export const MetricCard: React.FC<MetricCardProps> = ({
   iconBgColor,
   children,
 }) => {
-  // Conditionally render the value or the children content
   const content = children ? (
     children
   ) : (
-    // Updated text color for light mode
-    <div className="text-5xl lg:text-6xl font-extrabold mt-4 text-gray-900 dark:text-white">
+    <div className="text-4xl sm:text-5xl font-bold mt-6 text-gray-900 dark:text-white tracking-tight">
       {value}
     </div>
   );
 
   return (
-    // Updated background and border for theme awareness
-    <div className="bg-white dark:bg-gray-900 border border-gray-200 dark:border-gray-800 rounded-xl p-6 shadow-md dark:shadow-lg h-full transition-shadow duration-300 hover:shadow-blue-500/30">
+    <div className="group bg-white dark:bg-gray-900 border border-gray-100 dark:border-gray-800 rounded-2xl p-6 shadow-sm hover:shadow-xl hover:-translate-y-1 transition-all duration-300 ease-out h-full flex flex-col">
       <div className="flex justify-between items-start">
-        <h3 className="text-sm font-semibold uppercase tracking-wider text-gray-500 dark:text-gray-400 flex items-center">
+        <h3 className="text-xs font-bold uppercase tracking-widest text-gray-500 dark:text-gray-400 flex items-center">
           {title}
-          {/* Small icon next to title */}
-          <Icon className={`w-4 h-4 ml-2 ${iconBgColor}`} />
         </h3>
-        {/* You could add a small information icon here if needed */}
+        <div
+          className={`p-2 rounded-lg ${iconBgColor
+            .replace("text-", "bg-")
+            .replace("600", "100")
+            .replace("400", "900/30")} ${iconBgColor}`}
+        >
+          <Icon className="w-5 h-5" />
+        </div>
       </div>
-
-      {content}
+      <div className="flex-1 flex flex-col justify-end">{content}</div>
     </div>
   );
 };
 
-// Specific component for the 'Active Demo Agent' card, showing how to use the children prop
 export const ActiveAgentCard: React.FC<{
   status: "Active" | "Inactive";
   lastUpdated: string;
 }> = ({ status, lastUpdated }) => {
   const isAvailable = status === "Active";
-  const statusColor = isAvailable ? "bg-green-600" : "bg-yellow-600";
-  const statusText = isAvailable ? "Active" : "Inactive";
+  const statusColor = isAvailable
+    ? "bg-emerald-500 shadow-emerald-500/30"
+    : "bg-amber-500 shadow-amber-500/30";
 
   return (
     <MetricCard
       title="Active Demo Agent"
-      value="" // Value is rendered via children
+      value=""
       icon={AlertCircle}
       iconBgColor="text-blue-600 dark:text-blue-400"
     >
-      <div className="flex flex-col h-full justify-between mt-4">
-        <div>
-          {/* Updated text color */}
-          <div className="text-3xl font-bold tracking-tight text-gray-900 dark:text-white">
-            Active
+      <div className="flex flex-col h-full mt-4">
+        <div className="mb-4">
+          <div className="flex items-center space-x-3">
+            <div className="text-3xl font-bold tracking-tight text-gray-900 dark:text-white">
+              Active
+            </div>
+            <span
+              className={`inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-bold shadow-lg ${statusColor} text-white`}
+            >
+              {status}
+            </span>
           </div>
-
-          {/* Status Badge */}
-          <span
-            className={`inline-flex items-center px-3 py-1 rounded-full text-xs font-medium mt-2 ${statusColor} text-white`}
-          >
-            {statusText}
-          </span>
-
-          {/* Last Updated - Updated text color */}
-          <p className="text-xs text-gray-500 dark:text-gray-500 mt-4">
-            Last Updated:
-            <br />
-            {lastUpdated}
+          <p className="text-xs text-gray-400 mt-2 font-medium">
+            Last synced: {lastUpdated}
           </p>
         </div>
 
-        {/* Manage Button */}
-        <button className="mt-6 w-full py-2 px-4 bg-blue-600 hover:bg-blue-700 text-white font-medium rounded-lg transition-colors duration-150">
+        <button className="mt-auto w-full py-2.5 px-4 bg-gray-900 dark:bg-white text-white dark:text-gray-900 font-semibold rounded-xl hover:opacity-90 transition-opacity text-sm shadow-md">
           Manage Agent
         </button>
       </div>
@@ -99,5 +85,4 @@ export const ActiveAgentCard: React.FC<{
   );
 };
 
-// Exporting the MetricCard component for general use
 export default MetricCard;

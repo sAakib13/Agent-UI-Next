@@ -1,5 +1,4 @@
 "use client"
-
 import React, { useState } from "react";
 import {
   Settings,
@@ -7,11 +6,9 @@ import {
   CreditCard,
   Key,
   AlertTriangle,
-  LogOut,
   ChevronRight,
+  Shield,
 } from "lucide-react";
-
-// --- Types and Mock Data ---
 
 type UserProfile = {
   fullName: string;
@@ -19,7 +16,6 @@ type UserProfile = {
   plan: "Pro" | "Starter";
   apiKey: string;
 };
-
 const mockProfile: UserProfile = {
   fullName: "Jane Doe",
   email: "jane.doe@example.com",
@@ -27,9 +23,6 @@ const mockProfile: UserProfile = {
   apiKey: "sk-sahayata-xxxxxxxxxxxxxxxxxxxx",
 };
 
-// --- Reusable Form Components ---
-
-// Component for standard text inputs (used for profile fields)
 const TextInput: React.FC<{
   label: string;
   value: string;
@@ -45,8 +38,8 @@ const TextInput: React.FC<{
   type = "text",
   onChange,
 }) => (
-  <div className="space-y-2">
-    <label className="block text-sm font-medium text-gray-700 dark:text-gray-300">
+  <div className="space-y-1.5">
+    <label className="block text-sm font-semibold text-gray-700 dark:text-gray-300 ml-1">
       {label}
     </label>
     <input
@@ -55,238 +48,130 @@ const TextInput: React.FC<{
       placeholder={placeholder}
       readOnly={isReadOnly}
       onChange={onChange}
-      // Updated input classes for theme awareness
-      className={`w-full rounded-lg px-4 py-2 text-gray-900 dark:text-white transition-colors 
-        ${
-          isReadOnly
-            ? "bg-gray-100 dark:bg-gray-800 border border-gray-300 dark:border-gray-700 text-gray-500 dark:text-gray-400 cursor-not-allowed"
-            : "bg-white dark:bg-gray-800 border border-gray-300 dark:border-gray-700 placeholder-gray-500 focus:ring-blue-500 focus:border-blue-500"
-        }`}
+      className={`w-full rounded-xl px-4 py-3 text-gray-900 dark:text-white transition-all outline-none border ${
+        isReadOnly
+          ? "bg-gray-100 dark:bg-gray-800 border-transparent text-gray-500 cursor-not-allowed"
+          : "bg-gray-50 dark:bg-gray-800/50 border-gray-200 dark:border-gray-700 focus:ring-2 focus:ring-blue-500/20 focus:border-blue-500"
+      }`}
     />
   </div>
 );
 
-// Component for full-width action buttons (used in settings panels)
-const ActionButton: React.FC<{
+const ActionRow: React.FC<{
   label: string;
   onClick: () => void;
   icon: React.ElementType;
-}> = ({ label, onClick, icon: Icon }) => (
+  description?: string;
+}> = ({ label, onClick, icon: Icon, description }) => (
   <button
     onClick={onClick}
-    // Updated button classes for theme awareness
-    className="w-full flex items-center justify-between p-4 bg-white dark:bg-gray-800 hover:bg-gray-100 dark:hover:bg-gray-700 border border-gray-200 dark:border-gray-700 rounded-xl transition-colors text-gray-900 dark:text-white"
+    className="w-full flex items-center justify-between p-4 hover:bg-gray-50 dark:hover:bg-gray-800/50 rounded-xl transition-colors group text-left"
   >
-    <div className="flex items-center space-x-3">
-      <Icon className="w-5 h-5 text-blue-600 dark:text-blue-400" />
-      <span className="font-medium">{label}</span>
+    <div className="flex items-center gap-4">
+      <div className="p-2 bg-gray-100 dark:bg-gray-800 rounded-lg group-hover:bg-white dark:group-hover:bg-gray-700 transition-colors">
+        <Icon className="w-5 h-5 text-gray-500 dark:text-gray-400 group-hover:text-blue-600 dark:group-hover:text-blue-400" />
+      </div>
+      <div>
+        <span className="block font-medium text-gray-900 dark:text-white">
+          {label}
+        </span>
+        {description && (
+          <span className="block text-sm text-gray-500">{description}</span>
+        )}
+      </div>
     </div>
-    <ChevronRight className="w-5 h-5 text-gray-400" />
+    <ChevronRight className="w-5 h-5 text-gray-400 group-hover:translate-x-1 transition-transform" />
   </button>
 );
 
-// --- Main Page Component ---
-
 export default function AccountSettingsPage() {
   const [profile, setProfile] = useState(mockProfile);
-  const [currentPassword, setCurrentPassword] = useState("");
-  const [newPassword, setNewPassword] = useState("");
-
-  const handleProfileChange = (
-    field: keyof Omit<UserProfile, "plan" | "apiKey">,
-    value: string
-  ) => {
-    setProfile((prev) => ({ ...prev, [field]: value }));
-  };
-
-  const handleSaveProfile = () => {
-    console.log("Profile saved:", profile);
-    // Add API call here
-  };
-
-  const handlePasswordChange = () => {
-    console.log(
-      "Password change initiated. Current:",
-      currentPassword,
-      "New:",
-      newPassword
-    );
-    // Add API call here
-    setCurrentPassword("");
-    setNewPassword("");
-  };
-
-  const handleRegenerateApiKey = () => {
-    const newKey = "sk-sahayata-" + Math.random().toString(36).substring(2, 22);
-    setProfile((prev) => ({ ...prev, apiKey: newKey }));
-    console.log("API Key Regenerated:", newKey);
-  };
 
   return (
-    <div className="max-w-4xl mx-auto space-y-10 py-4">
-      {/* Header */}
-      <header className="pb-4 border-b border-gray-200 dark:border-gray-800">
-        <h1 className="text-3xl font-bold tracking-tight flex items-center space-x-2 text-gray-900 dark:text-white">
-          <Settings className="w-6 h-6 text-blue-600 dark:text-blue-500" />
-          <span>Account Settings</span>
+    <div className="max-w-3xl mx-auto space-y-10 pb-10">
+      <header>
+        <h1 className="text-3xl font-bold tracking-tight text-gray-900 dark:text-white">
+          Settings
         </h1>
-        <p className="text-gray-500 dark:text-gray-400 mt-1">
-          Manage your personal information, subscription, and security.
+        <p className="text-gray-500 dark:text-gray-400 mt-2">
+          Manage your account preferences and security.
         </p>
       </header>
 
-      {/* 1. Personal Information - Updated background and border classes */}
-      <section className="space-y-6 border border-gray-200 dark:border-gray-800 rounded-xl p-6 bg-white dark:bg-gray-900">
-        <h2 className="text-xl font-semibold border-b border-gray-200 dark:border-gray-800 pb-3 flex items-center space-x-2 text-gray-900 dark:text-white">
-          <User className="w-5 h-5" />
-          <span>Personal Information</span>
-        </h2>
-
-        <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+      {/* Profile Section */}
+      <section className="bg-white dark:bg-gray-900 rounded-2xl border border-gray-100 dark:border-gray-800 p-8 shadow-sm">
+        <div className="flex items-center gap-3 mb-6">
+          <div className="p-2 bg-blue-50 dark:bg-blue-900/20 rounded-lg">
+            <User className="w-5 h-5 text-blue-600 dark:text-blue-400" />
+          </div>
+          <h2 className="text-xl font-bold text-gray-900 dark:text-white">
+            Profile
+          </h2>
+        </div>
+        <div className="grid grid-cols-1 md:grid-cols-2 gap-6 mb-6">
           <TextInput
             label="Full Name"
             placeholder="Your name"
             value={profile.fullName}
-            onChange={(e) => handleProfileChange("fullName", e.target.value)}
+            onChange={(e) =>
+              setProfile({ ...profile, fullName: e.target.value })
+            }
           />
           <TextInput
-            label="Email Address"
+            label="Email"
             placeholder="Your email"
             value={profile.email}
             isReadOnly
             onChange={() => {}}
           />
         </div>
-
-        <div className="flex justify-end pt-2">
-          <button
-            onClick={handleSaveProfile}
-            className="px-6 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-colors font-medium"
-          >
-            Save Profile
+        <div className="flex justify-end">
+          <button className="px-5 py-2 bg-gray-900 dark:bg-white text-white dark:text-gray-900 font-medium rounded-xl hover:opacity-90 transition-opacity">
+            Save Changes
           </button>
         </div>
       </section>
 
-      {/* Password Change - Updated background and border classes */}
-      <section className="space-y-6 border border-gray-200 dark:border-gray-800 rounded-xl p-6 bg-white dark:bg-gray-900">
-        <h2 className="text-xl font-semibold border-b border-gray-200 dark:border-gray-800 pb-3 text-gray-900 dark:text-white">
-          Password Management
-        </h2>
+      {/* Security & Billing Group */}
+      <div className="bg-white dark:bg-gray-900 rounded-2xl border border-gray-100 dark:border-gray-800 divide-y divide-gray-100 dark:divide-gray-800 shadow-sm overflow-hidden">
+        <ActionRow
+          label="Change Password"
+          icon={Shield}
+          description="Update your password securely"
+          onClick={() => {}}
+        />
+        <ActionRow
+          label="Billing & Invoices"
+          icon={CreditCard}
+          description={`Current Plan: ${profile.plan}`}
+          onClick={() => {}}
+        />
+        <ActionRow
+          label="API Keys"
+          icon={Key}
+          description="Manage your integration keys"
+          onClick={() => {}}
+        />
+      </div>
 
-        <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-          <TextInput
-            label="Current Password"
-            placeholder="Enter current password"
-            value={currentPassword}
-            type="password"
-            onChange={(e) => setCurrentPassword(e.target.value)}
-          />
-          <TextInput
-            label="New Password"
-            placeholder="Enter new password"
-            value={newPassword}
-            type="password"
-            onChange={(e) => setNewPassword(e.target.value)}
-          />
-        </div>
-
-        <div className="flex justify-end pt-2">
-          <button
-            onClick={handlePasswordChange}
-            disabled={!currentPassword || !newPassword}
-            className={`px-6 py-2 text-white rounded-lg font-medium transition-colors 
-              ${
-                currentPassword && newPassword
-                  ? "bg-blue-600 hover:bg-blue-700"
-                  : "bg-gray-400 dark:bg-gray-600 cursor-not-allowed"
-              }`}
-          >
-            Change Password
-          </button>
-        </div>
-      </section>
-
-      {/* 2. Subscription & Billing - Updated background and border classes */}
-      <section className="space-y-6 border border-gray-200 dark:border-gray-800 rounded-xl p-6 bg-white dark:bg-gray-900">
-        <h2 className="text-xl font-semibold border-b border-gray-200 dark:border-gray-800 pb-3 flex items-center space-x-2 text-gray-900 dark:text-white">
-          <CreditCard className="w-5 h-5" />
-          <span>Subscription & Billing</span>
-        </h2>
-
-        {/* Updated inner background and border classes */}
-        <div className="bg-gray-100 dark:bg-gray-800 p-4 rounded-lg border border-gray-300 dark:border-gray-700">
-          <p className="text-lg font-semibold text-gray-900 dark:text-white">
-            Current Plan: {profile.plan}
-          </p>
-          <p className="text-sm text-gray-600 dark:text-gray-400">
-            Your current plan provides unlimited agents and priority support.
-          </p>
-        </div>
-
-        <div className="space-y-3">
-          <ActionButton
-            label="Manage Billing and Invoices"
-            onClick={() =>
-              console.log("Redirecting to Stripe/Billing portal...")
-            }
-            icon={CreditCard}
-          />
-          <ActionButton
-            label="Change Subscription Plan"
-            onClick={() => console.log("Opening plan change modal...")}
-            icon={ChevronRight}
-          />
-        </div>
-      </section>
-
-      {/* 3. API Key Management - Updated background and border classes */}
-      <section className="space-y-6 border border-gray-200 dark:border-gray-800 rounded-xl p-6 bg-white dark:bg-gray-900">
-        <h2 className="text-xl font-semibold border-b border-gray-200 dark:border-gray-800 pb-3 flex items-center space-x-2 text-gray-900 dark:text-white">
-          <Key className="w-5 h-5" />
-          <span>API Key Management</span>
-        </h2>
-
-        {/* Updated inner background and border classes */}
-        <div className="bg-gray-100 dark:bg-gray-800 p-4 rounded-lg border border-gray-300 dark:border-gray-700 break-words">
-          <p className="text-sm font-medium text-gray-600 dark:text-gray-400 mb-1">
-            Current API Key:
-          </p>
-          <code className="text-yellow-600 dark:text-yellow-400 select-all">
-            {profile.apiKey}
-          </code>
-        </div>
-
-        <div className="flex justify-between items-center pt-2">
-          <p className="text-sm text-gray-500 hidden sm:block">
-            Regenerating your key will immediately invalidate the old one.
-          </p>
-          <button
-            onClick={handleRegenerateApiKey}
-            className="px-6 py-2 border border-yellow-600 text-yellow-600 dark:text-yellow-400 rounded-lg hover:bg-yellow-50 dark:hover:bg-yellow-900/30 transition-colors font-medium"
-          >
-            Regenerate Key
-          </button>
-        </div>
-      </section>
-
-      {/* 4. Danger Zone - Updated border and background classes */}
-      <section className="space-y-6 border border-red-400 dark:border-red-800 rounded-xl p-6 bg-red-50 dark:bg-red-900/20">
-        <h2 className="text-xl font-semibold border-b border-red-400 dark:border-red-800 pb-3 flex items-center space-x-2 text-red-600 dark:text-red-400">
-          <AlertTriangle className="w-5 h-5" />
-          <span>Danger Zone</span>
-        </h2>
-
-        <div className="flex justify-between items-center">
-          <p className="text-gray-700 dark:text-gray-300">
-            Permanently delete your account and all associated data.
-          </p>
-          <button
-            onClick={() => console.log("Show delete confirmation modal...")}
-            className="px-6 py-2 bg-red-600 text-white rounded-lg hover:bg-red-700 transition-colors font-medium"
-          >
-            Delete Account
-          </button>
+      {/* Danger Zone */}
+      <section className="bg-red-50 dark:bg-red-900/10 rounded-2xl border border-red-100 dark:border-red-900/30 p-8">
+        <div className="flex items-start gap-4">
+          <div className="p-2 bg-red-100 dark:bg-red-900/30 rounded-lg shrink-0">
+            <AlertTriangle className="w-5 h-5 text-red-600 dark:text-red-400" />
+          </div>
+          <div className="flex-1">
+            <h2 className="text-lg font-bold text-red-700 dark:text-red-400 mb-1">
+              Danger Zone
+            </h2>
+            <p className="text-sm text-red-600/80 dark:text-red-400/70 mb-4">
+              Deleting your account is permanent. All your agents and data will
+              be wiped immediately.
+            </p>
+            <button className="px-4 py-2 bg-white dark:bg-red-950 border border-red-200 dark:border-red-900 text-red-600 dark:text-red-400 font-medium rounded-lg hover:bg-red-50 dark:hover:bg-red-900/40 transition-colors">
+              Delete Account
+            </button>
+          </div>
         </div>
       </section>
     </div>
