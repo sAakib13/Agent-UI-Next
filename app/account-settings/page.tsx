@@ -1,4 +1,4 @@
-"use client";
+"use client"
 
 import React, { useState } from "react";
 import {
@@ -46,18 +46,21 @@ const TextInput: React.FC<{
   onChange,
 }) => (
   <div className="space-y-2">
-    <label className="block text-sm font-medium text-gray-300">{label}</label>
+    <label className="block text-sm font-medium text-gray-700 dark:text-gray-300">
+      {label}
+    </label>
     <input
       type={type}
       value={value}
       placeholder={placeholder}
       readOnly={isReadOnly}
       onChange={onChange}
-      className={`w-full rounded-lg px-4 py-2 text-white transition-colors 
+      // Updated input classes for theme awareness
+      className={`w-full rounded-lg px-4 py-2 text-gray-900 dark:text-white transition-colors 
         ${
           isReadOnly
-            ? "bg-gray-800 border border-gray-700 text-gray-400 cursor-not-allowed"
-            : "bg-gray-800 border border-gray-700 placeholder-gray-500 focus:ring-blue-500 focus:border-blue-500"
+            ? "bg-gray-100 dark:bg-gray-800 border border-gray-300 dark:border-gray-700 text-gray-500 dark:text-gray-400 cursor-not-allowed"
+            : "bg-white dark:bg-gray-800 border border-gray-300 dark:border-gray-700 placeholder-gray-500 focus:ring-blue-500 focus:border-blue-500"
         }`}
     />
   </div>
@@ -71,10 +74,11 @@ const ActionButton: React.FC<{
 }> = ({ label, onClick, icon: Icon }) => (
   <button
     onClick={onClick}
-    className="w-full flex items-center justify-between p-4 bg-gray-800 hover:bg-gray-700 border border-gray-700 rounded-xl transition-colors text-white"
+    // Updated button classes for theme awareness
+    className="w-full flex items-center justify-between p-4 bg-white dark:bg-gray-800 hover:bg-gray-100 dark:hover:bg-gray-700 border border-gray-200 dark:border-gray-700 rounded-xl transition-colors text-gray-900 dark:text-white"
   >
     <div className="flex items-center space-x-3">
-      <Icon className="w-5 h-5 text-blue-400" />
+      <Icon className="w-5 h-5 text-blue-600 dark:text-blue-400" />
       <span className="font-medium">{label}</span>
     </div>
     <ChevronRight className="w-5 h-5 text-gray-400" />
@@ -121,19 +125,19 @@ export default function AccountSettingsPage() {
   return (
     <div className="max-w-4xl mx-auto space-y-10 py-4">
       {/* Header */}
-      <header className="pb-4 border-b border-gray-800">
-        <h1 className="text-3xl font-bold tracking-tight flex items-center space-x-2">
-          <Settings className="w-6 h-6 text-blue-500" />
+      <header className="pb-4 border-b border-gray-200 dark:border-gray-800">
+        <h1 className="text-3xl font-bold tracking-tight flex items-center space-x-2 text-gray-900 dark:text-white">
+          <Settings className="w-6 h-6 text-blue-600 dark:text-blue-500" />
           <span>Account Settings</span>
         </h1>
-        <p className="text-gray-400 mt-1">
+        <p className="text-gray-500 dark:text-gray-400 mt-1">
           Manage your personal information, subscription, and security.
         </p>
       </header>
 
-      {/* 1. Personal Information */}
-      <section className="space-y-6 border border-gray-800 rounded-xl p-6 bg-gray-900">
-        <h2 className="text-xl font-semibold border-b border-gray-800 pb-3 flex items-center space-x-2 text-white">
+      {/* 1. Personal Information - Updated background and border classes */}
+      <section className="space-y-6 border border-gray-200 dark:border-gray-800 rounded-xl p-6 bg-white dark:bg-gray-900">
+        <h2 className="text-xl font-semibold border-b border-gray-200 dark:border-gray-800 pb-3 flex items-center space-x-2 text-gray-900 dark:text-white">
           <User className="w-5 h-5" />
           <span>Personal Information</span>
         </h2>
@@ -164,9 +168,9 @@ export default function AccountSettingsPage() {
         </div>
       </section>
 
-      {/* Password Change */}
-      <section className="space-y-6 border border-gray-800 rounded-xl p-6 bg-gray-900">
-        <h2 className="text-xl font-semibold border-b border-gray-800 pb-3 text-white">
+      {/* Password Change - Updated background and border classes */}
+      <section className="space-y-6 border border-gray-200 dark:border-gray-800 rounded-xl p-6 bg-white dark:bg-gray-900">
+        <h2 className="text-xl font-semibold border-b border-gray-200 dark:border-gray-800 pb-3 text-gray-900 dark:text-white">
           Password Management
         </h2>
 
@@ -195,7 +199,7 @@ export default function AccountSettingsPage() {
               ${
                 currentPassword && newPassword
                   ? "bg-blue-600 hover:bg-blue-700"
-                  : "bg-gray-600 cursor-not-allowed"
+                  : "bg-gray-400 dark:bg-gray-600 cursor-not-allowed"
               }`}
           >
             Change Password
@@ -203,18 +207,19 @@ export default function AccountSettingsPage() {
         </div>
       </section>
 
-      {/* 2. Subscription & Billing */}
-      <section className="space-y-6 border border-gray-800 rounded-xl p-6 bg-gray-900">
-        <h2 className="text-xl font-semibold border-b border-gray-800 pb-3 flex items-center space-x-2 text-white">
+      {/* 2. Subscription & Billing - Updated background and border classes */}
+      <section className="space-y-6 border border-gray-200 dark:border-gray-800 rounded-xl p-6 bg-white dark:bg-gray-900">
+        <h2 className="text-xl font-semibold border-b border-gray-200 dark:border-gray-800 pb-3 flex items-center space-x-2 text-gray-900 dark:text-white">
           <CreditCard className="w-5 h-5" />
           <span>Subscription & Billing</span>
         </h2>
 
-        <div className="bg-gray-800 p-4 rounded-lg border border-gray-700">
-          <p className="text-lg font-semibold text-white">
+        {/* Updated inner background and border classes */}
+        <div className="bg-gray-100 dark:bg-gray-800 p-4 rounded-lg border border-gray-300 dark:border-gray-700">
+          <p className="text-lg font-semibold text-gray-900 dark:text-white">
             Current Plan: {profile.plan}
           </p>
-          <p className="text-sm text-gray-400">
+          <p className="text-sm text-gray-600 dark:text-gray-400">
             Your current plan provides unlimited agents and priority support.
           </p>
         </div>
@@ -235,18 +240,21 @@ export default function AccountSettingsPage() {
         </div>
       </section>
 
-      {/* 3. API Key Management */}
-      <section className="space-y-6 border border-gray-800 rounded-xl p-6 bg-gray-900">
-        <h2 className="text-xl font-semibold border-b border-gray-800 pb-3 flex items-center space-x-2 text-white">
+      {/* 3. API Key Management - Updated background and border classes */}
+      <section className="space-y-6 border border-gray-200 dark:border-gray-800 rounded-xl p-6 bg-white dark:bg-gray-900">
+        <h2 className="text-xl font-semibold border-b border-gray-200 dark:border-gray-800 pb-3 flex items-center space-x-2 text-gray-900 dark:text-white">
           <Key className="w-5 h-5" />
           <span>API Key Management</span>
         </h2>
 
-        <div className="bg-gray-800 p-4 rounded-lg border border-gray-700 break-words">
-          <p className="text-sm font-medium text-gray-400 mb-1">
+        {/* Updated inner background and border classes */}
+        <div className="bg-gray-100 dark:bg-gray-800 p-4 rounded-lg border border-gray-300 dark:border-gray-700 break-words">
+          <p className="text-sm font-medium text-gray-600 dark:text-gray-400 mb-1">
             Current API Key:
           </p>
-          <code className="text-yellow-400 select-all">{profile.apiKey}</code>
+          <code className="text-yellow-600 dark:text-yellow-400 select-all">
+            {profile.apiKey}
+          </code>
         </div>
 
         <div className="flex justify-between items-center pt-2">
@@ -255,22 +263,22 @@ export default function AccountSettingsPage() {
           </p>
           <button
             onClick={handleRegenerateApiKey}
-            className="px-6 py-2 border border-yellow-600 text-yellow-400 rounded-lg hover:bg-yellow-900/30 transition-colors font-medium"
+            className="px-6 py-2 border border-yellow-600 text-yellow-600 dark:text-yellow-400 rounded-lg hover:bg-yellow-50 dark:hover:bg-yellow-900/30 transition-colors font-medium"
           >
             Regenerate Key
           </button>
         </div>
       </section>
 
-      {/* 4. Danger Zone */}
-      <section className="space-y-6 border border-red-800 rounded-xl p-6 bg-red-900/20">
-        <h2 className="text-xl font-semibold border-b border-red-800 pb-3 flex items-center space-x-2 text-red-400">
+      {/* 4. Danger Zone - Updated border and background classes */}
+      <section className="space-y-6 border border-red-400 dark:border-red-800 rounded-xl p-6 bg-red-50 dark:bg-red-900/20">
+        <h2 className="text-xl font-semibold border-b border-red-400 dark:border-red-800 pb-3 flex items-center space-x-2 text-red-600 dark:text-red-400">
           <AlertTriangle className="w-5 h-5" />
           <span>Danger Zone</span>
         </h2>
 
         <div className="flex justify-between items-center">
-          <p className="text-gray-300">
+          <p className="text-gray-700 dark:text-gray-300">
             Permanently delete your account and all associated data.
           </p>
           <button

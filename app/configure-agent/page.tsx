@@ -1,4 +1,4 @@
-"use client";
+"use client"
 
 import React, { useState } from "react";
 import {
@@ -71,8 +71,11 @@ const TextInput: React.FC<{
   rows = 4,
 }) => (
   <div className="space-y-2">
+    {/* Updated label text color */}
     {label && (
-      <label className="block text-sm font-medium text-gray-300">{label}</label>
+      <label className="block text-sm font-medium text-gray-700 dark:text-gray-300">
+        {label}
+      </label>
     )}
     {isTextArea ? (
       <textarea
@@ -80,7 +83,8 @@ const TextInput: React.FC<{
         value={value}
         onChange={onChange}
         placeholder={placeholder}
-        className="w-full bg-gray-800 border border-gray-700 rounded-lg px-4 py-2 text-white placeholder-gray-500 focus:ring-blue-500 focus:border-blue-500 transition-colors"
+        // Updated input classes for theme awareness
+        className="w-full bg-white dark:bg-gray-800 border border-gray-300 dark:border-gray-700 rounded-lg px-4 py-2 text-gray-900 dark:text-white placeholder-gray-500 focus:ring-blue-500 focus:border-blue-500 transition-colors"
       />
     ) : (
       <input
@@ -88,7 +92,8 @@ const TextInput: React.FC<{
         value={value}
         onChange={onChange as (e: React.ChangeEvent<HTMLInputElement>) => void}
         placeholder={placeholder}
-        className="w-full bg-gray-800 border border-gray-700 rounded-lg px-4 py-2 text-white placeholder-gray-500 focus:ring-blue-500 focus:border-blue-500 transition-colors"
+        // Updated input classes for theme awareness
+        className="w-full bg-white dark:bg-gray-800 border border-gray-300 dark:border-gray-700 rounded-lg px-4 py-2 text-gray-900 dark:text-white placeholder-gray-500 focus:ring-blue-500 focus:border-blue-500 transition-colors"
       />
     )}
   </div>
@@ -105,15 +110,18 @@ const RichTextEditorMock: React.FC<{
 
   return (
     <div className="space-y-2">
-      <label className="block text-sm font-medium text-gray-300">{label}</label>
-      <div className="border border-gray-700 rounded-lg overflow-hidden bg-gray-800">
-        {/* Mock Toolbar */}
-        <div className="flex space-x-2 p-2 border-b border-gray-700">
+      {/* Updated label text color */}
+      <label className="block text-sm font-medium text-gray-700 dark:text-gray-300">
+        {label}
+      </label>
+      <div className="border border-gray-300 dark:border-gray-700 rounded-lg overflow-hidden bg-white dark:bg-gray-800">
+        {/* Mock Toolbar - Updated toolbar background and icon colors */}
+        <div className="flex space-x-2 p-2 border-b border-gray-300 dark:border-gray-700 bg-gray-50 dark:bg-gray-700">
           {toolbarItems.map((Icon, index) => (
             <button
               key={index}
               type="button"
-              className="p-1 rounded text-gray-400 hover:bg-gray-700 hover:text-white transition-colors"
+              className="p-1 rounded text-gray-600 dark:text-gray-400 hover:bg-gray-200 dark:hover:bg-gray-600 hover:text-gray-900 dark:hover:text-white transition-colors"
               title={Icon.displayName}
             >
               <Icon className="w-4 h-4" />
@@ -121,13 +129,13 @@ const RichTextEditorMock: React.FC<{
           ))}
         </div>
 
-        {/* Text Area */}
+        {/* Text Area - Updated text area background and text color */}
         <textarea
           rows={6}
           value={value}
           onChange={onChange}
           placeholder={placeholder}
-          className="w-full p-4 bg-gray-800 text-white placeholder-gray-500 focus:outline-none resize-none"
+          className="w-full p-4 bg-white dark:bg-gray-800 text-gray-900 dark:text-white placeholder-gray-500 focus:outline-none resize-none"
         />
       </div>
     </div>
@@ -174,8 +182,8 @@ const FileDropZone: React.FC<{
       <div
         className={`border-2 border-dashed rounded-xl p-8 text-center transition-colors cursor-pointer ${
           isDragging
-            ? "border-blue-500 bg-blue-900/20"
-            : "border-gray-700 bg-gray-800 hover:border-blue-500"
+            ? "border-blue-500 bg-blue-100 dark:bg-blue-900/20"
+            : "border-gray-300 dark:border-gray-700 bg-gray-50 dark:bg-gray-800 hover:border-blue-500"
         }`}
         onDragOver={handleDragOver}
         onDragLeave={handleDragLeave}
@@ -192,7 +200,7 @@ const FileDropZone: React.FC<{
           onChange={handleFileSelect}
         />
         <UploadCloud className="w-8 h-8 mx-auto mb-3 text-gray-500" />
-        <p className="text-gray-400">
+        <p className="text-gray-600 dark:text-gray-400">
           Drag & drop documents here or click to browse
         </p>
         <p className="text-xs text-gray-500 mt-1">
@@ -202,11 +210,14 @@ const FileDropZone: React.FC<{
 
       {/* Displaying uploaded files */}
       {files.length > 0 && (
-        <ul className="text-sm text-gray-400 pt-2 space-y-2">
+        <ul className="text-sm text-gray-600 dark:text-gray-400 pt-2 space-y-2">
+          <label className="block text-xs font-semibold text-gray-400 dark:text-gray-500">
+            Uploaded Files:
+          </label>
           {files.map((file, index) => (
             <li
               key={index}
-              className="flex justify-between items-center bg-gray-800 p-3 rounded border border-gray-700"
+              className="flex justify-between items-center bg-gray-100 dark:bg-gray-800 p-3 rounded border border-gray-300 dark:border-gray-700"
             >
               <span className="truncate flex-1">{file.name}</span>
               <div className="flex items-center space-x-2">
@@ -219,7 +230,7 @@ const FileDropZone: React.FC<{
                     e.stopPropagation();
                     onFileRemoved(index);
                   }}
-                  className="text-red-400 hover:text-red-300 font-medium text-xs ml-2"
+                  className="text-red-600 dark:text-red-400 hover:text-red-500 dark:hover:text-red-300 font-medium text-xs ml-2"
                 >
                   (Remove)
                 </button>
@@ -287,23 +298,23 @@ export default function ConfigureAgentPage() {
     <div className="max-w-4xl mx-auto space-y-10 py-4">
       {/* Header and Agent Information */}
       <header className="pb-4">
-        <h1 className="text-3xl font-bold tracking-tight">
+        <h1 className="text-3xl font-bold tracking-tight text-gray-900 dark:text-white">
           Configure Sahayata Agent
         </h1>
-        <p className="text-gray-400 mt-1">
+        <p className="text-gray-500 dark:text-gray-400 mt-1">
           Customize your agent with templates, knowledge base, and actions
         </p>
       </header>
 
-      {/* Agent Information & Actions */}
-      <div className="flex justify-between items-start p-4 bg-gray-900 border border-gray-800 rounded-xl">
+      {/* Agent Information & Actions - Updated background and border classes */}
+      <div className="flex justify-between items-start p-4 bg-white dark:bg-gray-900 border border-gray-200 dark:border-gray-800 rounded-xl">
         <div>
-          <h3 className="text-lg font-semibold text-white mb-2">
+          <h3 className="text-lg font-semibold text-gray-900 dark:text-white mb-2">
             Agent Information
           </h3>
-          <p className="text-sm text-gray-400">
+          <p className="text-sm text-gray-600 dark:text-gray-400">
             Status:{" "}
-            <span className="text-green-400 font-medium">
+            <span className="text-green-600 dark:text-green-400 font-medium">
               {mockAgentStatus.status}
             </span>{" "}
             | Created: {mockAgentStatus.created} | Last Updated:{" "}
@@ -311,19 +322,19 @@ export default function ConfigureAgentPage() {
           </p>
         </div>
         <div className="flex space-x-3">
-          <button className="px-4 py-2 text-sm text-blue-400 border border-blue-600 rounded-lg hover:bg-blue-900/50 transition-colors">
+          <button className="px-4 py-2 text-sm text-blue-600 dark:text-blue-400 border border-blue-600 dark:border-blue-700 rounded-lg hover:bg-blue-50 dark:hover:bg-blue-900/50 transition-colors">
             Rebuild Agent
           </button>
-          <button className="px-4 py-2 text-sm text-red-400 border border-red-600 rounded-lg hover:bg-red-900/50 transition-colors">
+          <button className="px-4 py-2 text-sm text-red-600 dark:text-red-400 border border-red-600 dark:border-red-700 rounded-lg hover:bg-red-50 dark:hover:bg-red-900/50 transition-colors">
             Delete Agent
           </button>
         </div>
       </div>
 
       <form onSubmit={handleSubmit} className="space-y-10">
-        {/* Agent Configuration (Name, Persona, Task) */}
-        <div className="space-y-6 border border-gray-800 rounded-xl p-6 bg-gray-900">
-          <h2 className="text-xl font-semibold border-b border-gray-800 pb-3 text-white">
+        {/* Agent Configuration (Name, Persona, Task) - Updated background and border classes */}
+        <div className="space-y-6 border border-gray-200 dark:border-gray-800 rounded-xl p-6 bg-white dark:bg-gray-900">
+          <h2 className="text-xl font-semibold border-b border-gray-200 dark:border-gray-800 pb-3 text-gray-900 dark:text-white">
             Agent Configuration
           </h2>
 
@@ -349,9 +360,9 @@ export default function ConfigureAgentPage() {
           />
         </div>
 
-        {/* Knowledge Base Documents */}
-        <div className="space-y-6 border border-gray-800 rounded-xl p-6 bg-gray-900">
-          <h2 className="text-xl font-semibold border-b border-gray-800 pb-3 text-white">
+        {/* Knowledge Base Documents - Updated background and border classes */}
+        <div className="space-y-6 border border-gray-200 dark:border-gray-800 rounded-xl p-6 bg-white dark:bg-gray-900">
+          <h2 className="text-xl font-semibold border-b border-gray-200 dark:border-gray-800 pb-3 text-gray-900 dark:text-white">
             Knowledge Base Documents
           </h2>
 
@@ -362,9 +373,9 @@ export default function ConfigureAgentPage() {
           />
         </div>
 
-        {/* URL-based Knowledge Base */}
-        <div className="space-y-6 border border-gray-800 rounded-xl p-6 bg-gray-900">
-          <h2 className="text-xl font-semibold border-b border-gray-800 pb-3 text-white">
+        {/* URL-based Knowledge Base - Updated background and border classes */}
+        <div className="space-y-6 border border-gray-200 dark:border-gray-800 rounded-xl p-6 bg-white dark:bg-gray-900">
+          <h2 className="text-xl font-semibold border-b border-gray-200 dark:border-gray-800 pb-3 text-gray-900 dark:text-white">
             URL-based Knowledge Base
           </h2>
 
@@ -381,7 +392,7 @@ export default function ConfigureAgentPage() {
             <button
               type="button"
               onClick={handleAddUrl}
-              className="flex items-center text-blue-400 hover:text-blue-300 text-sm font-medium transition-colors"
+              className="flex items-center text-blue-600 dark:text-blue-400 hover:text-blue-500 dark:hover:text-blue-300 text-sm font-medium transition-colors"
             >
               <Plus className="w-4 h-4 mr-1" />
               Add Url
@@ -389,45 +400,45 @@ export default function ConfigureAgentPage() {
           </div>
         </div>
 
-        {/* Possible Actions */}
-        <div className="space-y-6 border border-gray-800 rounded-xl p-6 bg-gray-900">
-          <h2 className="text-xl font-semibold border-b border-gray-800 pb-3 text-white">
+        {/* Possible Actions - Updated background and border classes */}
+        <div className="space-y-6 border border-gray-200 dark:border-gray-800 rounded-xl p-6 bg-white dark:bg-gray-900">
+          <h2 className="text-xl font-semibold border-b border-gray-200 dark:border-gray-800 pb-3 text-gray-900 dark:text-white">
             Possible Actions
           </h2>
 
           <div className="space-y-3">
-            <label className="flex items-center space-x-3 text-gray-300">
+            <label className="flex items-center space-x-3 text-gray-700 dark:text-gray-300">
               <input
                 type="checkbox"
                 checked={config.possibleActions.updateContactTable}
                 onChange={() => handleActionToggle("updateContactTable")}
-                className="w-4 h-4 text-blue-600 bg-gray-800 border-gray-700 rounded focus:ring-blue-500"
+                className="w-4 h-4 text-blue-600 bg-white dark:bg-gray-800 border-gray-400 dark:border-gray-700 rounded focus:ring-blue-500"
               />
               <span>Update Contact Table</span>
             </label>
-            <label className="flex items-center space-x-3 text-gray-300">
+            <label className="flex items-center space-x-3 text-gray-700 dark:text-gray-300">
               <input
                 type="checkbox"
                 checked={config.possibleActions.delegateToHuman}
                 onChange={() => handleActionToggle("delegateToHuman")}
-                className="w-4 h-4 text-blue-600 bg-gray-800 border-gray-700 rounded focus:ring-blue-500"
+                className="w-4 h-4 text-blue-600 bg-white dark:bg-gray-800 border-gray-400 dark:border-gray-700 rounded focus:ring-blue-500"
               />
               <span>Delegate to Human at a Particular Stage</span>
             </label>
           </div>
         </div>
 
-        {/* Knowledgebase Sources Summary */}
-        <div className="space-y-6 border border-gray-800 rounded-xl p-6 bg-gray-900">
-          <h2 className="text-xl font-semibold border-b border-gray-800 pb-3 text-white">
+        {/* Knowledgebase Sources Summary - Updated background and border classes */}
+        <div className="space-y-6 border border-gray-200 dark:border-gray-800 rounded-xl p-6 bg-white dark:bg-gray-900">
+          <h2 className="text-xl font-semibold border-b border-gray-200 dark:border-gray-800 pb-3 text-gray-900 dark:text-white">
             Knowledgebase Sources
           </h2>
           <div className="grid grid-cols-2 gap-6">
             <div>
-              <h3 className="text-sm font-medium text-gray-400 uppercase tracking-wider mb-2">
+              <h3 className="text-sm font-medium text-gray-500 dark:text-gray-400 uppercase tracking-wider mb-2">
                 URLs
               </h3>
-              <ul className="list-disc list-inside text-gray-300 space-y-1 pl-4">
+              <ul className="list-disc list-inside text-gray-700 dark:text-gray-300 space-y-1 pl-4">
                 {config.urls
                   .filter((url) => url)
                   .map((url, index) => (
@@ -441,10 +452,10 @@ export default function ConfigureAgentPage() {
               </ul>
             </div>
             <div>
-              <h3 className="text-sm font-medium text-gray-400 uppercase tracking-wider mb-2">
+              <h3 className="text-sm font-medium text-gray-500 dark:text-gray-400 uppercase tracking-wider mb-2">
                 Documents
               </h3>
-              <ul className="list-disc list-inside text-gray-300 space-y-1 pl-4">
+              <ul className="list-disc list-inside text-gray-700 dark:text-gray-300 space-y-1 pl-4">
                 {config.documents.map((doc, index) => (
                   <li key={index} className="text-sm truncate">
                     {doc.name}
@@ -460,20 +471,20 @@ export default function ConfigureAgentPage() {
           </div>
         </div>
 
-        {/* Test Your Agent Section */}
-        <div className="space-y-6 border border-gray-800 rounded-xl p-6 bg-gray-900">
-          <h2 className="text-xl font-semibold border-b border-gray-800 pb-3 text-white">
+        {/* Test Your Agent Section - Updated background and border classes */}
+        <div className="space-y-6 border border-gray-200 dark:border-gray-800 rounded-xl p-6 bg-white dark:bg-gray-900">
+          <h2 className="text-xl font-semibold border-b border-gray-200 dark:border-gray-800 pb-3 text-gray-900 dark:text-white">
             Test Your Agent on WhatsApp
           </h2>
 
           <div className="flex items-center space-x-8">
-            {/* Mock QR Code Placeholder */}
-            <div className="w-24 h-24 bg-gray-800 rounded-lg flex items-center justify-center border border-gray-700">
-              <QrCode className="w-10 h-10 text-gray-600" />
+            {/* Mock QR Code Placeholder - Updated background and border classes */}
+            <div className="w-24 h-24 bg-gray-200 dark:bg-gray-800 rounded-lg flex items-center justify-center border border-gray-300 dark:border-gray-700">
+              <QrCode className="w-10 h-10 text-gray-400 dark:text-gray-600" />
             </div>
 
             <div>
-              <p className="text-sm text-gray-400 mb-4">
+              <p className="text-sm text-gray-600 dark:text-gray-400 mb-4">
                 Scan this QR code with your phone to test your agent on
                 WhatsApp.
               </p>
@@ -487,11 +498,11 @@ export default function ConfigureAgentPage() {
           </div>
         </div>
 
-        {/* Form Footer / Action Buttons */}
-        <footer className="flex justify-end space-x-4 pt-4 border-t border-gray-800">
+        {/* Form Footer / Action Buttons - Updated background and border classes */}
+        <footer className="flex justify-end space-x-4 pt-4 border-t border-gray-200 dark:border-gray-800 bg-gray-50 dark:bg-gray-900">
           <button
             type="button"
-            className="px-6 py-2 border border-gray-700 text-gray-300 rounded-lg hover:bg-gray-800 transition-colors"
+            className="px-6 py-2 border border-gray-400 dark:border-gray-700 text-gray-700 dark:text-gray-300 rounded-lg hover:bg-gray-100 dark:hover:bg-gray-800 transition-colors"
             onClick={() => console.log("Cancel clicked")}
           >
             Cancel

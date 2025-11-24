@@ -1,8 +1,17 @@
 "use client";
 
 import Link from "next/link";
-import { usePathname } from "next/navigation"; // <-- Import usePathname
-import { Home, Zap, Settings, LogOut, SlidersHorizontal } from "lucide-react";
+import { usePathname } from "next/navigation";
+import {
+  Home,
+  Zap,
+  Settings,
+  LogOut,
+  SlidersHorizontal,
+  Sun,
+  Moon,
+} from "lucide-react";
+import { useTheme } from "@/components/theme/ThemeProvider"; // <-- New import
 
 // Define the structure for a navigation item
 interface NavItem {
@@ -29,8 +38,10 @@ const NavLink: React.FC<NavItem & { isActive: boolean }> = ({
   icon: Icon,
   isActive,
 }) => {
-  const activeClasses = "bg-blue-600 text-white shadow-lg shadow-blue-600/50"; // Added shadow for a nicer effect
-  const inactiveClasses = "text-gray-400 hover:bg-gray-800 hover:text-white";
+  // Updated classes for theme awareness
+  const activeClasses = "bg-blue-600 text-white shadow-lg shadow-blue-600/50";
+  const inactiveClasses =
+    "text-gray-600 dark:text-gray-400 hover:bg-gray-200 dark:hover:bg-gray-800 hover:text-gray-900 dark:hover:text-white";
 
   return (
     <Link
@@ -46,7 +57,8 @@ const NavLink: React.FC<NavItem & { isActive: boolean }> = ({
 };
 
 export const Sidebar: React.FC = () => {
-  const pathname = usePathname(); // <-- Get the current path
+  const pathname = usePathname();
+  const { toggleTheme, theme, Icon: ThemeIcon } = useTheme(); // <-- Use theme context
 
   // Function to check if the link is active
   const isLinkActive = (href: string) => {
@@ -68,12 +80,14 @@ export const Sidebar: React.FC = () => {
   };
 
   return (
-    <aside className="w-64 bg-gray-950 border-r border-gray-800 p-6 flex flex-col justify-between sticky top-0 h-screen">
+    <aside className="w-64 bg-white dark:bg-gray-950 border-r border-gray-200 dark:border-gray-800 p-6 flex flex-col justify-between sticky top-0 h-screen transition-colors duration-300">
       <div>
         {/* Logo/App Name */}
-        <div className="flex items-center space-x-2 mb-8 border-b border-gray-800 pb-4">
+        <div className="flex items-center space-x-2 mb-8 border-b border-gray-200 dark:border-gray-800 pb-4">
           <Zap className="w-6 h-6 text-blue-500" />
-          <h1 className="text-xl font-bold tracking-tight">Sahayata Agent</h1>
+          <h1 className="text-xl font-bold tracking-tight text-gray-900 dark:text-white">
+            Sahayata Agent
+          </h1>
         </div>
 
         {/* Navigation Links */}
@@ -82,19 +96,30 @@ export const Sidebar: React.FC = () => {
             <NavLink
               key={item.name}
               {...item}
-              isActive={isLinkActive(item.href)} // <-- Use the dynamic active check
+              isActive={isLinkActive(item.href)}
             />
           ))}
         </nav>
       </div>
 
-      {/* Logout Link */}
-      <div className="mt-8 pt-4 border-t border-gray-800">
+      {/* Logout Link and Theme Toggle */}
+      <div className="mt-8 pt-4 border-t border-gray-200 dark:border-gray-800 space-y-3">
+        {/* Theme Toggle Button */}
+        <button
+          onClick={toggleTheme}
+          className="w-full flex items-center space-x-3 p-3 rounded-xl transition-colors duration-200 text-gray-600 dark:text-gray-400 hover:bg-gray-200 dark:hover:bg-gray-800 hover:text-gray-900 dark:hover:text-white"
+          aria-label={`Switch to ${theme === "light" ? "Dark" : "Light"} Mode`}
+        >
+          <ThemeIcon className="w-5 h-5" />
+          <span>Switch to {theme === "light" ? "Dark" : "Light"} Mode</span>
+        </button>
+
+        {/* Logout Link */}
         <NavLink
           name="Logout"
           href="/logout"
           icon={LogOut}
-          isActive={isLinkActive("/logout")} // Check for logout if you have a logout page
+          isActive={isLinkActive("/logout")}
         />
       </div>
     </aside>

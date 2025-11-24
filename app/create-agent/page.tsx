@@ -1,4 +1,4 @@
-"use client";
+"use client"
 import React, { useState } from "react";
 import { ChevronDown, Plus, UploadCloud, Zap } from "lucide-react";
 
@@ -48,8 +48,11 @@ const TextInput: React.FC<{
   isTextArea?: boolean;
 }> = ({ label, placeholder, value, onChange, isTextArea = false }) => (
   <div className="space-y-2">
+    {/* Updated label text color */}
     {label && (
-      <label className="block text-sm font-medium text-gray-300">{label}</label>
+      <label className="block text-sm font-medium text-gray-700 dark:text-gray-300">
+        {label}
+      </label>
     )}
     {isTextArea ? (
       <textarea
@@ -57,7 +60,8 @@ const TextInput: React.FC<{
         value={value}
         onChange={onChange}
         placeholder={placeholder}
-        className="w-full bg-gray-800 border border-gray-700 rounded-lg px-4 py-2 text-white placeholder-gray-500 focus:ring-blue-500 focus:border-blue-500 transition-colors"
+        // Updated input classes for theme awareness
+        className="w-full bg-white dark:bg-gray-800 border border-gray-300 dark:border-gray-700 rounded-lg px-4 py-2 text-gray-900 dark:text-white placeholder-gray-500 focus:ring-blue-500 focus:border-blue-500 transition-colors"
       />
     ) : (
       <input
@@ -65,7 +69,8 @@ const TextInput: React.FC<{
         value={value}
         onChange={onChange as (e: React.ChangeEvent<HTMLInputElement>) => void}
         placeholder={placeholder}
-        className="w-full bg-gray-800 border border-gray-700 rounded-lg px-4 py-2 text-white placeholder-gray-500 focus:ring-blue-500 focus:border-blue-500 transition-colors"
+        // Updated input classes for theme awareness
+        className="w-full bg-white dark:bg-gray-800 border border-gray-300 dark:border-gray-700 rounded-lg px-4 py-2 text-gray-900 dark:text-white placeholder-gray-500 focus:ring-blue-500 focus:border-blue-500 transition-colors"
       />
     )}
   </div>
@@ -79,12 +84,16 @@ const SelectInput: React.FC<{
   onChange: (e: React.ChangeEvent<HTMLSelectElement>) => void;
 }> = ({ label, value, options, onChange }) => (
   <div className="space-y-2">
-    <label className="block text-sm font-medium text-gray-300">{label}</label>
+    {/* Updated label text color */}
+    <label className="block text-sm font-medium text-gray-700 dark:text-gray-300">
+      {label}
+    </label>
     <div className="relative">
       <select
         value={value}
         onChange={onChange}
-        className="appearance-none w-full bg-gray-800 border border-gray-700 rounded-lg pl-4 pr-10 py-2 text-white focus:ring-blue-500 focus:border-blue-500 transition-colors cursor-pointer"
+        // Updated select classes for theme awareness
+        className="appearance-none w-full bg-white dark:bg-gray-800 border border-gray-300 dark:border-gray-700 rounded-lg pl-4 pr-10 py-2 text-gray-900 dark:text-white focus:ring-blue-500 focus:border-blue-500 transition-colors cursor-pointer"
       >
         {options.map((option) => (
           <option key={option} value={option}>
@@ -92,7 +101,7 @@ const SelectInput: React.FC<{
           </option>
         ))}
       </select>
-      <ChevronDown className="absolute right-3 top-1/2 transform -translate-y-1/2 w-4 h-4 text-gray-400 pointer-events-none" />
+      <ChevronDown className="absolute right-3 top-1/2 transform -translate-y-1/2 w-4 h-4 text-gray-500 dark:text-gray-400 pointer-events-none" />
     </div>
   </div>
 );
@@ -137,8 +146,8 @@ const FileDropZone: React.FC<{
       <div
         className={`border-2 border-dashed rounded-xl p-8 text-center transition-colors ${
           isDragging
-            ? "border-blue-500 bg-blue-900/20"
-            : "border-gray-700 bg-gray-800 hover:border-blue-500"
+            ? "border-blue-500 bg-blue-100 dark:bg-blue-900/20"
+            : "border-gray-300 dark:border-gray-700 bg-gray-50 dark:bg-gray-800 hover:border-blue-500"
         }`}
         onDragOver={handleDragOver}
         onDragLeave={handleDragLeave}
@@ -155,7 +164,7 @@ const FileDropZone: React.FC<{
           onChange={handleFileSelect}
         />
         <UploadCloud className="w-8 h-8 mx-auto mb-3 text-gray-500" />
-        <p className="text-gray-400">
+        <p className="text-gray-600 dark:text-gray-400">
           Drag & drop files here or click to browse
         </p>
         <p className="text-xs text-gray-500 mt-1">
@@ -165,11 +174,11 @@ const FileDropZone: React.FC<{
 
       {/* Displaying uploaded files */}
       {files.length > 0 && (
-        <ul className="text-sm text-gray-400 pt-2 space-y-2">
+        <ul className="text-sm text-gray-600 dark:text-gray-400 pt-2 space-y-2">
           {files.map((file, index) => (
             <li
               key={index}
-              className="flex justify-between items-center bg-gray-800 p-3 rounded border border-gray-700"
+              className="flex justify-between items-center bg-gray-100 dark:bg-gray-800 p-3 rounded border border-gray-300 dark:border-gray-700"
             >
               <span className="truncate flex-1">{file.name}</span>
               <div className="flex items-center space-x-2">
@@ -182,7 +191,7 @@ const FileDropZone: React.FC<{
                     e.stopPropagation();
                     onFileRemoved(index);
                   }}
-                  className="text-red-400 hover:text-red-300 font-medium text-xs ml-2"
+                  className="text-red-600 dark:text-red-400 hover:text-red-500 dark:hover:text-red-300 font-medium text-xs ml-2"
                 >
                   (Remove)
                 </button>
@@ -246,10 +255,10 @@ export default function CreateAgentPage() {
     <div className="max-w-4xl mx-auto space-y-10 py-4">
       {/* Header */}
       <header className="pb-4">
-        <h1 className="text-3xl font-bold tracking-tight">
+        <h1 className="text-3xl font-bold tracking-tight text-gray-900 dark:text-white">
           Create Sahayata Agent
         </h1>
-        <p className="text-gray-400 mt-1">
+        <p className="text-gray-500 dark:text-gray-400 mt-1">
           Configure your intelligent agent with custom business profiles and
           knowledge bases
         </p>
@@ -257,8 +266,9 @@ export default function CreateAgentPage() {
 
       <form onSubmit={handleSubmit} className="space-y-10">
         {/* Quick Start Templates */}
-        <div className="border border-gray-800 rounded-xl p-6 bg-gray-900">
-          <div className="flex justify-between items-center cursor-pointer text-gray-300 hover:text-white transition-colors">
+        {/* Updated background and border classes */}
+        <div className="border border-gray-200 dark:border-gray-800 rounded-xl p-6 bg-white dark:bg-gray-900">
+          <div className="flex justify-between items-center cursor-pointer text-gray-700 dark:text-gray-300 hover:text-gray-900 dark:hover:text-white transition-colors">
             <h2 className="text-lg font-semibold">Quick Start Templates</h2>
             <ChevronDown className="w-5 h-5" />
           </div>
@@ -268,8 +278,9 @@ export default function CreateAgentPage() {
         </div>
 
         {/* Business Profile Section */}
-        <div className="space-y-6 border border-gray-800 rounded-xl p-6 bg-gray-900">
-          <h2 className="text-xl font-semibold border-b border-gray-800 pb-3 text-white">
+        {/* Updated background and border classes */}
+        <div className="space-y-6 border border-gray-200 dark:border-gray-800 rounded-xl p-6 bg-white dark:bg-gray-900">
+          <h2 className="text-xl font-semibold border-b border-gray-200 dark:border-gray-800 pb-3 text-gray-900 dark:text-white">
             Business Profile
           </h2>
 
@@ -299,8 +310,9 @@ export default function CreateAgentPage() {
         </div>
 
         {/* Agent Behavior Section */}
-        <div className="space-y-6 border border-gray-800 rounded-xl p-6 bg-gray-900">
-          <h2 className="text-xl font-semibold border-b border-gray-800 pb-3 text-white">
+        {/* Updated background and border classes */}
+        <div className="space-y-6 border border-gray-200 dark:border-gray-800 rounded-xl p-6 bg-white dark:bg-gray-900">
+          <h2 className="text-xl font-semibold border-b border-gray-200 dark:border-gray-800 pb-3 text-gray-900 dark:text-white">
             Agent Behavior
           </h2>
 
@@ -322,14 +334,15 @@ export default function CreateAgentPage() {
         </div>
 
         {/* Knowledge Base Section */}
-        <div className="space-y-6 border border-gray-800 rounded-xl p-6 bg-gray-900">
-          <h2 className="text-xl font-semibold border-b border-gray-800 pb-3 text-white">
+        {/* Updated background and border classes */}
+        <div className="space-y-6 border border-gray-200 dark:border-gray-800 rounded-xl p-6 bg-white dark:bg-gray-900">
+          <h2 className="text-xl font-semibold border-b border-gray-200 dark:border-gray-800 pb-3 text-gray-900 dark:text-white">
             Knowledge Base
           </h2>
 
           {/* URL Inputs */}
           <div className="space-y-4">
-            <label className="block text-sm font-medium text-gray-300">
+            <label className="block text-sm font-medium text-gray-700 dark:text-gray-300">
               URLs (up to 3)
             </label>
             {config.urls.map((url, index) => (
@@ -345,7 +358,7 @@ export default function CreateAgentPage() {
               <button
                 type="button"
                 onClick={handleAddUrl}
-                className="flex items-center text-blue-400 hover:text-blue-300 text-sm font-medium transition-colors"
+                className="flex items-center text-blue-600 dark:text-blue-400 hover:text-blue-500 dark:hover:text-blue-300 text-sm font-medium transition-colors"
               >
                 <Plus className="w-4 h-4 mr-1" />
                 Add URL
@@ -355,7 +368,7 @@ export default function CreateAgentPage() {
 
           {/* Documents Drop Zone */}
           <div className="space-y-2 pt-4">
-            <label className="block text-sm font-medium text-gray-300">
+            <label className="block text-sm font-medium text-gray-700 dark:text-gray-300">
               Documents (PDF, DOCX)
             </label>
             <FileDropZone
@@ -367,19 +380,20 @@ export default function CreateAgentPage() {
         </div>
 
         {/* Optional Templates Section (Collapsible) */}
-        <div className="border border-gray-800 rounded-xl p-6 bg-gray-900">
-          <div className="flex justify-between items-center cursor-pointer text-gray-300 hover:text-white transition-colors">
+        {/* Updated background and border classes */}
+        <div className="border border-gray-200 dark:border-gray-800 rounded-xl p-6 bg-white dark:bg-gray-900">
+          <div className="flex justify-between items-center cursor-pointer text-gray-700 dark:text-gray-300 hover:text-gray-900 dark:hover:text-white transition-colors">
             <h2 className="text-lg font-semibold">Optional Templates</h2>
             <ChevronDown className="w-5 h-5" />
           </div>
         </div>
 
         {/* Form Footer / Action Buttons */}
-        {/* Using a fixed, slightly sticky footer for better UX on long forms */}
-        <footer className="flex justify-end space-x-4 sticky bottom-0 bg-gray-900 pt-4 border-t border-gray-800">
+        {/* Updated background and border classes */}
+        <footer className="flex justify-end space-x-4 sticky bottom-0 bg-gray-50 dark:bg-gray-900 pt-4 border-t border-gray-200 dark:border-gray-800">
           <button
             type="button"
-            className="px-6 py-2 border border-gray-700 text-gray-300 rounded-lg hover:bg-gray-800 transition-colors"
+            className="px-6 py-2 border border-gray-400 dark:border-gray-700 text-gray-700 dark:text-gray-300 rounded-lg hover:bg-gray-100 dark:hover:bg-gray-800 transition-colors"
             onClick={() => console.log("Cancel clicked")}
           >
             Cancel
