@@ -1,5 +1,8 @@
-import Link from 'next/link';
-import { Home, Zap, Settings, LogOut, SlidersHorizontal } from 'lucide-react';
+"use client";
+
+import Link from "next/link";
+import { usePathname } from "next/navigation"; // <-- Import usePathname
+import { Home, Zap, Settings, LogOut, SlidersHorizontal } from "lucide-react";
 
 // Define the structure for a navigation item
 interface NavItem {
@@ -9,21 +12,32 @@ interface NavItem {
 }
 
 const navItems: NavItem[] = [
-  { name: 'Dashboard', href: '/dashboard', icon: Home },
-  { name: 'Create Agent', href: '/create-agent', icon: Zap },
-  { name: 'Configure Agent', href: '/configure-agent', icon: SlidersHorizontal },
-  { name: 'Account Settings', href: '/account-settings', icon: Settings },
+  { name: "Dashboard", href: "/dashboard", icon: Home },
+  { name: "Create Agent", href: "/create-agent", icon: Zap },
+  {
+    name: "Configure Agent",
+    href: "/configure-agent",
+    icon: SlidersHorizontal,
+  },
+  { name: "Account Settings", href: "/account-settings", icon: Settings },
 ];
 
-// Reusable NavLink component (in the actual app, this would be in NavLink.tsx)
-const NavLink: React.FC<NavItem & { isActive: boolean }> = ({ name, href, icon: Icon, isActive }) => {
-  const activeClasses = 'bg-blue-600 text-white';
-  const inactiveClasses = 'text-gray-400 hover:bg-gray-800 hover:text-white';
-  
+// Reusable NavLink component
+const NavLink: React.FC<NavItem & { isActive: boolean }> = ({
+  name,
+  href,
+  icon: Icon,
+  isActive,
+}) => {
+  const activeClasses = "bg-blue-600 text-white shadow-lg shadow-blue-600/50"; // Added shadow for a nicer effect
+  const inactiveClasses = "text-gray-400 hover:bg-gray-800 hover:text-white";
+
   return (
-    <Link 
+    <Link
       href={href}
-      className={`flex items-center space-x-3 p-3 rounded-xl transition-colors duration-200 ${isActive ? activeClasses : inactiveClasses}`}
+      className={`flex items-center space-x-3 p-3 rounded-xl transition-colors duration-200 ${
+        isActive ? activeClasses : inactiveClasses
+      }`}
     >
       <Icon className="w-5 h-5" />
       <span>{name}</span>
@@ -31,10 +45,27 @@ const NavLink: React.FC<NavItem & { isActive: boolean }> = ({ name, href, icon: 
   );
 };
 
-
 export const Sidebar: React.FC = () => {
-  // In a real app, use next/router or next/navigation to determine the active path
-  const currentPath = '/dashboard'; // Mocking the active path for this example
+  const pathname = usePathname(); // <-- Get the current path
+
+  // Function to check if the link is active
+  const isLinkActive = (href: string) => {
+    // Check if the current path exactly matches the href
+    if (pathname === href) return true;
+
+    // Check for nested routes (e.g., /configure-agent/123 should activate /configure-agent)
+    if (href !== "/" && pathname.startsWith(href) && href !== "/dashboard")
+      return true;
+
+    // Special case for dashboard root
+    if (
+      href === "/dashboard" &&
+      (pathname === "/" || pathname === "/dashboard")
+    )
+      return true;
+
+    return false;
+  };
 
   return (
     <aside className="w-64 bg-gray-950 border-r border-gray-800 p-6 flex flex-col justify-between sticky top-0 h-screen">
@@ -48,10 +79,10 @@ export const Sidebar: React.FC = () => {
         {/* Navigation Links */}
         <nav className="space-y-2">
           {navItems.map((item) => (
-            <NavLink 
-              key={item.name} 
-              {...item} 
-              isActive={item.href === currentPath} 
+            <NavLink
+              key={item.name}
+              {...item}
+              isActive={isLinkActive(item.href)} // <-- Use the dynamic active check
             />
           ))}
         </nav>
@@ -59,11 +90,11 @@ export const Sidebar: React.FC = () => {
 
       {/* Logout Link */}
       <div className="mt-8 pt-4 border-t border-gray-800">
-        <NavLink 
-          name="Logout" 
-          href="/logout" 
-          icon={LogOut} 
-          isActive={false} // Logout is never active
+        <NavLink
+          name="Logout"
+          href="/logout"
+          icon={LogOut}
+          isActive={isLinkActive("/logout")} // Check for logout if you have a logout page
         />
       </div>
     </aside>
