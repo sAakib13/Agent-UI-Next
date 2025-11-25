@@ -14,11 +14,17 @@ import {
   Check,
   ArrowRight,
   ArrowLeft,
+  Loader2,
 } from "lucide-react";
 
 // --- Types & Config ---
 
 type AgentConfig = {
+  // Database fields required for POST
+  id: string; // Temporary ID for new agent, though DB might override
+  status: "Active" | "Inactive" | "Training";
+  possibleActions: { updateContactTable: boolean; delegateToHuman: boolean };
+
   // Step 1: Business
   businessName: string;
   industry: string;
@@ -37,6 +43,10 @@ type AgentConfig = {
 };
 
 const initialConfig: AgentConfig = {
+  id: crypto.randomUUID(), // Assign a unique ID on creation
+  status: "Training", // New agents start in training status
+  possibleActions: { updateContactTable: false, delegateToHuman: false },
+
   businessName: "",
   industry: "Technology",
   shortDescription: "",
@@ -58,6 +68,52 @@ const industries = [
 ];
 const languages = ["English", "Spanish", "French", "German"];
 const tones = ["Formal", "Casual", "Friendly", "Professional"];
+
+// --- Reusable DB Function (Copied from Agent Management) ---
+
+const saveAgentConfigToDB = async (
+  config: AgentConfig
+): Promise<{ success: boolean; message: string }> => {
+  try {
+    const response = await fetch("/api/agents", {
+      method: "POST",
+      headers: {
+        "Content-Type": "application/json",
+      },
+      // Only send the necessary data (excluding File objects)
+      body: JSON.stringify({
+        id: config.id,
+        agentName: config.agentName,
+        persona: config.persona,
+        task: config.task,
+        urls: config.urls.filter((url) => url.trim() !== ""), // Filter out empty strings
+        status: config.status,
+        possibleActions: config.possibleActions,
+      }),
+    });
+
+    const data = await response.json();
+
+    if (data.success) {
+      return {
+        success: true,
+        message: "Agent configuration saved to PostgreSQL database!",
+      };
+    } else {
+      return {
+        success: false,
+        message:
+          "Failed to save: " + (data.details || data.error || "Unknown error"),
+      };
+    }
+  } catch (error) {
+    console.error("API Call Error:", error);
+    return {
+      success: false,
+      message: "Error connecting to server or API route failed.",
+    };
+  }
+};
 
 // --- Components ---
 
@@ -290,6 +346,7 @@ const FileDropZone: React.FC<{
 export default function CreateAgentPage() {
   const [step, setStep] = useState(1);
   const [config, setConfig] = useState<AgentConfig>(initialConfig);
+  const [isDeploying, setIsDeploying] = useState(false);
 
   const handleInputChange = (field: keyof AgentConfig, value: string) =>
     setConfig((prev) => ({ ...prev, [field]: value }));
@@ -317,6 +374,16 @@ export default function CreateAgentPage() {
   };
   const handleBack = () => {
     if (step > 1) setStep((prev) => prev - 1);
+  };
+
+  const handleDeployAgent = async () => {
+    setIsDeploying(true);
+    const result = await saveAgentConfigToDB(config);
+    alert(result.message);
+    setIsDeploying(false);
+
+    // Optional: Redirect to Agent Management on success
+    // if (result.success) router.push('/configure-agent');
   };
 
   return (
@@ -494,7 +561,7 @@ export default function CreateAgentPage() {
           <button
             type="button"
             onClick={handleBack}
-            disabled={step === 1}
+            disabled={step === 1 || isDeploying}
             className="px-6 py-3 rounded-xl text-gray-600 dark:text-gray-300 font-semibold hover:bg-gray-100 dark:hover:bg-gray-800 transition-colors disabled:opacity-40 disabled:cursor-not-allowed flex items-center gap-2"
           >
             <ArrowLeft className="w-4 h-4" /> Back
@@ -506,16 +573,24 @@ export default function CreateAgentPage() {
             <button
               type="button"
               onClick={handleNext}
-              className="px-8 py-3 bg-blue-600 text-white rounded-xl font-semibold hover:bg-blue-700 shadow-lg shadow-blue-600/30 hover:shadow-blue-600/40 hover:-translate-y-0.5 transition-all flex items-center gap-2"
+              disabled={isDeploying}
+              className="px-8 py-3 bg-blue-600 text-white rounded-xl font-semibold hover:bg-blue-700 shadow-lg shadow-blue-600/30 hover:shadow-blue-600/40 hover:-translate-y-0.5 transition-all flex items-center gap-2 disabled:opacity-50 disabled:cursor-not-allowed"
             >
               Next Step <ArrowRight className="w-4 h-4" />
             </button>
           ) : (
             <button
               type="button"
-              className="px-8 py-3 bg-gradient-to-r from-blue-600 to-indigo-600 text-white rounded-xl font-semibold hover:from-blue-700 hover:to-indigo-700 shadow-lg shadow-blue-600/30 hover:shadow-blue-600/40 hover:-translate-y-0.5 transition-all flex items-center gap-2"
+              onClick={handleDeployAgent}
+              disabled={isDeploying}
+              className="px-8 py-3 bg-gradient-to-r from-blue-600 to-indigo-600 text-white rounded-xl font-semibold hover:from-blue-700 hover:to-indigo-700 shadow-lg shadow-blue-600/30 hover:shadow-blue-600/40 hover:-translate-y-0.5 transition-all flex items-center gap-2 disabled:opacity-50 disabled:cursor-not-allowed"
             >
-              <Check className="w-5 h-5" /> Deploy Agent
+              {isDeploying ? (
+                <Loader2 className="w-5 h-5 animate-spin" />
+              ) : (
+                <Check className="w-5 h-5" />
+              )}
+              {isDeploying ? "Deploying..." : "Deploy Agent"}
             </button>
           )}
         </div>

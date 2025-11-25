@@ -22,6 +22,7 @@ import {
   Zap,
   Clock,
   ChevronRight,
+  Loader2,
 } from "lucide-react";
 
 // --- Types & Mock Data ---
@@ -199,6 +200,7 @@ const FileDropZone: React.FC<{
 export default function AgentManagementPage() {
   const [view, setView] = useState<"LIST" | "EDIT">("LIST");
   const [currentAgent, setCurrentAgent] = useState<AgentConfig | null>(null);
+  const [isSaving, setIsSaving] = useState(false);
 
   const handleEditAgent = (agent: AgentConfig) => {
     setCurrentAgent(agent);
@@ -213,6 +215,35 @@ export default function AgentManagementPage() {
   const handleInputChange = (field: any, value: string) => {
     if (currentAgent) {
       setCurrentAgent({ ...currentAgent, [field]: value });
+    }
+  };
+
+  // --- DB Save Handler ---
+  const handleSaveChanges = async () => {
+    if (!currentAgent) return;
+
+    setIsSaving(true);
+    try {
+      const response = await fetch("/api/agents", {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+        },
+        body: JSON.stringify(currentAgent),
+      });
+
+      const data = await response.json();
+
+      if (data.success) {
+        alert("Agent configuration saved to PostgreSQL database!");
+      } else {
+        alert("Failed to save: " + (data.error || "Unknown error"));
+      }
+    } catch (error) {
+      console.error(error);
+      alert("Error connecting to server.");
+    } finally {
+      setIsSaving(false);
     }
   };
 
@@ -371,8 +402,17 @@ export default function AgentManagementPage() {
             <button className="flex items-center gap-2 px-5 py-2.5 bg-white dark:bg-gray-900 border border-gray-200 dark:border-gray-800 text-gray-700 dark:text-gray-300 rounded-2xl font-semibold hover:bg-gray-50 dark:hover:bg-gray-800 transition-all hover:shadow-md">
               <RotateCcw className="w-4 h-4" /> Rebuild
             </button>
-            <button className="flex items-center gap-2 px-5 py-2.5 bg-blue-600 text-white rounded-2xl font-semibold hover:bg-blue-700 shadow-lg shadow-blue-600/30 hover:shadow-blue-600/40 transition-all">
-              <Save className="w-4 h-4" /> Save Changes
+            <button
+              onClick={handleSaveChanges}
+              disabled={isSaving}
+              className="flex items-center gap-2 px-5 py-2.5 bg-blue-600 text-white rounded-2xl font-semibold hover:bg-blue-700 shadow-lg shadow-blue-600/30 hover:shadow-blue-600/40 transition-all disabled:opacity-70 disabled:cursor-not-allowed"
+            >
+              {isSaving ? (
+                <Loader2 className="w-4 h-4 animate-spin" />
+              ) : (
+                <Save className="w-4 h-4" />
+              )}
+              {isSaving ? "Saving..." : "Save Changes"}
             </button>
           </div>
         </header>
