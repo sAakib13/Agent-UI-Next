@@ -10,6 +10,8 @@ import {
   ArrowUpRight,
 } from "lucide-react";
 
+
+
 const metricsData = {
   messagesProcessed: 14500,
   documentsUploaded: 75,
