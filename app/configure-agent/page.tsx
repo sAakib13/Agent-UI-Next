@@ -1,8 +1,7 @@
-"use client"
+"use client";
 
 import React, { useState } from "react";
 import {
-  ChevronDown,
   Plus,
   UploadCloud,
   Bold,
@@ -10,13 +9,28 @@ import {
   Underline,
   List,
   ListOrdered,
-  Zap,
   QrCode,
   X,
+  Activity,
+  Settings,
+  Save,
+  RotateCcw,
+  Search,
+  MoreVertical,
+  ArrowLeft,
+  Users,
+  Zap,
+  Clock,
+  ChevronRight,
 } from "lucide-react";
 
+// --- Types & Mock Data ---
+
 type AgentConfig = {
+  id: string;
   agentName: string;
+  status: "Active" | "Inactive" | "Training";
+  lastActive: string;
   persona: string;
   task: string;
   urls: string[];
@@ -24,17 +38,44 @@ type AgentConfig = {
   possibleActions: { updateContactTable: boolean; delegateToHuman: boolean };
 };
 
-const mockConfig: AgentConfig = {
-  agentName: "Customer Support Bot v2.1",
-  persona:
-    "A friendly and knowledgeable assistant dedicated to technical support.",
-  task: "Identify customer issues, provide troubleshooting steps, and escalate complex problems to human agents.",
-  urls: ["https://docs.sahayata.ai/api", "https://knowledge.base/faq"],
-  documents: [
-    new File([], "Troubleshooting_Guide_v1.pdf", { type: "application/pdf" }),
-  ],
-  possibleActions: { updateContactTable: true, delegateToHuman: false },
-};
+const mockAgents: AgentConfig[] = [
+  {
+    id: "1",
+    agentName: "Customer Support Bot v2.1",
+    status: "Active",
+    lastActive: "2 mins ago",
+    persona:
+      "A friendly and knowledgeable assistant dedicated to technical support.",
+    task: "Identify customer issues, provide troubleshooting steps.",
+    urls: ["https://docs.sahayata.ai/api"],
+    documents: [new File([], "Troubleshooting_Guide.pdf")],
+    possibleActions: { updateContactTable: true, delegateToHuman: false },
+  },
+  {
+    id: "2",
+    agentName: "Sales Outreach Assistant",
+    status: "Inactive",
+    lastActive: "5 days ago",
+    persona: "Professional sales representative focused on lead qualification.",
+    task: "Engage with inbound leads and schedule demos.",
+    urls: ["https://sahayata.ai/pricing"],
+    documents: [],
+    possibleActions: { updateContactTable: false, delegateToHuman: true },
+  },
+  {
+    id: "3",
+    agentName: "Internal HR Helper",
+    status: "Training",
+    lastActive: "Just now",
+    persona: "Helpful HR coordinator for employee onboarding.",
+    task: "Answer policy questions and guide new hires.",
+    urls: [],
+    documents: [new File([], "Employee_Handbook_2025.pdf")],
+    possibleActions: { updateContactTable: true, delegateToHuman: true },
+  },
+];
+
+// --- Reusable Modern Components ---
 
 const TextInput: React.FC<{
   label: string;
@@ -44,8 +85,8 @@ const TextInput: React.FC<{
     e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement>
   ) => void;
 }> = ({ label, placeholder, value, onChange }) => (
-  <div className="space-y-1.5">
-    <label className="block text-sm font-semibold text-gray-700 dark:text-gray-300 ml-1">
+  <div className="space-y-2">
+    <label className="text-sm font-semibold text-gray-700 dark:text-gray-300 ml-1">
       {label}
     </label>
     <input
@@ -53,7 +94,7 @@ const TextInput: React.FC<{
       value={value}
       onChange={onChange as any}
       placeholder={placeholder}
-      className="w-full bg-gray-50 dark:bg-gray-800/50 border border-gray-200 dark:border-gray-700 rounded-xl px-4 py-3 text-gray-900 dark:text-white placeholder-gray-400 focus:ring-2 focus:ring-blue-500/20 focus:border-blue-500 transition-all outline-none"
+      className="w-full bg-white dark:bg-gray-800/50 border border-gray-200 dark:border-gray-700 rounded-2xl px-5 py-4 text-gray-900 dark:text-white placeholder-gray-400 focus:ring-4 focus:ring-blue-500/10 focus:border-blue-500 transition-all outline-none shadow-sm"
     />
   </div>
 );
@@ -64,17 +105,17 @@ const RichTextEditorMock: React.FC<{
   value: string;
   onChange: (e: React.ChangeEvent<HTMLTextAreaElement>) => void;
 }> = ({ label, placeholder, value, onChange }) => (
-  <div className="space-y-1.5">
-    <label className="block text-sm font-semibold text-gray-700 dark:text-gray-300 ml-1">
+  <div className="space-y-2">
+    <label className="text-sm font-semibold text-gray-700 dark:text-gray-300 ml-1">
       {label}
     </label>
-    <div className="border border-gray-200 dark:border-gray-700 rounded-xl overflow-hidden bg-gray-50 dark:bg-gray-800/50 focus-within:ring-2 focus-within:ring-blue-500/20 focus-within:border-blue-500 transition-all">
-      <div className="flex space-x-1 p-2 border-b border-gray-200 dark:border-gray-700 bg-gray-100/50 dark:bg-gray-800">
+    <div className="border border-gray-200 dark:border-gray-700 rounded-2xl overflow-hidden bg-white dark:bg-gray-800/50 focus-within:ring-4 focus-within:ring-blue-500/10 focus-within:border-blue-500 transition-all shadow-sm">
+      <div className="flex space-x-1 p-2 border-b border-gray-200 dark:border-gray-700 bg-gray-50/50 dark:bg-gray-800/50">
         {[Bold, Italic, Underline, List, ListOrdered].map((Icon, i) => (
           <button
             key={i}
             type="button"
-            className="p-1.5 rounded-lg text-gray-500 hover:bg-gray-200 dark:hover:bg-gray-700 transition-colors"
+            className="p-2 rounded-lg text-gray-500 hover:bg-white dark:hover:bg-gray-700 hover:text-blue-600 dark:hover:text-blue-400 transition-all shadow-sm hover:shadow"
           >
             <Icon className="w-4 h-4" />
           </button>
@@ -85,7 +126,7 @@ const RichTextEditorMock: React.FC<{
         value={value}
         onChange={onChange}
         placeholder={placeholder}
-        className="w-full p-4 bg-transparent text-gray-900 dark:text-white placeholder-gray-400 outline-none resize-none"
+        className="w-full p-5 bg-transparent text-gray-900 dark:text-white placeholder-gray-400 outline-none resize-none"
       />
     </div>
   </div>
@@ -107,7 +148,7 @@ const FileDropZone: React.FC<{
   return (
     <div className="space-y-4">
       <div
-        className="group border-2 border-dashed border-gray-200 dark:border-gray-700 rounded-2xl p-6 text-center transition-all hover:border-blue-500 hover:bg-blue-50/50 dark:hover:bg-blue-900/10 cursor-pointer"
+        className="group border-2 border-dashed border-gray-200 dark:border-gray-700 rounded-2xl p-8 text-center transition-all hover:border-blue-500 hover:bg-blue-50/30 dark:hover:bg-blue-900/10 cursor-pointer bg-white dark:bg-gray-900/50"
         onClick={() => inputRef.current?.click()}
       >
         <input
@@ -118,17 +159,19 @@ const FileDropZone: React.FC<{
           className="hidden"
           onChange={handleFileSelect}
         />
-        <UploadCloud className="w-8 h-8 mx-auto mb-2 text-gray-400 group-hover:text-blue-500 transition-colors" />
+        <div className="w-12 h-12 bg-blue-50 dark:bg-gray-800 rounded-2xl flex items-center justify-center mx-auto mb-4 group-hover:scale-110 group-hover:bg-blue-100 dark:group-hover:bg-gray-700 transition-all duration-300">
+          <UploadCloud className="w-6 h-6 text-blue-500 group-hover:text-blue-600" />
+        </div>
         <p className="text-sm font-medium text-gray-700 dark:text-gray-300">
           Click to upload documents
         </p>
       </div>
       {files.length > 0 && (
-        <div className="space-y-2">
+        <div className="grid grid-cols-1 gap-2">
           {files.map((file, index) => (
             <div
               key={index}
-              className="flex justify-between items-center bg-white dark:bg-gray-800 p-3 rounded-lg border border-gray-100 dark:border-gray-700 shadow-sm"
+              className="flex justify-between items-center bg-white dark:bg-gray-800 p-3 rounded-xl border border-gray-100 dark:border-gray-700 shadow-sm"
             >
               <span className="truncate flex-1 text-sm font-medium text-gray-700 dark:text-gray-300 ml-2">
                 {file.name}
@@ -139,7 +182,7 @@ const FileDropZone: React.FC<{
                   e.stopPropagation();
                   onFileRemoved(index);
                 }}
-                className="p-1 hover:bg-red-50 dark:hover:bg-red-900/20 rounded text-gray-400 hover:text-red-500 transition-colors"
+                className="p-2 hover:bg-red-50 dark:hover:bg-red-900/20 rounded-lg text-gray-400 hover:text-red-500 transition-colors"
               >
                 <X className="w-4 h-4" />
               </button>
@@ -151,167 +194,347 @@ const FileDropZone: React.FC<{
   );
 };
 
-export default function ConfigureAgentPage() {
-  const [config, setConfig] = useState<AgentConfig>(mockConfig);
-  const handleInputChange = (field: any, value: string) =>
-    setConfig((prev) => ({ ...prev, [field]: value }));
+// --- Main Page Component ---
 
-  return (
-    <div className="max-w-4xl mx-auto space-y-8 pb-24">
-      <header>
-        <h1 className="text-3xl font-bold tracking-tight text-gray-900 dark:text-white">
-          Configure Agent
-        </h1>
-      </header>
+export default function AgentManagementPage() {
+  const [view, setView] = useState<"LIST" | "EDIT">("LIST");
+  const [currentAgent, setCurrentAgent] = useState<AgentConfig | null>(null);
 
-      {/* Status Banner */}
-      <div className="flex flex-col sm:flex-row justify-between items-center gap-4 p-6 bg-white dark:bg-gray-900 border border-gray-100 dark:border-gray-800 rounded-2xl shadow-sm">
-        <div>
-          <div className="flex items-center gap-3 mb-1">
-            <h3 className="text-lg font-bold text-gray-900 dark:text-white">
-              Agent Status
-            </h3>
-            <span className="px-2.5 py-0.5 rounded-full text-xs font-bold bg-green-100 text-green-700 dark:bg-green-900/30 dark:text-green-400">
-              Active
-            </span>
-          </div>
-          <p className="text-sm text-gray-500">Last updated: Today, 4:21 PM</p>
-        </div>
-        <div className="flex gap-3 w-full sm:w-auto">
-          <button className="flex-1 sm:flex-none px-4 py-2 text-sm font-medium text-blue-600 dark:text-blue-400 bg-blue-50 dark:bg-blue-900/20 rounded-lg hover:bg-blue-100 dark:hover:bg-blue-900/30 transition-colors">
-            Rebuild
-          </button>
-          <button className="flex-1 sm:flex-none px-4 py-2 text-sm font-medium text-red-600 dark:text-red-400 bg-red-50 dark:bg-red-900/20 rounded-lg hover:bg-red-100 dark:hover:bg-red-900/30 transition-colors">
-            Delete
-          </button>
-        </div>
-      </div>
+  const handleEditAgent = (agent: AgentConfig) => {
+    setCurrentAgent(agent);
+    setView("EDIT");
+  };
 
-      <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
-        {/* Main Column */}
-        <div className="lg:col-span-2 space-y-8">
-          <section className="bg-white dark:bg-gray-900 p-8 rounded-2xl border border-gray-100 dark:border-gray-800 shadow-sm space-y-6">
-            <h2 className="text-xl font-bold text-gray-900 dark:text-white">
-              Core Configuration
-            </h2>
-            <TextInput
-              label="Agent Name"
-              placeholder="Agent Name"
-              value={config.agentName}
-              onChange={(e) => handleInputChange("agentName", e.target.value)}
-            />
-            <RichTextEditorMock
-              label="Persona"
-              placeholder="Describe persona..."
-              value={config.persona}
-              onChange={(e) => handleInputChange("persona", e.target.value)}
-            />
-            <RichTextEditorMock
-              label="Task"
-              placeholder="Describe task..."
-              value={config.task}
-              onChange={(e) => handleInputChange("task", e.target.value)}
-            />
-          </section>
+  const handleBackToList = () => {
+    setCurrentAgent(null);
+    setView("LIST");
+  };
 
-          <section className="bg-white dark:bg-gray-900 p-8 rounded-2xl border border-gray-100 dark:border-gray-800 shadow-sm space-y-6">
-            <h2 className="text-xl font-bold text-gray-900 dark:text-white">
-              Knowledge Base
-            </h2>
-            <FileDropZone
-              files={config.documents}
-              onFilesAdded={() => {}}
-              onFileRemoved={() => {}}
-            />
-            <div className="space-y-3 pt-4">
-              {config.urls.map((url, i) => (
-                <TextInput
-                  key={i}
-                  label={i === 0 ? "Source URLs" : ""}
-                  placeholder="https://"
-                  value={url}
-                  onChange={() => {}}
-                />
-              ))}
-              <button className="text-sm font-medium text-blue-600 dark:text-blue-400 flex items-center">
-                <Plus className="w-4 h-4 mr-1" /> Add URL
-              </button>
-            </div>
-          </section>
-        </div>
+  const handleInputChange = (field: any, value: string) => {
+    if (currentAgent) {
+      setCurrentAgent({ ...currentAgent, [field]: value });
+    }
+  };
 
-        {/* Side Column */}
-        <div className="space-y-8">
-          <section className="bg-white dark:bg-gray-900 p-6 rounded-2xl border border-gray-100 dark:border-gray-800 shadow-sm">
-            <h2 className="text-lg font-bold text-gray-900 dark:text-white mb-4">
-              Actions
-            </h2>
-            <div className="space-y-4">
-              <label className="flex items-start gap-3 p-3 rounded-xl hover:bg-gray-50 dark:hover:bg-gray-800 transition-colors cursor-pointer">
-                <input
-                  type="checkbox"
-                  checked={config.possibleActions.updateContactTable}
-                  onChange={() => {}}
-                  className="mt-1 w-4 h-4 text-blue-600 rounded focus:ring-blue-500"
-                />
-                <div>
-                  <span className="block text-sm font-medium text-gray-900 dark:text-white">
-                    Update Contact Table
-                  </span>
-                  <span className="block text-xs text-gray-500 mt-0.5">
-                    Allow agent to modify records
-                  </span>
-                </div>
-              </label>
-              <label className="flex items-start gap-3 p-3 rounded-xl hover:bg-gray-50 dark:hover:bg-gray-800 transition-colors cursor-pointer">
-                <input
-                  type="checkbox"
-                  checked={config.possibleActions.delegateToHuman}
-                  onChange={() => {}}
-                  className="mt-1 w-4 h-4 text-blue-600 rounded focus:ring-blue-500"
-                />
-                <div>
-                  <span className="block text-sm font-medium text-gray-900 dark:text-white">
-                    Human Delegation
-                  </span>
-                  <span className="block text-xs text-gray-500 mt-0.5">
-                    Transfer to agent when stuck
-                  </span>
-                </div>
-              </label>
-            </div>
-          </section>
-
-          <section className="bg-gradient-to-b from-gray-900 to-gray-800 dark:from-blue-900/20 dark:to-blue-900/10 p-6 rounded-2xl text-white">
-            <div className="flex items-center gap-3 mb-4">
-              <QrCode className="w-6 h-6 text-white/80" />
-              <h2 className="text-lg font-bold">Test Live</h2>
-            </div>
-            <p className="text-sm text-white/60 mb-6">
-              Scan to chat with this agent configuration on WhatsApp instantly.
+  // --- View: Agent List ---
+  if (view === "LIST") {
+    return (
+      <div className="max-w-7xl mx-auto space-y-10 pb-20 pt-6">
+        <header className="flex flex-col md:flex-row md:items-center justify-between gap-6">
+          <div>
+            <h1 className="text-3xl font-extrabold tracking-tight text-gray-900 dark:text-white">
+              Agent Fleet
+            </h1>
+            <p className="text-lg text-gray-500 dark:text-gray-400 mt-1">
+              Manage and monitor your fleet of intelligent agents.
             </p>
-            <button className="w-full py-2 bg-white text-gray-900 rounded-xl font-semibold text-sm hover:bg-gray-100 transition-colors">
-              Open WhatsApp
-            </button>
-          </section>
+          </div>
+          <button className="flex items-center gap-2 px-6 py-3 bg-blue-600 text-white rounded-2xl font-semibold hover:bg-blue-700 shadow-lg shadow-blue-600/30 hover:shadow-blue-600/40 hover:-translate-y-0.5 transition-all">
+            <Plus className="w-5 h-5" /> Deploy New Agent
+          </button>
+        </header>
+
+        {/* Filter Bar */}
+        <div className="flex gap-4 p-1.5 bg-white dark:bg-gray-900 border border-gray-200 dark:border-gray-800 rounded-2xl shadow-sm">
+          <div className="flex-1 relative">
+            <Search className="absolute left-4 top-1/2 -translate-y-1/2 w-5 h-5 text-gray-400" />
+            <input
+              type="text"
+              placeholder="Search agents..."
+              className="w-full bg-transparent border-none rounded-xl pl-12 pr-4 py-3 text-gray-900 dark:text-white focus:ring-0 placeholder-gray-400 outline-none"
+            />
+          </div>
+          <div className="w-px bg-gray-200 dark:bg-gray-800 my-2" />
+          <select className="bg-transparent border-none px-6 py-3 text-gray-700 dark:text-gray-300 outline-none cursor-pointer font-medium hover:text-blue-600 dark:hover:text-blue-400 transition-colors">
+            <option>All Statuses</option>
+            <option>Active</option>
+            <option>Inactive</option>
+          </select>
+        </div>
+
+        {/* Agents Grid */}
+        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+          {mockAgents.map((agent) => (
+            <div
+              key={agent.id}
+              className="group relative bg-white dark:bg-gray-900 border border-gray-200 dark:border-gray-800 rounded-3xl p-6 shadow-sm hover:shadow-xl hover:border-blue-500/30 transition-all duration-300 flex flex-col hover:-translate-y-1"
+            >
+              <div className="flex justify-between items-start mb-6">
+                <div
+                  className={`w-14 h-14 rounded-2xl flex items-center justify-center shadow-inner ${
+                    agent.status === "Active"
+                      ? "bg-gradient-to-br from-green-50 to-green-100 dark:from-green-900/20 dark:to-green-900/10"
+                      : agent.status === "Training"
+                      ? "bg-gradient-to-br from-amber-50 to-amber-100 dark:from-amber-900/20 dark:to-amber-900/10"
+                      : "bg-gradient-to-br from-gray-50 to-gray-100 dark:from-gray-800 dark:to-gray-900"
+                  }`}
+                >
+                  <Zap
+                    className={`w-7 h-7 ${
+                      agent.status === "Active"
+                        ? "text-green-600 dark:text-green-400"
+                        : agent.status === "Training"
+                        ? "text-amber-600 dark:text-amber-400"
+                        : "text-gray-400"
+                    }`}
+                  />
+                </div>
+                <div
+                  className={`px-3 py-1 rounded-full text-xs font-bold border ${
+                    agent.status === "Active"
+                      ? "bg-green-50 text-green-700 border-green-200 dark:bg-green-900/20 dark:border-green-900"
+                      : agent.status === "Training"
+                      ? "bg-amber-50 text-amber-700 border-amber-200 dark:bg-amber-900/20 dark:border-amber-900"
+                      : "bg-gray-50 text-gray-600 border-gray-200 dark:bg-gray-800 dark:border-gray-700"
+                  }`}
+                >
+                  {agent.status}
+                </div>
+              </div>
+
+              <h3 className="text-xl font-bold text-gray-900 dark:text-white mb-2">
+                {agent.agentName}
+              </h3>
+              <p className="text-sm text-gray-500 dark:text-gray-400 line-clamp-2 mb-6 flex-1 leading-relaxed">
+                {agent.persona}
+              </p>
+
+              <div className="space-y-4">
+                <div className="flex items-center text-xs font-medium text-gray-400 dark:text-gray-500 bg-gray-50 dark:bg-gray-800/50 rounded-xl p-3">
+                  <Clock className="w-4 h-4 mr-2" />
+                  Active {agent.lastActive}
+                </div>
+
+                <button
+                  onClick={() => handleEditAgent(agent)}
+                  className="w-full py-3 bg-white dark:bg-gray-800 border border-gray-200 dark:border-gray-700 text-gray-900 dark:text-white font-semibold rounded-xl hover:bg-gray-50 dark:hover:bg-gray-700 transition-colors flex items-center justify-center group-hover:border-blue-500/30 group-hover:text-blue-600 dark:group-hover:text-blue-400"
+                >
+                  Configure{" "}
+                  <ChevronRight className="w-4 h-4 ml-1 opacity-60 group-hover:translate-x-1 transition-transform" />
+                </button>
+              </div>
+            </div>
+          ))}
+
+          {/* Add New Agent Placeholder Card */}
+          <button className="group border-2 border-dashed border-gray-200 dark:border-gray-800 rounded-3xl p-6 flex flex-col items-center justify-center text-gray-400 hover:border-blue-500 hover:bg-blue-50/30 dark:hover:bg-blue-900/10 transition-all gap-4 min-h-[320px]">
+            <div className="w-16 h-16 rounded-full bg-gray-50 dark:bg-gray-800 flex items-center justify-center group-hover:scale-110 group-hover:bg-blue-100 dark:group-hover:bg-blue-900/30 transition-all duration-300">
+              <Plus className="w-8 h-8 text-gray-400 group-hover:text-blue-600 dark:group-hover:text-blue-400 transition-colors" />
+            </div>
+            <div>
+              <span className="block font-bold text-lg text-gray-600 dark:text-gray-300 group-hover:text-blue-700 dark:group-hover:text-blue-400">
+                Deploy New Agent
+              </span>
+              <span className="block text-sm text-gray-400 mt-1">
+                Start from scratch or template
+              </span>
+            </div>
+          </button>
         </div>
       </div>
+    );
+  }
 
-      {/* Footer */}
-      <footer className="fixed bottom-0 right-0 left-0 lg:left-72 p-4 bg-white/80 dark:bg-gray-950/80 backdrop-blur-md border-t border-gray-200 dark:border-gray-800 flex justify-end gap-3 z-40">
-        <button
-          type="button"
-          className="px-6 py-2.5 rounded-xl text-gray-600 dark:text-gray-300 font-medium hover:bg-gray-100 dark:hover:bg-gray-800 transition-colors"
-        >
-          Discard Changes
-        </button>
-        <button
-          type="button"
-          className="px-6 py-2.5 bg-blue-600 text-white rounded-xl font-medium hover:bg-blue-700 shadow-lg shadow-blue-600/20 transition-all"
-        >
-          Save Config
-        </button>
-      </footer>
-    </div>
-  );
+  // --- View: Edit Agent ---
+  if (view === "EDIT" && currentAgent) {
+    return (
+      <div className="max-w-6xl mx-auto pb-32 pt-6 animate-in slide-in-from-right-8 fade-in duration-500">
+        {/* Modern Header */}
+        <header className="flex flex-col md:flex-row md:items-center justify-between gap-6 mb-10">
+          <div className="flex items-center gap-6">
+            <button
+              onClick={handleBackToList}
+              className="p-3 bg-white dark:bg-gray-900 border border-gray-200 dark:border-gray-800 rounded-2xl hover:bg-gray-50 dark:hover:bg-gray-800 text-gray-500 hover:text-gray-900 dark:hover:text-white transition-all hover:shadow-md hover:-translate-x-1"
+            >
+              <ArrowLeft className="w-6 h-6" />
+            </button>
+            <div>
+              <h1 className="text-3xl font-extrabold tracking-tight text-gray-900 dark:text-white flex items-center gap-4">
+                {currentAgent.agentName}
+                <span
+                  className={`text-sm font-bold px-3 py-1 rounded-full border ${
+                    currentAgent.status === "Active"
+                      ? "bg-green-50 border-green-200 text-green-700 dark:bg-green-900/20 dark:border-green-900 dark:text-green-400"
+                      : "bg-gray-50 border-gray-200 text-gray-600 dark:bg-gray-800 dark:border-gray-700 dark:text-gray-400"
+                  }`}
+                >
+                  {currentAgent.status}
+                </span>
+              </h1>
+              <p className="text-gray-500 dark:text-gray-400 mt-1 flex items-center gap-2">
+                <Clock className="w-4 h-4" /> Last Updated{" "}
+                {currentAgent.lastActive}
+              </p>
+            </div>
+          </div>
+          <div className="flex gap-3">
+            <button className="flex items-center gap-2 px-5 py-2.5 bg-white dark:bg-gray-900 border border-gray-200 dark:border-gray-800 text-gray-700 dark:text-gray-300 rounded-2xl font-semibold hover:bg-gray-50 dark:hover:bg-gray-800 transition-all hover:shadow-md">
+              <RotateCcw className="w-4 h-4" /> Rebuild
+            </button>
+            <button className="flex items-center gap-2 px-5 py-2.5 bg-blue-600 text-white rounded-2xl font-semibold hover:bg-blue-700 shadow-lg shadow-blue-600/30 hover:shadow-blue-600/40 transition-all">
+              <Save className="w-4 h-4" /> Save Changes
+            </button>
+          </div>
+        </header>
+
+        {/* Status Dashboard */}
+        <div className="grid grid-cols-1 md:grid-cols-3 gap-6 mb-10">
+          <div className="bg-white/60 dark:bg-gray-900/60 backdrop-blur-md p-6 rounded-3xl border border-gray-100 dark:border-gray-800 shadow-sm flex items-center gap-5">
+            <div className="p-4 bg-green-100 dark:bg-green-900/30 rounded-2xl text-green-600 dark:text-green-400">
+              <Activity className="w-8 h-8" />
+            </div>
+            <div>
+              <p className="text-sm text-gray-500 dark:text-gray-400 font-medium">
+                System Health
+              </p>
+              <p className="text-xl font-bold text-gray-900 dark:text-white">
+                100% Uptime
+              </p>
+            </div>
+          </div>
+          <div className="bg-white/60 dark:bg-gray-900/60 backdrop-blur-md p-6 rounded-3xl border border-gray-100 dark:border-gray-800 shadow-sm flex items-center gap-5">
+            <div className="p-4 bg-blue-100 dark:bg-blue-900/30 rounded-2xl text-blue-600 dark:text-blue-400">
+              <Settings className="w-8 h-8" />
+            </div>
+            <div>
+              <p className="text-sm text-gray-500 dark:text-gray-400 font-medium">
+                Model Config
+              </p>
+              <p className="text-xl font-bold text-gray-900 dark:text-white">
+                GPT-4 Turbo
+              </p>
+            </div>
+          </div>
+          <div className="bg-gradient-to-br from-gray-900 to-gray-800 dark:from-blue-900/40 dark:to-indigo-900/40 p-6 rounded-3xl text-white flex items-center justify-between shadow-lg shadow-gray-900/10">
+            <div>
+              <p className="text-sm text-white/70 font-medium mb-1">
+                Testing Sandbox
+              </p>
+              <p className="text-xl font-bold">Active on WhatsApp</p>
+            </div>
+            <QrCode className="w-10 h-10 opacity-80" />
+          </div>
+        </div>
+
+        <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
+          {/* Main Column */}
+          <div className="lg:col-span-2 space-y-8">
+            <section className="bg-white dark:bg-gray-900 border border-gray-100 dark:border-gray-800 rounded-3xl p-8 shadow-sm">
+              <div className="flex items-center justify-between mb-8">
+                <h2 className="text-xl font-bold text-gray-900 dark:text-white">
+                  Core Configuration
+                </h2>
+                <div className="flex items-center gap-2 px-3 py-1 bg-blue-50 dark:bg-blue-900/20 rounded-full">
+                  <div className="w-2 h-2 bg-blue-500 rounded-full animate-pulse" />
+                  <span className="text-xs font-bold text-blue-700 dark:text-blue-300 uppercase tracking-wide">
+                    Live Mode
+                  </span>
+                </div>
+              </div>
+              <div className="space-y-6">
+                <TextInput
+                  label="Agent Name"
+                  placeholder="Agent Name"
+                  value={currentAgent.agentName}
+                  onChange={(e) =>
+                    handleInputChange("agentName", e.target.value)
+                  }
+                />
+                <RichTextEditorMock
+                  label="Persona"
+                  placeholder="Describe persona..."
+                  value={currentAgent.persona}
+                  onChange={(e) => handleInputChange("persona", e.target.value)}
+                />
+                <RichTextEditorMock
+                  label="Task"
+                  placeholder="Describe task..."
+                  value={currentAgent.task}
+                  onChange={(e) => handleInputChange("task", e.target.value)}
+                />
+              </div>
+            </section>
+
+            <section className="bg-white dark:bg-gray-900 border border-gray-100 dark:border-gray-800 rounded-3xl p-8 shadow-sm">
+              <h2 className="text-xl font-bold text-gray-900 dark:text-white mb-8">
+                Knowledge Base
+              </h2>
+              <FileDropZone
+                files={currentAgent.documents}
+                onFilesAdded={() => {}}
+                onFileRemoved={() => {}}
+              />
+              <div className="space-y-4 pt-8">
+                <h3 className="text-sm font-bold text-gray-900 dark:text-white">
+                  Connected URLs
+                </h3>
+                {currentAgent.urls.map((url, i) => (
+                  <div key={i} className="flex gap-2">
+                    <TextInput
+                      label=""
+                      placeholder="https://"
+                      value={url}
+                      onChange={() => {}}
+                    />
+                  </div>
+                ))}
+                <button className="text-sm font-medium text-blue-600 dark:text-blue-400 flex items-center hover:underline">
+                  <Plus className="w-4 h-4 mr-1" /> Add Source URL
+                </button>
+              </div>
+            </section>
+          </div>
+
+          {/* Side Column */}
+          <div className="space-y-8">
+            <section className="bg-white dark:bg-gray-900 p-8 rounded-3xl border border-gray-100 dark:border-gray-800 shadow-sm sticky top-6">
+              <h2 className="text-lg font-bold text-gray-900 dark:text-white mb-6">
+                Capabilities
+              </h2>
+              <div className="space-y-4">
+                <label className="flex items-start gap-4 p-4 rounded-2xl bg-gray-50 dark:bg-gray-800/50 hover:bg-white dark:hover:bg-gray-800 border border-transparent hover:border-gray-200 dark:hover:border-gray-700 transition-all cursor-pointer">
+                  <div className="mt-1">
+                    <input
+                      type="checkbox"
+                      checked={currentAgent.possibleActions.updateContactTable}
+                      onChange={() => {}}
+                      className="w-5 h-5 text-blue-600 rounded-md focus:ring-blue-500 border-gray-300"
+                    />
+                  </div>
+                  <div>
+                    <span className="block text-sm font-bold text-gray-900 dark:text-white">
+                      CRM Access
+                    </span>
+                    <span className="block text-xs text-gray-500 mt-1 leading-relaxed">
+                      Allow agent to read and update contact tables
+                    </span>
+                  </div>
+                </label>
+                <label className="flex items-start gap-4 p-4 rounded-2xl bg-gray-50 dark:bg-gray-800/50 hover:bg-white dark:hover:bg-gray-800 border border-transparent hover:border-gray-200 dark:hover:border-gray-700 transition-all cursor-pointer">
+                  <div className="mt-1">
+                    <input
+                      type="checkbox"
+                      checked={currentAgent.possibleActions.delegateToHuman}
+                      onChange={() => {}}
+                      className="w-5 h-5 text-blue-600 rounded-md focus:ring-blue-500 border-gray-300"
+                    />
+                  </div>
+                  <div>
+                    <span className="block text-sm font-bold text-gray-900 dark:text-white">
+                      Human Handoff
+                    </span>
+                    <span className="block text-xs text-gray-500 mt-1 leading-relaxed">
+                      Escalate conversation based on sentiment analysis
+                    </span>
+                  </div>
+                </label>
+              </div>
+            </section>
+          </div>
+        </div>
+      </div>
+    );
+  }
+
+  return null;
 }

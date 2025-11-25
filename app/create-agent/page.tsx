@@ -1,13 +1,37 @@
-"use client"
+"use client";
+
 import React, { useState } from "react";
-import { ChevronDown, Plus, UploadCloud, X } from "lucide-react";
+import {
+  ChevronDown,
+  Plus,
+  UploadCloud,
+  X,
+  Bold,
+  Italic,
+  Underline,
+  List,
+  ListOrdered,
+  Check,
+  ArrowRight,
+  ArrowLeft,
+} from "lucide-react";
+
+// --- Types & Config ---
 
 type AgentConfig = {
+  // Step 1: Business
   businessName: string;
   industry: string;
   shortDescription: string;
   language: string;
   tone: string;
+
+  // Step 2: Core Config
+  agentName: string;
+  persona: string;
+  task: string;
+
+  // Step 3: Knowledge
   urls: string[];
   documents: File[];
 };
@@ -18,6 +42,9 @@ const initialConfig: AgentConfig = {
   shortDescription: "",
   language: "English",
   tone: "Formal",
+  agentName: "",
+  persona: "",
+  task: "",
   urls: [""],
   documents: [],
 };
@@ -32,7 +59,65 @@ const industries = [
 const languages = ["English", "Spanish", "French", "German"];
 const tones = ["Formal", "Casual", "Friendly", "Professional"];
 
-// Modern Input Component
+// --- Components ---
+
+const Stepper: React.FC<{ currentStep: number }> = ({ currentStep }) => {
+  const steps = [
+    { num: 1, label: "Profile" },
+    { num: 2, label: "Configuration" },
+    { num: 3, label: "Knowledge" },
+  ];
+
+  return (
+    <div className="relative mb-12">
+      <div className="absolute left-0 top-1/2 w-full -translate-y-1/2 px-4">
+        <div className="h-1 w-full bg-gray-100 dark:bg-gray-800 rounded-full" />
+        <div
+          className="absolute left-0 top-1/2 h-1 bg-blue-600 rounded-full -translate-y-1/2 transition-all duration-500 ease-in-out"
+          style={{
+            width: `${((currentStep - 1) / (steps.length - 1)) * 100}%`,
+          }}
+        />
+      </div>
+
+      <div className="relative flex justify-between">
+        {steps.map((step) => {
+          const isActive = step.num === currentStep;
+          const isCompleted = step.num < currentStep;
+          return (
+            <div
+              key={step.num}
+              className="flex flex-col items-center group cursor-default"
+            >
+              <div
+                className={`w-10 h-10 rounded-full flex items-center justify-center font-bold text-sm transition-all duration-300 ring-4 ring-white dark:ring-gray-950 z-10
+                  ${
+                    isActive
+                      ? "bg-blue-600 text-white shadow-lg shadow-blue-600/30 scale-110"
+                      : isCompleted
+                      ? "bg-green-500 text-white"
+                      : "bg-white dark:bg-gray-900 border-2 border-gray-200 dark:border-gray-800 text-gray-400"
+                  }`}
+              >
+                {isCompleted ? <Check className="w-5 h-5" /> : step.num}
+              </div>
+              <span
+                className={`absolute top-12 text-xs font-bold tracking-wide transition-colors duration-300 ${
+                  isActive
+                    ? "text-blue-600 dark:text-blue-400"
+                    : "text-gray-400"
+                }`}
+              >
+                {step.label}
+              </span>
+            </div>
+          );
+        })}
+      </div>
+    </div>
+  );
+};
+
 const TextInput: React.FC<{
   label: string;
   placeholder: string;
@@ -42,8 +127,8 @@ const TextInput: React.FC<{
   ) => void;
   isTextArea?: boolean;
 }> = ({ label, placeholder, value, onChange, isTextArea = false }) => (
-  <div className="space-y-1.5">
-    <label className="block text-sm font-semibold text-gray-700 dark:text-gray-300 ml-1">
+  <div className="space-y-2">
+    <label className="text-sm font-semibold text-gray-700 dark:text-gray-300 ml-1">
       {label}
     </label>
     {isTextArea ? (
@@ -52,7 +137,7 @@ const TextInput: React.FC<{
         value={value}
         onChange={onChange}
         placeholder={placeholder}
-        className="w-full bg-gray-50 dark:bg-gray-800/50 border border-gray-200 dark:border-gray-700 rounded-xl px-4 py-3 text-gray-900 dark:text-white placeholder-gray-400 focus:ring-2 focus:ring-blue-500/20 focus:border-blue-500 transition-all outline-none resize-none"
+        className="w-full bg-white dark:bg-gray-800/50 border border-gray-200 dark:border-gray-700 rounded-2xl px-5 py-4 text-gray-900 dark:text-white placeholder-gray-400 focus:ring-4 focus:ring-blue-500/10 focus:border-blue-500 transition-all outline-none resize-none shadow-sm hover:border-gray-300 dark:hover:border-gray-600"
       />
     ) : (
       <input
@@ -60,7 +145,7 @@ const TextInput: React.FC<{
         value={value}
         onChange={onChange as (e: React.ChangeEvent<HTMLInputElement>) => void}
         placeholder={placeholder}
-        className="w-full bg-gray-50 dark:bg-gray-800/50 border border-gray-200 dark:border-gray-700 rounded-xl px-4 py-3 text-gray-900 dark:text-white placeholder-gray-400 focus:ring-2 focus:ring-blue-500/20 focus:border-blue-500 transition-all outline-none"
+        className="w-full bg-white dark:bg-gray-800/50 border border-gray-200 dark:border-gray-700 rounded-2xl px-5 py-4 text-gray-900 dark:text-white placeholder-gray-400 focus:ring-4 focus:ring-blue-500/10 focus:border-blue-500 transition-all outline-none shadow-sm hover:border-gray-300 dark:hover:border-gray-600"
       />
     )}
   </div>
@@ -72,15 +157,15 @@ const SelectInput: React.FC<{
   options: string[];
   onChange: (e: React.ChangeEvent<HTMLSelectElement>) => void;
 }> = ({ label, value, options, onChange }) => (
-  <div className="space-y-1.5">
-    <label className="block text-sm font-semibold text-gray-700 dark:text-gray-300 ml-1">
+  <div className="space-y-2">
+    <label className="text-sm font-semibold text-gray-700 dark:text-gray-300 ml-1">
       {label}
     </label>
     <div className="relative">
       <select
         value={value}
         onChange={onChange}
-        className="appearance-none w-full bg-gray-50 dark:bg-gray-800/50 border border-gray-200 dark:border-gray-700 rounded-xl pl-4 pr-10 py-3 text-gray-900 dark:text-white focus:ring-2 focus:ring-blue-500/20 focus:border-blue-500 transition-all outline-none cursor-pointer"
+        className="appearance-none w-full bg-white dark:bg-gray-800/50 border border-gray-200 dark:border-gray-700 rounded-2xl pl-5 pr-10 py-4 text-gray-900 dark:text-white focus:ring-4 focus:ring-blue-500/10 focus:border-blue-500 transition-all outline-none cursor-pointer shadow-sm hover:border-gray-300 dark:hover:border-gray-600"
       >
         {options.map((option) => (
           <option key={option} value={option}>
@@ -88,7 +173,40 @@ const SelectInput: React.FC<{
           </option>
         ))}
       </select>
-      <ChevronDown className="absolute right-4 top-1/2 transform -translate-y-1/2 w-4 h-4 text-gray-500 pointer-events-none" />
+      <ChevronDown className="absolute right-5 top-1/2 transform -translate-y-1/2 w-4 h-4 text-gray-400 pointer-events-none" />
+    </div>
+  </div>
+);
+
+const RichTextEditorMock: React.FC<{
+  label: string;
+  placeholder: string;
+  value: string;
+  onChange: (e: React.ChangeEvent<HTMLTextAreaElement>) => void;
+}> = ({ label, placeholder, value, onChange }) => (
+  <div className="space-y-2">
+    <label className="text-sm font-semibold text-gray-700 dark:text-gray-300 ml-1">
+      {label}
+    </label>
+    <div className="border border-gray-200 dark:border-gray-700 rounded-2xl overflow-hidden bg-white dark:bg-gray-800/50 focus-within:ring-4 focus-within:ring-blue-500/10 focus-within:border-blue-500 transition-all shadow-sm">
+      <div className="flex space-x-1 p-2 border-b border-gray-200 dark:border-gray-700 bg-gray-50/50 dark:bg-gray-800/50">
+        {[Bold, Italic, Underline, List, ListOrdered].map((Icon, i) => (
+          <button
+            key={i}
+            type="button"
+            className="p-2 rounded-lg text-gray-500 hover:bg-white dark:hover:bg-gray-700 hover:text-blue-600 dark:hover:text-blue-400 transition-all shadow-sm hover:shadow"
+          >
+            <Icon className="w-4 h-4" />
+          </button>
+        ))}
+      </div>
+      <textarea
+        rows={6}
+        value={value}
+        onChange={onChange}
+        placeholder={placeholder}
+        className="w-full p-5 bg-transparent text-gray-900 dark:text-white placeholder-gray-400 outline-none resize-none"
+      />
     </div>
   </div>
 );
@@ -99,7 +217,6 @@ const FileDropZone: React.FC<{
   onFileRemoved: (index: number) => void;
 }> = ({ files, onFilesAdded, onFileRemoved }) => {
   const inputRef = React.useRef<HTMLInputElement>(null);
-
   const handleFileSelect = (e: React.ChangeEvent<HTMLInputElement>) => {
     if (e.target.files) {
       onFilesAdded(Array.from(e.target.files));
@@ -110,7 +227,7 @@ const FileDropZone: React.FC<{
   return (
     <div className="space-y-4">
       <div
-        className="group border-2 border-dashed border-gray-200 dark:border-gray-700 rounded-2xl p-8 text-center transition-all hover:border-blue-500 hover:bg-blue-50/50 dark:hover:bg-blue-900/10 cursor-pointer"
+        className="group border-2 border-dashed border-gray-200 dark:border-gray-700 rounded-2xl p-10 text-center transition-all hover:border-blue-500 hover:bg-blue-50/30 dark:hover:bg-blue-900/10 cursor-pointer bg-white dark:bg-gray-900/50"
         onClick={() => inputRef.current?.click()}
       >
         <input
@@ -121,32 +238,42 @@ const FileDropZone: React.FC<{
           className="hidden"
           onChange={handleFileSelect}
         />
-        <div className="w-12 h-12 bg-gray-100 dark:bg-gray-800 rounded-full flex items-center justify-center mx-auto mb-3 group-hover:scale-110 transition-transform">
-          <UploadCloud className="w-6 h-6 text-gray-500 group-hover:text-blue-500 transition-colors" />
+        <div className="w-14 h-14 bg-blue-50 dark:bg-gray-800 rounded-2xl flex items-center justify-center mx-auto mb-4 group-hover:scale-110 group-hover:bg-blue-100 dark:group-hover:bg-gray-700 transition-all duration-300">
+          <UploadCloud className="w-7 h-7 text-blue-500 group-hover:text-blue-600 transition-colors" />
         </div>
-        <p className="text-gray-900 dark:text-white font-medium">
-          Click to upload or drag and drop
+        <h4 className="text-lg font-semibold text-gray-900 dark:text-white mb-1">
+          Upload Documents
+        </h4>
+        <p className="text-sm text-gray-500">
+          Drag & drop files here or click to browse
         </p>
-        <p className="text-xs text-gray-500 mt-1">PDF, DOCX (Max 10MB)</p>
+        <p className="text-xs text-gray-400 mt-2 font-medium bg-gray-100 dark:bg-gray-800 inline-block px-3 py-1 rounded-full">
+          PDF, DOCX (Max 10MB)
+        </p>
       </div>
 
       {files.length > 0 && (
-        <div className="grid grid-cols-1 gap-2">
+        <div className="grid grid-cols-1 gap-3">
           {files.map((file, index) => (
             <div
               key={index}
-              className="flex justify-between items-center bg-white dark:bg-gray-800 p-3 rounded-lg border border-gray-100 dark:border-gray-700 shadow-sm"
+              className="flex justify-between items-center bg-white dark:bg-gray-800 p-4 rounded-xl border border-gray-100 dark:border-gray-700 shadow-sm hover:shadow-md transition-shadow"
             >
-              <span className="truncate flex-1 text-sm font-medium text-gray-700 dark:text-gray-300 ml-2">
-                {file.name}
-              </span>
+              <div className="flex items-center gap-3 overflow-hidden">
+                <div className="p-2 bg-blue-50 dark:bg-blue-900/20 rounded-lg">
+                  <UploadCloud className="w-4 h-4 text-blue-500" />
+                </div>
+                <span className="truncate text-sm font-medium text-gray-700 dark:text-gray-300">
+                  {file.name}
+                </span>
+              </div>
               <button
                 type="button"
                 onClick={(e) => {
                   e.stopPropagation();
                   onFileRemoved(index);
                 }}
-                className="p-1 hover:bg-red-50 dark:hover:bg-red-900/20 rounded text-gray-400 hover:text-red-500 transition-colors"
+                className="p-2 hover:bg-red-50 dark:hover:bg-red-900/20 rounded-lg text-gray-400 hover:text-red-500 transition-colors"
               >
                 <X className="w-4 h-4" />
               </button>
@@ -158,180 +285,241 @@ const FileDropZone: React.FC<{
   );
 };
 
+// --- Main Page ---
+
 export default function CreateAgentPage() {
+  const [step, setStep] = useState(1);
   const [config, setConfig] = useState<AgentConfig>(initialConfig);
 
-  const handleInputChange = (
-    field: keyof Omit<AgentConfig, "urls" | "documents">,
-    value: string
-  ) => {
+  const handleInputChange = (field: keyof AgentConfig, value: string) =>
     setConfig((prev) => ({ ...prev, [field]: value }));
-  };
-
   const handleUrlChange = (index: number, value: string) => {
     const newUrls = [...config.urls];
     newUrls[index] = value;
     setConfig((prev) => ({ ...prev, urls: newUrls }));
   };
-
   const handleAddUrl = () => {
     if (config.urls.length < 3)
       setConfig((prev) => ({ ...prev, urls: [...prev.urls, ""] }));
   };
-
-  const handleFilesAdded = (newFiles: File[]) => {
+  const handleFilesAdded = (newFiles: File[]) =>
     setConfig((prev) => ({
       ...prev,
       documents: [...prev.documents, ...newFiles],
     }));
-  };
-
-  const handleFileRemoved = (index: number) => {
+  const handleFileRemoved = (index: number) =>
     setConfig((prev) => ({
       ...prev,
       documents: prev.documents.filter((_, i) => i !== index),
     }));
+  const handleNext = () => {
+    if (step < 3) setStep((prev) => prev + 1);
+  };
+  const handleBack = () => {
+    if (step > 1) setStep((prev) => prev - 1);
   };
 
   return (
-    <div className="max-w-4xl mx-auto space-y-8 pb-24">
-      <header>
-        <h1 className="text-3xl font-bold tracking-tight text-gray-900 dark:text-white">
-          Create Sahayata Agent
+    <div className="max-w-4xl mx-auto pb-32 pt-6">
+      <header className="text-center mb-12">
+        <h1 className="text-4xl font-extrabold tracking-tight text-gray-900 dark:text-white mb-3">
+          Create New Agent
         </h1>
-        <p className="text-gray-500 dark:text-gray-400 mt-2 text-lg">
-          Set up your intelligent agent in just a few steps.
+        <p className="text-lg text-gray-500 dark:text-gray-400 max-w-xl mx-auto">
+          Set up your intelligent assistant in a few simple steps. Configure its
+          personality, tasks, and knowledge base.
         </p>
       </header>
 
-      <form className="space-y-8">
-        {/* Template Selector */}
-        <div className="bg-gradient-to-r from-blue-50 to-indigo-50 dark:from-blue-900/20 dark:to-indigo-900/20 border border-blue-100 dark:border-blue-900/30 rounded-2xl p-6 cursor-pointer hover:opacity-90 transition-opacity">
-          <div className="flex justify-between items-center">
-            <div>
-              <h2 className="text-lg font-bold text-blue-900 dark:text-blue-100">
-                Quick Start Templates
-              </h2>
-              <p className="text-sm text-blue-700 dark:text-blue-300 mt-1">
-                Pre-configured setups for common use cases.
-              </p>
-            </div>
-            <ChevronDown className="w-5 h-5 text-blue-700 dark:text-blue-300" />
-          </div>
-        </div>
+      <div className="px-4 md:px-0">
+        <Stepper currentStep={step} />
+      </div>
 
-        {/* Card: Business Profile */}
-        <div className="bg-white dark:bg-gray-900 border border-gray-100 dark:border-gray-800 rounded-2xl p-8 shadow-sm">
-          <h2 className="text-xl font-bold mb-6 text-gray-900 dark:text-white">
-            Business Profile
-          </h2>
+      <form className="mt-8 space-y-8 animate-in fade-in slide-in-from-bottom-8 duration-700">
+        {/* Step 1: Business Profile */}
+        {step === 1 && (
           <div className="space-y-6">
-            <TextInput
-              label="Business Name"
-              placeholder="e.g. Acme Corp"
-              value={config.businessName}
-              onChange={(e) =>
-                handleInputChange("businessName", e.target.value)
-              }
-            />
-            <SelectInput
-              label="Industry"
-              value={config.industry}
-              options={industries}
-              onChange={(e) => handleInputChange("industry", e.target.value)}
-            />
-            <TextInput
-              label="Short Description"
-              placeholder="Describe what your business does..."
-              value={config.shortDescription}
-              onChange={(e) =>
-                handleInputChange("shortDescription", e.target.value)
-              }
-              isTextArea
-            />
-          </div>
-        </div>
-
-        {/* Card: Behavior */}
-        <div className="bg-white dark:bg-gray-900 border border-gray-100 dark:border-gray-800 rounded-2xl p-8 shadow-sm">
-          <h2 className="text-xl font-bold mb-6 text-gray-900 dark:text-white">
-            Agent Behavior
-          </h2>
-          <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-            <SelectInput
-              label="Language"
-              value={config.language}
-              options={languages}
-              onChange={(e) => handleInputChange("language", e.target.value)}
-            />
-            <SelectInput
-              label="Tone"
-              value={config.tone}
-              options={tones}
-              onChange={(e) => handleInputChange("tone", e.target.value)}
-            />
-          </div>
-        </div>
-
-        {/* Card: Knowledge Base */}
-        <div className="bg-white dark:bg-gray-900 border border-gray-100 dark:border-gray-800 rounded-2xl p-8 shadow-sm">
-          <h2 className="text-xl font-bold mb-6 text-gray-900 dark:text-white">
-            Knowledge Base
-          </h2>
-          <div className="space-y-6">
-            <div className="space-y-4">
-              <label className="block text-sm font-semibold text-gray-700 dark:text-gray-300 ml-1">
-                Source URLs
-              </label>
-              {config.urls.map((url, index) => (
+            <section className="bg-white/80 dark:bg-gray-900/80 backdrop-blur-xl border border-gray-100 dark:border-gray-800 rounded-3xl p-8 shadow-xl shadow-gray-200/50 dark:shadow-none">
+              <div className="flex items-center gap-3 mb-8">
+                <div className="h-8 w-1 bg-blue-500 rounded-full" />
+                <h2 className="text-2xl font-bold text-gray-900 dark:text-white">
+                  Business Profile
+                </h2>
+              </div>
+              <div className="space-y-6">
                 <TextInput
-                  key={index}
-                  label=""
-                  placeholder="https://example.com"
-                  value={url}
-                  onChange={(e) => handleUrlChange(index, e.target.value)}
+                  label="Business Name"
+                  placeholder="e.g. Acme Corp"
+                  value={config.businessName}
+                  onChange={(e) =>
+                    handleInputChange("businessName", e.target.value)
+                  }
                 />
-              ))}
-              {config.urls.length < 3 && (
-                <button
-                  type="button"
-                  onClick={handleAddUrl}
-                  className="flex items-center text-blue-600 dark:text-blue-400 font-medium text-sm hover:underline pl-1"
-                >
-                  <Plus className="w-4 h-4 mr-1" /> Add another URL
-                </button>
-              )}
-            </div>
+                <SelectInput
+                  label="Industry"
+                  value={config.industry}
+                  options={industries}
+                  onChange={(e) =>
+                    handleInputChange("industry", e.target.value)
+                  }
+                />
+                <TextInput
+                  label="Short Description"
+                  placeholder="Briefly describe your business..."
+                  value={config.shortDescription}
+                  onChange={(e) =>
+                    handleInputChange("shortDescription", e.target.value)
+                  }
+                  isTextArea
+                />
+              </div>
+            </section>
 
-            <div className="pt-4 border-t border-gray-100 dark:border-gray-800">
-              <label className="block text-sm font-semibold text-gray-700 dark:text-gray-300 mb-3 ml-1">
-                Upload Documents
-              </label>
-              <FileDropZone
-                files={config.documents}
-                onFilesAdded={handleFilesAdded}
-                onFileRemoved={handleFileRemoved}
-              />
-            </div>
+            <section className="bg-white/80 dark:bg-gray-900/80 backdrop-blur-xl border border-gray-100 dark:border-gray-800 rounded-3xl p-8 shadow-xl shadow-gray-200/50 dark:shadow-none">
+              <div className="flex items-center gap-3 mb-8">
+                <div className="h-8 w-1 bg-indigo-500 rounded-full" />
+                <h2 className="text-2xl font-bold text-gray-900 dark:text-white">
+                  Communication Style
+                </h2>
+              </div>
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+                <SelectInput
+                  label="Language"
+                  value={config.language}
+                  options={languages}
+                  onChange={(e) =>
+                    handleInputChange("language", e.target.value)
+                  }
+                />
+                <SelectInput
+                  label="Tone"
+                  value={config.tone}
+                  options={tones}
+                  onChange={(e) => handleInputChange("tone", e.target.value)}
+                />
+              </div>
+            </section>
           </div>
-        </div>
+        )}
 
-        {/* Footer */}
-        <footer className="fixed bottom-0 right-0 left-0 lg:left-72 p-4 bg-white/80 dark:bg-gray-950/80 backdrop-blur-md border-t border-gray-200 dark:border-gray-800 flex justify-end gap-3 z-40">
-          <button
-            type="button"
-            className="px-6 py-2.5 rounded-xl text-gray-600 dark:text-gray-300 font-medium hover:bg-gray-100 dark:hover:bg-gray-800 transition-colors"
-          >
-            Cancel
-          </button>
-          <button
-            type="button"
-            className="px-6 py-2.5 bg-blue-600 text-white rounded-xl font-medium hover:bg-blue-700 shadow-lg shadow-blue-600/20 transition-all"
-          >
-            Create Agent
-          </button>
-        </footer>
+        {/* Step 2: Core Configuration */}
+        {step === 2 && (
+          <section className="bg-white/80 dark:bg-gray-900/80 backdrop-blur-xl border border-gray-100 dark:border-gray-800 rounded-3xl p-8 shadow-xl shadow-gray-200/50 dark:shadow-none">
+            <div className="flex items-center gap-3 mb-8">
+              <div className="h-8 w-1 bg-blue-500 rounded-full" />
+              <h2 className="text-2xl font-bold text-gray-900 dark:text-white">
+                Agent Configuration
+              </h2>
+            </div>
+            <div className="space-y-8">
+              <TextInput
+                label="Agent Name"
+                placeholder="e.g. Support Bot v1"
+                value={config.agentName}
+                onChange={(e) => handleInputChange("agentName", e.target.value)}
+              />
+              <div className="grid grid-cols-1 gap-8">
+                <RichTextEditorMock
+                  label="Persona"
+                  placeholder="Describe the agent's persona..."
+                  value={config.persona}
+                  onChange={(e) => handleInputChange("persona", e.target.value)}
+                />
+                <RichTextEditorMock
+                  label="Task"
+                  placeholder="Describe the specific tasks..."
+                  value={config.task}
+                  onChange={(e) => handleInputChange("task", e.target.value)}
+                />
+              </div>
+            </div>
+          </section>
+        )}
+
+        {/* Step 3: Knowledge Base */}
+        {step === 3 && (
+          <section className="bg-white/80 dark:bg-gray-900/80 backdrop-blur-xl border border-gray-100 dark:border-gray-800 rounded-3xl p-8 shadow-xl shadow-gray-200/50 dark:shadow-none">
+            <div className="flex items-center gap-3 mb-8">
+              <div className="h-8 w-1 bg-emerald-500 rounded-full" />
+              <h2 className="text-2xl font-bold text-gray-900 dark:text-white">
+                Knowledge Base
+              </h2>
+            </div>
+            <div className="space-y-8">
+              <div className="space-y-4">
+                <label className="text-sm font-semibold text-gray-700 dark:text-gray-300 ml-1">
+                  Source URLs
+                </label>
+                {config.urls.map((url, index) => (
+                  <div key={index} className="flex gap-2">
+                    <div className="flex-1">
+                      <TextInput
+                        label=""
+                        placeholder="https://example.com"
+                        value={url}
+                        onChange={(e) => handleUrlChange(index, e.target.value)}
+                      />
+                    </div>
+                  </div>
+                ))}
+                {config.urls.length < 3 && (
+                  <button
+                    type="button"
+                    onClick={handleAddUrl}
+                    className="flex items-center px-4 py-2 text-sm font-medium text-blue-600 bg-blue-50 dark:bg-blue-900/20 dark:text-blue-400 rounded-xl hover:bg-blue-100 dark:hover:bg-blue-900/40 transition-colors"
+                  >
+                    <Plus className="w-4 h-4 mr-2" /> Add another URL
+                  </button>
+                )}
+              </div>
+
+              <div className="pt-8 border-t border-gray-100 dark:border-gray-800">
+                <label className="block text-sm font-semibold text-gray-700 dark:text-gray-300 mb-4 ml-1">
+                  Upload Documents
+                </label>
+                <FileDropZone
+                  files={config.documents}
+                  onFilesAdded={handleFilesAdded}
+                  onFileRemoved={handleFileRemoved}
+                />
+              </div>
+            </div>
+          </section>
+        )}
       </form>
+
+      {/* Modern Floating Footer */}
+      <div className="fixed bottom-8 left-0 right-0 flex justify-center z-50 pointer-events-none px-4">
+        <div className="bg-white/90 dark:bg-gray-900/90 backdrop-blur-2xl border border-gray-200/50 dark:border-gray-700/50 p-2 rounded-2xl shadow-2xl shadow-blue-900/20 pointer-events-auto flex items-center gap-2">
+          <button
+            type="button"
+            onClick={handleBack}
+            disabled={step === 1}
+            className="px-6 py-3 rounded-xl text-gray-600 dark:text-gray-300 font-semibold hover:bg-gray-100 dark:hover:bg-gray-800 transition-colors disabled:opacity-40 disabled:cursor-not-allowed flex items-center gap-2"
+          >
+            <ArrowLeft className="w-4 h-4" /> Back
+          </button>
+
+          <div className="h-8 w-px bg-gray-200 dark:bg-gray-700 mx-1" />
+
+          {step < 3 ? (
+            <button
+              type="button"
+              onClick={handleNext}
+              className="px-8 py-3 bg-blue-600 text-white rounded-xl font-semibold hover:bg-blue-700 shadow-lg shadow-blue-600/30 hover:shadow-blue-600/40 hover:-translate-y-0.5 transition-all flex items-center gap-2"
+            >
+              Next Step <ArrowRight className="w-4 h-4" />
+            </button>
+          ) : (
+            <button
+              type="button"
+              className="px-8 py-3 bg-gradient-to-r from-blue-600 to-indigo-600 text-white rounded-xl font-semibold hover:from-blue-700 hover:to-indigo-700 shadow-lg shadow-blue-600/30 hover:shadow-blue-600/40 hover:-translate-y-0.5 transition-all flex items-center gap-2"
+            >
+              <Check className="w-5 h-5" /> Deploy Agent
+            </button>
+          )}
+        </div>
+      </div>
     </div>
   );
 }

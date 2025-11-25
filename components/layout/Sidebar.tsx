@@ -11,11 +11,12 @@ interface NavItem {
   icon: React.ElementType;
 }
 
+// Updated "Configure Agent" to "Agent Management"
 const navItems: NavItem[] = [
   { name: "Dashboard", href: "/dashboard", icon: Home },
   { name: "Create Agent", href: "/create-agent", icon: Zap },
   {
-    name: "Configure Agent",
+    name: "Agent Management",
     href: "/configure-agent",
     icon: SlidersHorizontal,
   },
@@ -28,7 +29,6 @@ const NavLink: React.FC<NavItem & { isActive: boolean }> = ({
   icon: Icon,
   isActive,
 }) => {
-  // Modern UI: subtle background for active state, clean text for inactive
   const activeClasses =
     "bg-blue-50 dark:bg-blue-900/20 text-blue-600 dark:text-blue-400 font-semibold";
   const inactiveClasses =
