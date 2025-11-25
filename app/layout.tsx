@@ -1,7 +1,7 @@
 import "./globals.css";
 import { Inter } from "next/font/google";
-import { Sidebar } from "@/components/layout/Sidebar";
 import { ThemeProvider } from "@/components/theme/ThemeProvider";
+import SideBarLayout from "@/components/layout/ClientLayout";
 
 const inter = Inter({ subsets: ["latin"] });
 
@@ -19,13 +19,10 @@ export default function RootLayout({
     <html lang="en">
       <body>
         <ThemeProvider>
-          {/* Main container with theme transition classes */}
-          <div
-            className={`${inter.className} bg-gray-50 dark:bg-gray-900 text-gray-900 dark:text-white min-h-screen flex transition-colors duration-300`}
-          >
-            <Sidebar />
-            <main className="flex-1 p-8 overflow-y-auto">{children}</main>
-          </div>
+          {/* Pass the font class to the wrapper */}
+          <SideBarLayout className={inter.className}>
+            {children}
+          </SideBarLayout>
         </ThemeProvider>
       </body>
     </html>

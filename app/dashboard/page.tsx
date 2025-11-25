@@ -33,7 +33,7 @@ export default function DashboardPage() {
             Dashboard
           </h1>
           <p className="text-gray-500 dark:text-gray-400 mt-2">
-            Welcome back, here's what's happening today.
+            Welcome back, here&apos;s what&apos;s happening today.
           </p>
         </div>
         <div className="flex space-x-3">
