@@ -52,9 +52,9 @@ export default function LoginPage() {
             <span className="text-blue-600 dark:text-blue-400">Agent</span>
           </h1>
         </div>
-        <p className="text-gray-600 dark:text-gray-400 text-lg">
+        {/* <p className="text-gray-600 dark:text-gray-400 text-lg">
           Sign in to your dashboard
-        </p>
+        </p> */}
       </div>
 
       <form onSubmit={handleLogin} className="space-y-6">
@@ -107,14 +107,14 @@ export default function LoginPage() {
           className="w-full flex items-center justify-center space-x-2 px-6 py-3 text-white font-semibold rounded-xl bg-blue-600 hover:bg-blue-700 transition-colors shadow-md shadow-blue-600/20 disabled:bg-blue-400 disabled:shadow-none"
         >
           {loading && <Loader2 className="w-5 h-5 animate-spin" />}
-          <span>{loading ? "Logging in..." : "Sign In"}</span>
+          <span>{loading ? "Logging in..." : "Log In"}</span>
         </button>
       </form>
 
       {/* Footer Link */}
       <div className="mt-8 text-center text-sm">
         <p className="text-gray-500 dark:text-gray-400">
-          Don't have an account?
+          Don&apos;t have an account?
           <a
             href="/register"
             className="text-blue-600 dark:text-blue-400 hover:underline ml-1"
