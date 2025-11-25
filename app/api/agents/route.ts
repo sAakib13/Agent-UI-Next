@@ -10,10 +10,13 @@ const pool = new Pool({
   password: process.env.PG_PASSWORD,
 });
 
-// SQL statement to create the table if it does not exist
-// We use JSONB for flexible storage of arrays (urls) and objects (actions)
+const SCHEMA = process.env.PG_SCHEMA || "agentstudio";
+const TABLE = process.env.PG_TABLE || "agents";
+
+// SQL statement to create the schema/table if it does not exist
+const CREATE_SCHEMA_QUERY = `CREATE SCHEMA IF NOT EXISTS ${SCHEMA};`;
 const CREATE_TABLE_QUERY = `
-  CREATE TABLE IF NOT EXISTS agentstudio.agents (
+  CREATE TABLE IF NOT EXISTS ${SCHEMA}.${TABLE} (
     id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
     name VARCHAR(255) UNIQUE NOT NULL,
     persona TEXT,
@@ -26,6 +29,32 @@ const CREATE_TABLE_QUERY = `
   );
 `;
 
+async function ensureTableExists(client: any) {
+  await client.query(CREATE_SCHEMA_QUERY);
+  await client.query(CREATE_TABLE_QUERY);
+}
+
+export async function GET() {
+  let client;
+  try {
+    client = await pool.connect();
+    await ensureTableExists(client);
+
+    const queryText = `SELECT id, name, persona, task, status, urls, actions, created_at, updated_at FROM ${SCHEMA}.${TABLE} ORDER BY updated_at DESC;`;
+    const result = await client.query(queryText);
+
+    return NextResponse.json({ success: true, data: result.rows });
+  } catch (error: any) {
+    console.error("GET /api/agents error:", error);
+    return NextResponse.json(
+      { success: false, error: "Failed to fetch agents", details: error.message },
+      { status: 500 }
+    );
+  } finally {
+    if (client) client.release();
+  }
+}
+
 export async function POST(request: Request) {
   let client;
   try {
@@ -36,20 +65,19 @@ export async function POST(request: Request) {
 
     client = await pool.connect();
 
-    // 1. Ensure the table exists
-    // This will execute the CREATE TABLE IF NOT EXISTS query
-    await client.query(CREATE_TABLE_QUERY);
+    // Ensure schema/table exist
+    await ensureTableExists(client);
 
-    // 2. Perform INSERT or UPDATE operation
+    // Insert or update
     const queryText = `
-      INSERT INTO ${process.env.PG_SCHEMA}.${process.env.PG_TABLE} (name, persona, task, status, urls, actions, updated_at)
+      INSERT INTO ${SCHEMA}.${TABLE} (name, persona, task, status, urls, actions, updated_at)
       VALUES ($1, $2, $3, $4, $5, $6, NOW())
       ON CONFLICT (name) DO UPDATE 
       SET persona = EXCLUDED.persona, 
           task = EXCLUDED.task,
           status = EXCLUDED.status,
-          urls = $5, 
-          actions = $6,
+          urls = EXCLUDED.urls, 
+          actions = EXCLUDED.actions,
           updated_at = NOW()
       RETURNING *;
     `;
@@ -59,8 +87,8 @@ export async function POST(request: Request) {
       persona,
       task,
       status || "Training",
-      JSON.stringify(urls || []), // Ensure it's a valid JSON string
-      JSON.stringify(possibleActions || {}), // Ensure it's a valid JSON string
+      urls || [], // send as JSONB via pg driver
+      possibleActions || {},
     ];
 
     const result = await client.query(queryText, values);
@@ -68,7 +96,6 @@ export async function POST(request: Request) {
     return NextResponse.json({ success: true, data: result.rows[0] });
   } catch (error: any) {
     console.error("Database Operation Error:", error);
-    // You might also get errors here if the schema 'agentstudio' doesn't exist.
     return NextResponse.json(
       {
         success: false,

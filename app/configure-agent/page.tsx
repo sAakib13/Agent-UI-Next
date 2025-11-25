@@ -1,6 +1,6 @@
 "use client";
 
-import React, { useState } from "react";
+import React, { useCallback, useEffect, useState } from "react";
 import {
   Plus,
   UploadCloud,
@@ -16,7 +16,6 @@ import {
   Save,
   RotateCcw,
   Search,
-  MoreVertical,
   ArrowLeft,
   Users,
   Zap,
@@ -25,7 +24,7 @@ import {
   Loader2,
 } from "lucide-react";
 
-// --- Types & Mock Data ---
+// --- Types & Helpers ---
 
 type AgentConfig = {
   id: string;
@@ -39,42 +38,41 @@ type AgentConfig = {
   possibleActions: { updateContactTable: boolean; delegateToHuman: boolean };
 };
 
-const mockAgents: AgentConfig[] = [
-  {
-    id: "1",
-    agentName: "Customer Support Bot v2.1",
-    status: "Active",
-    lastActive: "2 mins ago",
-    persona:
-      "A friendly and knowledgeable assistant dedicated to technical support.",
-    task: "Identify customer issues, provide troubleshooting steps.",
-    urls: ["https://docs.sahayata.ai/api"],
-    documents: [new File([], "Troubleshooting_Guide.pdf")],
-    possibleActions: { updateContactTable: true, delegateToHuman: false },
-  },
-  {
-    id: "2",
-    agentName: "Sales Outreach Assistant",
-    status: "Inactive",
-    lastActive: "5 days ago",
-    persona: "Professional sales representative focused on lead qualification.",
-    task: "Engage with inbound leads and schedule demos.",
-    urls: ["https://sahayata.ai/pricing"],
-    documents: [],
-    possibleActions: { updateContactTable: false, delegateToHuman: true },
-  },
-  {
-    id: "3",
-    agentName: "Internal HR Helper",
-    status: "Training",
-    lastActive: "Just now",
-    persona: "Helpful HR coordinator for employee onboarding.",
-    task: "Answer policy questions and guide new hires.",
-    urls: [],
-    documents: [new File([], "Employee_Handbook_2025.pdf")],
-    possibleActions: { updateContactTable: true, delegateToHuman: true },
-  },
-];
+const parseJSONField = <T,>(value: unknown, fallback: T): T => {
+  if (value === null || value === undefined) {
+    return fallback;
+  }
+
+  if (typeof value === "string") {
+    try {
+      return JSON.parse(value) as T;
+    } catch {
+      return fallback;
+    }
+  }
+
+  return value as T;
+};
+
+const normalizeStatus = (status?: string | null): AgentConfig["status"] => {
+  const normalized = (status || "Training").toLowerCase();
+  if (normalized === "active") return "Active";
+  if (normalized === "inactive") return "Inactive";
+  return "Training";
+};
+
+const formatLastActive = (timestamp?: string | null) => {
+  if (!timestamp) return "Unknown";
+  const parsed = new Date(timestamp);
+  return Number.isNaN(parsed.getTime())
+    ? "Unknown"
+    : parsed.toLocaleString(undefined, {
+        hour: "2-digit",
+        minute: "2-digit",
+        month: "short",
+        day: "numeric",
+      });
+};
 
 // --- Reusable Modern Components ---
 
@@ -201,6 +199,60 @@ export default function AgentManagementPage() {
   const [view, setView] = useState<"LIST" | "EDIT">("LIST");
   const [currentAgent, setCurrentAgent] = useState<AgentConfig | null>(null);
   const [isSaving, setIsSaving] = useState(false);
+  const [agents, setAgents] = useState<AgentConfig[]>([]);
+  const [isLoadingAgents, setIsLoadingAgents] = useState(true);
+  const [loadError, setLoadError] = useState<string | null>(null);
+
+  const fetchAgents = useCallback(async () => {
+    setIsLoadingAgents(true);
+    setLoadError(null);
+    try {
+      const response = await fetch("/api/agents");
+      if (!response.ok) {
+        throw new Error("Unable to reach the agents API endpoint.");
+      }
+
+      const payload = await response.json();
+      if (!payload?.success) {
+        throw new Error(payload?.error || "Failed to fetch agents from PostgreSQL.");
+      }
+
+      const mapped: AgentConfig[] = (payload.data ?? []).map((row: any) => {
+        const urls = parseJSONField<string[]>(row?.urls, []);
+        const actions = parseJSONField<Record<string, boolean>>(row?.actions, {});
+
+        return {
+          id: String(row?.id || row?.name || crypto.randomUUID?.() || Date.now()),
+          agentName: row?.name || "Untitled Agent",
+          status: normalizeStatus(row?.status),
+          lastActive: formatLastActive(row?.updated_at),
+          persona: row?.persona || "",
+          task: row?.task || "",
+          urls: Array.isArray(urls) ? urls : [],
+          documents: [],
+          possibleActions: {
+            updateContactTable: Boolean(actions.updateContactTable),
+            delegateToHuman: Boolean(actions.delegateToHuman),
+          },
+        };
+      });
+
+      setAgents(mapped);
+    } catch (error) {
+      console.error("Error fetching agents:", error);
+      setLoadError(
+        error instanceof Error
+          ? error.message
+          : "Unexpected error while fetching agents."
+      );
+    } finally {
+      setIsLoadingAgents(false);
+    }
+  }, []);
+
+  useEffect(() => {
+    fetchAgents();
+  }, [fetchAgents]);
 
   const handleEditAgent = (agent: AgentConfig) => {
     setCurrentAgent(agent);
@@ -229,19 +281,32 @@ export default function AgentManagementPage() {
         headers: {
           "Content-Type": "application/json",
         },
-        body: JSON.stringify(currentAgent),
+        body: JSON.stringify({
+          agentName: currentAgent.agentName,
+          persona: currentAgent.persona,
+          task: currentAgent.task,
+          status: currentAgent.status,
+          urls: currentAgent.urls,
+          possibleActions: currentAgent.possibleActions,
+        }),
       });
+
+      if (!response.ok) {
+        throw new Error("Server returned an error while saving the agent.");
+      }
 
       const data = await response.json();
 
-      if (data.success) {
-        alert("Agent configuration saved to PostgreSQL database!");
-      } else {
-        alert("Failed to save: " + (data.error || "Unknown error"));
+      if (!data.success) {
+        throw new Error(data.error || "Failed to save agent.");
       }
+
+      await fetchAgents();
+      handleBackToList();
+      alert("Agent configuration saved to PostgreSQL database!");
     } catch (error) {
       console.error(error);
-      alert("Error connecting to server.");
+      alert(error instanceof Error ? error.message : "Error connecting to server.");
     } finally {
       setIsSaving(false);
     }
@@ -285,67 +350,88 @@ export default function AgentManagementPage() {
 
         {/* Agents Grid */}
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-          {mockAgents.map((agent) => (
-            <div
-              key={agent.id}
-              className="group relative bg-white dark:bg-gray-900 border border-gray-200 dark:border-gray-800 rounded-3xl p-6 shadow-sm hover:shadow-xl hover:border-blue-500/30 transition-all duration-300 flex flex-col hover:-translate-y-1"
-            >
-              <div className="flex justify-between items-start mb-6">
-                <div
-                  className={`w-14 h-14 rounded-2xl flex items-center justify-center shadow-inner ${
-                    agent.status === "Active"
-                      ? "bg-gradient-to-br from-green-50 to-green-100 dark:from-green-900/20 dark:to-green-900/10"
-                      : agent.status === "Training"
-                      ? "bg-gradient-to-br from-amber-50 to-amber-100 dark:from-amber-900/20 dark:to-amber-900/10"
-                      : "bg-gradient-to-br from-gray-50 to-gray-100 dark:from-gray-800 dark:to-gray-900"
-                  }`}
-                >
-                  <Zap
-                    className={`w-7 h-7 ${
-                      agent.status === "Active"
-                        ? "text-green-600 dark:text-green-400"
-                        : agent.status === "Training"
-                        ? "text-amber-600 dark:text-amber-400"
-                        : "text-gray-400"
-                    }`}
-                  />
-                </div>
-                <div
-                  className={`px-3 py-1 rounded-full text-xs font-bold border ${
-                    agent.status === "Active"
-                      ? "bg-green-50 text-green-700 border-green-200 dark:bg-green-900/20 dark:border-green-900"
-                      : agent.status === "Training"
-                      ? "bg-amber-50 text-amber-700 border-amber-200 dark:bg-amber-900/20 dark:border-amber-900"
-                      : "bg-gray-50 text-gray-600 border-gray-200 dark:bg-gray-800 dark:border-gray-700"
-                  }`}
-                >
-                  {agent.status}
-                </div>
-              </div>
-
-              <h3 className="text-xl font-bold text-gray-900 dark:text-white mb-2">
-                {agent.agentName}
-              </h3>
-              <p className="text-sm text-gray-500 dark:text-gray-400 line-clamp-2 mb-6 flex-1 leading-relaxed">
-                {agent.persona}
-              </p>
-
-              <div className="space-y-4">
-                <div className="flex items-center text-xs font-medium text-gray-400 dark:text-gray-500 bg-gray-50 dark:bg-gray-800/50 rounded-xl p-3">
-                  <Clock className="w-4 h-4 mr-2" />
-                  Active {agent.lastActive}
-                </div>
-
-                <button
-                  onClick={() => handleEditAgent(agent)}
-                  className="w-full py-3 bg-white dark:bg-gray-800 border border-gray-200 dark:border-gray-700 text-gray-900 dark:text-white font-semibold rounded-xl hover:bg-gray-50 dark:hover:bg-gray-700 transition-colors flex items-center justify-center group-hover:border-blue-500/30 group-hover:text-blue-600 dark:group-hover:text-blue-400"
-                >
-                  Configure{" "}
-                  <ChevronRight className="w-4 h-4 ml-1 opacity-60 group-hover:translate-x-1 transition-transform" />
-                </button>
-              </div>
+          {isLoadingAgents ? (
+            <div className="col-span-full flex flex-col items-center justify-center rounded-3xl border border-gray-200 bg-white/80 py-20 text-center text-gray-500 dark:border-gray-800 dark:bg-gray-900/60 dark:text-gray-300">
+              <Loader2 className="mb-4 h-6 w-6 animate-spin text-blue-600" />
+              <p className="font-medium">Loading agents from PostgreSQL...</p>
             </div>
-          ))}
+          ) : agents.length > 0 ? (
+            agents.map((agent) => (
+              <div
+                key={agent.id}
+                className="group relative bg-white dark:bg-gray-900 border border-gray-200 dark:border-gray-800 rounded-3xl p-6 shadow-sm hover:shadow-xl hover:border-blue-500/30 transition-all duration-300 flex flex-col hover:-translate-y-1"
+              >
+                <div className="flex justify-between items-start mb-6">
+                  <div
+                    className={`w-14 h-14 rounded-2xl flex items-center justify-center shadow-inner ${
+                      agent.status === "Active"
+                        ? "bg-gradient-to-br from-green-50 to-green-100 dark:from-green-900/20 dark:to-green-900/10"
+                        : agent.status === "Training"
+                        ? "bg-gradient-to-br from-amber-50 to-amber-100 dark:from-amber-900/20 dark:to-amber-900/10"
+                        : "bg-gradient-to-br from-gray-50 to-gray-100 dark:from-gray-800 dark:to-gray-900"
+                    }`}
+                  >
+                    <Zap
+                      className={`w-7 h-7 ${
+                        agent.status === "Active"
+                          ? "text-green-600 dark:text-green-400"
+                          : agent.status === "Training"
+                          ? "text-amber-600 dark:text-amber-400"
+                          : "text-gray-400"
+                      }`}
+                    />
+                  </div>
+                  <div
+                    className={`px-3 py-1 rounded-full text-xs font-bold border ${
+                      agent.status === "Active"
+                        ? "bg-green-50 text-green-700 border-green-200 dark:bg-green-900/20 dark:border-green-900"
+                        : agent.status === "Training"
+                        ? "bg-amber-50 text-amber-700 border-amber-200 dark:bg-amber-900/20 dark:border-amber-900"
+                        : "bg-gray-50 text-gray-600 border-gray-200 dark:bg-gray-800 dark:border-gray-700"
+                    }`}
+                  >
+                    {agent.status}
+                  </div>
+                </div>
+
+                <h3 className="text-xl font-bold text-gray-900 dark:text-white mb-2">
+                  {agent.agentName}
+                </h3>
+                <p className="text-sm text-gray-500 dark:text-gray-400 line-clamp-2 mb-6 flex-1 leading-relaxed">
+                  {agent.persona || "No persona provided yet."}
+                </p>
+
+                <div className="space-y-4">
+                  <div className="flex items-center text-xs font-medium text-gray-400 dark:text-gray-500 bg-gray-50 dark:bg-gray-800/50 rounded-xl p-3">
+                    <Clock className="w-4 h-4 mr-2" />
+                    Active {agent.lastActive}
+                  </div>
+
+                  <button
+                    onClick={() => handleEditAgent(agent)}
+                    className="w-full py-3 bg-white dark:bg-gray-800 border border-gray-200 dark:border-gray-700 text-gray-900 dark:text-white font-semibold rounded-xl hover:bg-gray-50 dark:hover:bg-gray-700 transition-colors flex items-center justify-center group-hover:border-blue-500/30 group-hover:text-blue-600 dark:group-hover:text-blue-400"
+                  >
+                    Configure{" "}
+                    <ChevronRight className="w-4 h-4 ml-1 opacity-60 group-hover:translate-x-1 transition-transform" />
+                  </button>
+                </div>
+              </div>
+            ))
+          ) : (
+            <div className="col-span-full flex flex-col items-center justify-center rounded-3xl border border-gray-200 bg-white/80 py-16 text-center text-gray-500 dark:border-gray-800 dark:bg-gray-900/60 dark:text-gray-300">
+              <Users className="mb-4 h-10 w-10 text-gray-400" />
+              <p className="text-base font-semibold">No agents found yet.</p>
+              <p className="mt-1 text-sm text-gray-500 dark:text-gray-400">
+                Save a configuration to see it appear here.
+              </p>
+              <button
+                onClick={fetchAgents}
+                className="mt-4 rounded-2xl border border-gray-200 px-4 py-2 text-sm font-semibold text-gray-700 hover:border-blue-500 hover:text-blue-600 dark:border-gray-700 dark:text-gray-200 dark:hover:border-blue-400"
+              >
+                Refresh
+              </button>
+            </div>
+          )}
 
           {/* Add New Agent Placeholder Card */}
           <button className="group border-2 border-dashed border-gray-200 dark:border-gray-800 rounded-3xl p-6 flex flex-col items-center justify-center text-gray-400 hover:border-blue-500 hover:bg-blue-50/30 dark:hover:bg-blue-900/10 transition-all gap-4 min-h-[320px]">
@@ -455,6 +541,18 @@ export default function AgentManagementPage() {
             <QrCode className="w-10 h-10 opacity-80" />
           </div>
         </div>
+
+        {loadError && (
+          <div className="flex items-center justify-between gap-4 rounded-2xl border border-red-200 bg-red-50/80 px-4 py-3 text-sm text-red-700 dark:border-red-900/40 dark:bg-red-950/30 dark:text-red-200">
+            <span>{loadError}</span>
+            <button
+              onClick={fetchAgents}
+              className="rounded-xl border border-red-300 px-3 py-1 text-xs font-semibold uppercase tracking-wide text-red-700 hover:bg-red-100 dark:border-red-700 dark:text-red-200 dark:hover:bg-red-900/30"
+            >
+              Retry
+            </button>
+          </div>
+        )}
 
         <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
           {/* Main Column */}
