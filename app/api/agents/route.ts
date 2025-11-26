@@ -72,6 +72,38 @@ const MIGRATE_COLUMNS_QUERY = `
   END $$;
 `;
 
+// --- NEW GET FUNCTION (Fixes 405 Error) ---
+export async function GET() {
+  let client;
+  try {
+    client = await pool.connect();
+
+    // Ensure table structure is valid before querying
+    await client.query(CREATE_TABLE_QUERY);
+    await client.query(MIGRATE_COLUMNS_QUERY);
+
+    const result = await client.query(
+      "SELECT * FROM agentstudio.agents ORDER BY updated_at DESC"
+    );
+
+    // The driver returns JSONB columns (urls, actions) as parsed JSON objects in Node.js,
+    // so we don't need JSON.parse here, just return the rows.
+    return NextResponse.json({ success: true, data: result.rows });
+  } catch (error: any) {
+    console.error("Database Fetch Error:", error);
+    return NextResponse.json(
+      {
+        success: false,
+        error: "Failed to process request or save to database.",
+        details: error.message,
+      },
+      { status: 500 }
+    );
+  } finally {
+    if (client) client.release();
+  }
+}
+
 export async function POST(request: Request) {
   let client;
   try {

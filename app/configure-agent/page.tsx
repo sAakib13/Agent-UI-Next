@@ -22,6 +22,7 @@ import {
   Clock,
   ChevronRight,
   Loader2,
+  Hash,
 } from "lucide-react";
 
 // --- Types & Helpers ---
@@ -29,10 +30,22 @@ import {
 type AgentConfig = {
   id: string;
   agentName: string;
+  triggerCode: string; // New field
   status: "Active" | "Inactive" | "Training";
   lastActive: string;
+
+  // Business Profile Fields
+  businessName: string;
+  industry: string;
+  shortDescription: string;
+  businessURL: string;
+
+  // Core Config
   persona: string;
   task: string;
+  language: string;
+  tone: string;
+
   urls: string[];
   documents: File[];
   possibleActions: { updateContactTable: boolean; delegateToHuman: boolean };
@@ -83,10 +96,14 @@ const TextInput: React.FC<{
   onChange: (
     e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement>
   ) => void;
-}> = ({ label, placeholder, value, onChange }) => (
+  hint?: string;
+}> = ({ label, placeholder, value, onChange, hint }) => (
   <div className="space-y-2">
-    <label className="text-sm font-semibold text-gray-700 dark:text-gray-300 ml-1">
+    <label className="text-sm font-semibold text-gray-700 dark:text-gray-300 ml-1 flex justify-between">
       {label}
+      {hint && (
+        <span className="text-xs font-normal text-gray-400">{hint}</span>
+      )}
     </label>
     <input
       type="text"
@@ -203,6 +220,7 @@ export default function AgentManagementPage() {
   const [isLoadingAgents, setIsLoadingAgents] = useState(true);
   const [loadError, setLoadError] = useState<string | null>(null);
 
+  // Fetch logic mapping DB snake_case to frontend camelCase
   const fetchAgents = useCallback(async () => {
     setIsLoadingAgents(true);
     setLoadError(null);
@@ -214,22 +232,39 @@ export default function AgentManagementPage() {
 
       const payload = await response.json();
       if (!payload?.success) {
-        throw new Error(payload?.error || "Failed to fetch agents from PostgreSQL.");
+        throw new Error(
+          payload?.error || "Failed to fetch agents from PostgreSQL."
+        );
       }
 
       const mapped: AgentConfig[] = (payload.data ?? []).map((row: any) => {
         const urls = parseJSONField<string[]>(row?.urls, []);
-        const actions = parseJSONField<Record<string, boolean>>(row?.actions, {});
+        const actions = parseJSONField<Record<string, boolean>>(
+          row?.actions,
+          {}
+        );
 
         return {
-          id: String(row?.id || row?.name || crypto.randomUUID?.() || Date.now()),
+          id: row?.id || crypto.randomUUID(),
           agentName: row?.name || "Untitled Agent",
+          triggerCode: row?.trigger_code || "",
           status: normalizeStatus(row?.status),
           lastActive: formatLastActive(row?.updated_at),
+
+          // Mapped Business Fields
+          businessName: row?.business_name || "",
+          industry: row?.industry || "",
+          shortDescription: row?.short_description || "",
+          businessURL: row?.business_url || "",
+
+          // Mapped Config Fields
+          language: row?.language || "English",
+          tone: row?.tone || "Formal",
           persona: row?.persona || "",
           task: row?.task || "",
+
           urls: Array.isArray(urls) ? urls : [],
-          documents: [],
+          documents: [], // Files are client-side only for now in this demo
           possibleActions: {
             updateContactTable: Boolean(actions.updateContactTable),
             delegateToHuman: Boolean(actions.delegateToHuman),
@@ -264,7 +299,7 @@ export default function AgentManagementPage() {
     setView("LIST");
   };
 
-  const handleInputChange = (field: any, value: string) => {
+  const handleInputChange = (field: keyof AgentConfig, value: string) => {
     if (currentAgent) {
       setCurrentAgent({ ...currentAgent, [field]: value });
     }
@@ -281,8 +316,17 @@ export default function AgentManagementPage() {
         headers: {
           "Content-Type": "application/json",
         },
+        // Send ALL fields to match schema
         body: JSON.stringify({
+          id: currentAgent.id,
           agentName: currentAgent.agentName,
+          triggerCode: currentAgent.triggerCode,
+          businessName: currentAgent.businessName,
+          industry: currentAgent.industry,
+          shortDescription: currentAgent.shortDescription,
+          businessURL: currentAgent.businessURL,
+          language: currentAgent.language,
+          tone: currentAgent.tone,
           persona: currentAgent.persona,
           task: currentAgent.task,
           status: currentAgent.status,
@@ -301,12 +345,14 @@ export default function AgentManagementPage() {
         throw new Error(data.error || "Failed to save agent.");
       }
 
-      await fetchAgents();
-      handleBackToList();
-      alert("Agent configuration saved to PostgreSQL database!");
+      await fetchAgents(); // Refresh list
+      handleBackToList(); // Go back to list
+      alert("Agent configuration saved successfully!");
     } catch (error) {
       console.error(error);
-      alert(error instanceof Error ? error.message : "Error connecting to server.");
+      alert(
+        error instanceof Error ? error.message : "Error connecting to server."
+      );
     } finally {
       setIsSaving(false);
     }
@@ -394,9 +440,14 @@ export default function AgentManagementPage() {
                   </div>
                 </div>
 
-                <h3 className="text-xl font-bold text-gray-900 dark:text-white mb-2">
+                <h3 className="text-xl font-bold text-gray-900 dark:text-white mb-1">
                   {agent.agentName}
                 </h3>
+                {agent.triggerCode && (
+                  <span className="text-xs font-mono text-blue-600 dark:text-blue-400 mb-2 block">
+                    TRIGGER: {agent.triggerCode}
+                  </span>
+                )}
                 <p className="text-sm text-gray-500 dark:text-gray-400 line-clamp-2 mb-6 flex-1 leading-relaxed">
                   {agent.persona || "No persona provided yet."}
                 </p>
@@ -503,72 +554,24 @@ export default function AgentManagementPage() {
           </div>
         </header>
 
-        {/* Status Dashboard */}
-        <div className="grid grid-cols-1 md:grid-cols-3 gap-6 mb-10">
-          <div className="bg-white/60 dark:bg-gray-900/60 backdrop-blur-md p-6 rounded-3xl border border-gray-100 dark:border-gray-800 shadow-sm flex items-center gap-5">
-            <div className="p-4 bg-green-100 dark:bg-green-900/30 rounded-2xl text-green-600 dark:text-green-400">
-              <Activity className="w-8 h-8" />
-            </div>
-            <div>
-              <p className="text-sm text-gray-500 dark:text-gray-400 font-medium">
-                System Health
-              </p>
-              <p className="text-xl font-bold text-gray-900 dark:text-white">
-                100% Uptime
-              </p>
-            </div>
-          </div>
-          <div className="bg-white/60 dark:bg-gray-900/60 backdrop-blur-md p-6 rounded-3xl border border-gray-100 dark:border-gray-800 shadow-sm flex items-center gap-5">
-            <div className="p-4 bg-blue-100 dark:bg-blue-900/30 rounded-2xl text-blue-600 dark:text-blue-400">
-              <Settings className="w-8 h-8" />
-            </div>
-            <div>
-              <p className="text-sm text-gray-500 dark:text-gray-400 font-medium">
-                Model Config
-              </p>
-              <p className="text-xl font-bold text-gray-900 dark:text-white">
-                GPT-4 Turbo
-              </p>
-            </div>
-          </div>
-          <div className="bg-gradient-to-br from-gray-900 to-gray-800 dark:from-blue-900/40 dark:to-indigo-900/40 p-6 rounded-3xl text-white flex items-center justify-between shadow-lg shadow-gray-900/10">
-            <div>
-              <p className="text-sm text-white/70 font-medium mb-1">
-                Testing Sandbox
-              </p>
-              <p className="text-xl font-bold">Active on WhatsApp</p>
-            </div>
-            <QrCode className="w-10 h-10 opacity-80" />
-          </div>
-        </div>
-
-        {loadError && (
-          <div className="flex items-center justify-between gap-4 rounded-2xl border border-red-200 bg-red-50/80 px-4 py-3 text-sm text-red-700 dark:border-red-900/40 dark:bg-red-950/30 dark:text-red-200">
-            <span>{loadError}</span>
-            <button
-              onClick={fetchAgents}
-              className="rounded-xl border border-red-300 px-3 py-1 text-xs font-semibold uppercase tracking-wide text-red-700 hover:bg-red-100 dark:border-red-700 dark:text-red-200 dark:hover:bg-red-900/30"
-            >
-              Retry
-            </button>
-          </div>
-        )}
-
         <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
           {/* Main Column */}
           <div className="lg:col-span-2 space-y-8">
+            {/* Agent Identification */}
             <section className="bg-white dark:bg-gray-900 border border-gray-100 dark:border-gray-800 rounded-3xl p-8 shadow-sm">
               <div className="flex items-center justify-between mb-8">
                 <h2 className="text-xl font-bold text-gray-900 dark:text-white">
-                  Core Configuration
+                  Agent Identity
                 </h2>
-                <div className="flex items-center gap-2 px-3 py-1 bg-blue-50 dark:bg-blue-900/20 rounded-full">
-                  <div className="w-2 h-2 bg-blue-500 rounded-full animate-pulse" />
-                  <span className="text-xs font-bold text-blue-700 dark:text-blue-300 uppercase tracking-wide">
-                    Live Mode
+                {/* ID Badge */}
+                <div className="flex items-center gap-2 px-3 py-1 bg-gray-100 dark:bg-gray-800 rounded-full border border-gray-200 dark:border-gray-700">
+                  <Hash className="w-3 h-3 text-gray-500" />
+                  <span className="text-xs font-mono text-gray-600 dark:text-gray-400">
+                    {currentAgent.id}
                   </span>
                 </div>
               </div>
+
               <div className="space-y-6">
                 <TextInput
                   label="Agent Name"
@@ -578,6 +581,67 @@ export default function AgentManagementPage() {
                     handleInputChange("agentName", e.target.value)
                   }
                 />
+                <TextInput
+                  label="Trigger Code (Max 4 words, CAPS)"
+                  placeholder="START AGENT NOW"
+                  value={currentAgent.triggerCode}
+                  onChange={(e) =>
+                    handleInputChange(
+                      "triggerCode",
+                      e.target.value.toUpperCase()
+                    )
+                  }
+                />
+              </div>
+            </section>
+
+            {/* Business Info (Editable) */}
+            <section className="bg-white dark:bg-gray-900 border border-gray-100 dark:border-gray-800 rounded-3xl p-8 shadow-sm">
+              <h2 className="text-xl font-bold text-gray-900 dark:text-white mb-8">
+                Business Context
+              </h2>
+              <div className="space-y-6">
+                <TextInput
+                  label="Business Name"
+                  placeholder="Acme Corp"
+                  value={currentAgent.businessName}
+                  onChange={(e) =>
+                    handleInputChange("businessName", e.target.value)
+                  }
+                />
+                <TextInput
+                  label="Website URL"
+                  placeholder="https://..."
+                  value={currentAgent.businessURL}
+                  onChange={(e) =>
+                    handleInputChange("businessURL", e.target.value)
+                  }
+                />
+                <div className="grid grid-cols-2 gap-4">
+                  <TextInput
+                    label="Language"
+                    placeholder="English"
+                    value={currentAgent.language}
+                    onChange={(e) =>
+                      handleInputChange("language", e.target.value)
+                    }
+                  />
+                  <TextInput
+                    label="Tone"
+                    placeholder="Formal"
+                    value={currentAgent.tone}
+                    onChange={(e) => handleInputChange("tone", e.target.value)}
+                  />
+                </div>
+              </div>
+            </section>
+
+            {/* Core Behavior */}
+            <section className="bg-white dark:bg-gray-900 border border-gray-100 dark:border-gray-800 rounded-3xl p-8 shadow-sm">
+              <h2 className="text-xl font-bold text-gray-900 dark:text-white mb-8">
+                Core Behavior
+              </h2>
+              <div className="space-y-6">
                 <RichTextEditorMock
                   label="Persona"
                   placeholder="Describe persona..."
