@@ -16,13 +16,12 @@ import {
   ArrowLeft,
   Loader2,
   Hash,
-  MessageSquare,
 } from "lucide-react";
 
 // --- Types & Config ---
 
 type AgentConfig = {
-  // Database fields required for POST
+  // Database fields required
   id: string;
   status: "Active" | "Inactive" | "Training";
   possibleActions: { updateContactTable: boolean; delegateToHuman: boolean };
@@ -35,7 +34,7 @@ type AgentConfig = {
 
   // Step 2: Core Config
   agentName: string;
-  triggerCode: string; // New field
+  triggerCode: string;
   persona: string;
   task: string;
   language: string;
@@ -57,7 +56,7 @@ const initialConfig: AgentConfig = {
   businessURL: "",
 
   agentName: "",
-  triggerCode: "", // Default empty
+  triggerCode: "",
   language: "English",
   tone: "Formal",
   persona: "",
@@ -89,9 +88,16 @@ const saveAgentConfigToDB = async (
         "Content-Type": "application/json",
       },
       body: JSON.stringify({
+        // Send ALL fields to the API
         id: config.id,
         agentName: config.agentName,
-        triggerCode: config.triggerCode, // Send new field
+        triggerCode: config.triggerCode,
+        businessName: config.businessName,
+        industry: config.industry,
+        shortDescription: config.shortDescription,
+        businessURL: config.businessURL,
+        language: config.language,
+        tone: config.tone,
         persona: config.persona,
         task: config.task,
         urls: config.urls.filter((url) => url.trim() !== ""),
@@ -195,17 +201,8 @@ const TextInput: React.FC<{
     e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement>
   ) => void;
   isTextArea?: boolean;
-  maxLength?: number; // Added prop
-  hint?: string; // Added prop
-}> = ({
-  label,
-  placeholder,
-  value,
-  onChange,
-  isTextArea = false,
-  maxLength,
-  hint,
-}) => (
+  hint?: string;
+}> = ({ label, placeholder, value, onChange, isTextArea = false, hint }) => (
   <div className="space-y-2">
     <label className="text-sm font-semibold text-gray-700 dark:text-gray-300 ml-1 flex justify-between">
       {label}
@@ -219,7 +216,6 @@ const TextInput: React.FC<{
         value={value}
         onChange={onChange}
         placeholder={placeholder}
-        maxLength={maxLength}
         className="w-full bg-white dark:bg-gray-800/50 border border-gray-200 dark:border-gray-700 rounded-2xl px-5 py-4 text-gray-900 dark:text-white placeholder-gray-400 focus:ring-4 focus:ring-blue-500/10 focus:border-blue-500 transition-all outline-none resize-none shadow-sm hover:border-gray-300 dark:hover:border-gray-600"
       />
     ) : (
@@ -228,7 +224,6 @@ const TextInput: React.FC<{
         value={value}
         onChange={onChange as (e: React.ChangeEvent<HTMLInputElement>) => void}
         placeholder={placeholder}
-        maxLength={maxLength}
         className="w-full bg-white dark:bg-gray-800/50 border border-gray-200 dark:border-gray-700 rounded-2xl px-5 py-4 text-gray-900 dark:text-white placeholder-gray-400 focus:ring-4 focus:ring-blue-500/10 focus:border-blue-500 transition-all outline-none shadow-sm hover:border-gray-300 dark:hover:border-gray-600"
       />
     )}
@@ -378,6 +373,24 @@ export default function CreateAgentPage() {
 
   const handleInputChange = (field: keyof AgentConfig, value: string) =>
     setConfig((prev) => ({ ...prev, [field]: value }));
+
+  // Special handler for Trigger Code
+  const handleTriggerCodeChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    let value = e.target.value.toUpperCase();
+    const words = value.trim().split(/\s+/);
+
+    // Limit to 4 words
+    if (words.length > 4 && value.endsWith(" ")) {
+      // prevent adding more words
+      return;
+    }
+    // Only update if within limit roughly (simple check)
+    if (words.length <= 5) {
+      // buffer for typing
+      setConfig((prev) => ({ ...prev, triggerCode: value }));
+    }
+  };
+
   const handleUrlChange = (index: number, value: string) => {
     const newUrls = [...config.urls];
     newUrls[index] = value;
@@ -402,28 +415,6 @@ export default function CreateAgentPage() {
   };
   const handleBack = () => {
     if (step > 1) setStep((prev) => prev - 1);
-  };
-
-  // Specific handler for Trigger Code (Uppercase + 4 words limit)
-  const handleTriggerCodeChange = (e: React.ChangeEvent<HTMLInputElement>) => {
-    let value = e.target.value.toUpperCase();
-
-    // Check word count (allow if words <= 4)
-    // We check if adding another character would start a 5th word
-    const words = value.trim().split(/\s+/);
-
-    // If we have more than 4 words, don't update (unless deleting)
-    // Allow spaces at the end of the 4th word, but not a 5th word char
-    if (words.length > 4) {
-      // Simple truncation or just prevent input could be tricky with paste.
-      // Let's just prevent typing if it exceeds.
-      // Or easier: allow typing but show error state? User asked for "limitation".
-      // We will just slice the array to 4 words if pasted/typed.
-      const truncated = words.slice(0, 4).join(" ");
-      value = truncated;
-    }
-
-    setConfig((prev) => ({ ...prev, triggerCode: value }));
   };
 
   const handleDeployAgent = async () => {
@@ -499,7 +490,7 @@ export default function CreateAgentPage() {
           </div>
         )}
 
-        {/* Step 2: Core Configuration & Communication Style */}
+        {/* Step 2: Core Configuration */}
         {step === 2 && (
           <div className="space-y-6">
             <section className="bg-white/80 dark:bg-gray-900/80 backdrop-blur-xl border border-gray-100 dark:border-gray-800 rounded-3xl p-8 shadow-xl shadow-gray-200/50 dark:shadow-none">
@@ -510,7 +501,7 @@ export default function CreateAgentPage() {
                 </h2>
               </div>
               <div className="space-y-8">
-                {/* Auto-Generated Agent ID Display */}
+                {/* Agent ID Display */}
                 <div className="bg-gray-50 dark:bg-gray-800/50 p-4 rounded-2xl border border-gray-200 dark:border-gray-700 flex items-center justify-between group">
                   <div>
                     <label className="text-xs font-bold text-gray-500 dark:text-gray-400 uppercase tracking-wider flex items-center gap-2">
@@ -534,13 +525,12 @@ export default function CreateAgentPage() {
                   }
                 />
 
-                {/* Agent Trigger Code Input */}
                 <TextInput
-                  label="Agent Trigger Code"
-                  placeholder="e.g. HELLO START BOT NOW"
+                  label="Trigger Code"
+                  placeholder="e.g. HELLO START"
                   value={config.triggerCode}
                   onChange={(e) => handleTriggerCodeChange(e as any)}
-                  hint="Max 4 words, All CAPS"
+                  hint="Max 4 words, Uppercase"
                 />
 
                 <div className="grid grid-cols-1 gap-8">
