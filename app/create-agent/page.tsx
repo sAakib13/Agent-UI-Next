@@ -15,13 +15,15 @@ import {
   ArrowRight,
   ArrowLeft,
   Loader2,
+  Hash,
+  MessageSquare,
 } from "lucide-react";
 
 // --- Types & Config ---
 
 type AgentConfig = {
   // Database fields required for POST
-  id: string; // Temporary ID for new agent, though DB might override
+  id: string;
   status: "Active" | "Inactive" | "Training";
   possibleActions: { updateContactTable: boolean; delegateToHuman: boolean };
 
@@ -29,13 +31,15 @@ type AgentConfig = {
   businessName: string;
   industry: string;
   shortDescription: string;
-  language: string;
-  tone: string;
+  businessURL: string;
 
   // Step 2: Core Config
   agentName: string;
+  triggerCode: string; // New field
   persona: string;
   task: string;
+  language: string;
+  tone: string;
 
   // Step 3: Knowledge
   urls: string[];
@@ -43,18 +47,22 @@ type AgentConfig = {
 };
 
 const initialConfig: AgentConfig = {
-  id: crypto.randomUUID(), // Assign a unique ID on creation
-  status: "Training", // New agents start in training status
+  id: crypto.randomUUID(),
+  status: "Training",
   possibleActions: { updateContactTable: false, delegateToHuman: false },
 
   businessName: "",
   industry: "Technology",
   shortDescription: "",
+  businessURL: "",
+
+  agentName: "",
+  triggerCode: "", // Default empty
   language: "English",
   tone: "Formal",
-  agentName: "",
   persona: "",
   task: "",
+
   urls: [""],
   documents: [],
 };
@@ -69,7 +77,7 @@ const industries = [
 const languages = ["English", "Spanish", "French", "German"];
 const tones = ["Formal", "Casual", "Friendly", "Professional"];
 
-// --- Reusable DB Function (Copied from Agent Management) ---
+// --- Reusable DB Function ---
 
 const saveAgentConfigToDB = async (
   config: AgentConfig
@@ -80,17 +88,22 @@ const saveAgentConfigToDB = async (
       headers: {
         "Content-Type": "application/json",
       },
-      // Only send the necessary data (excluding File objects)
       body: JSON.stringify({
         id: config.id,
         agentName: config.agentName,
+        triggerCode: config.triggerCode, // Send new field
         persona: config.persona,
         task: config.task,
-        urls: config.urls.filter((url) => url.trim() !== ""), // Filter out empty strings
+        urls: config.urls.filter((url) => url.trim() !== ""),
         status: config.status,
         possibleActions: config.possibleActions,
       }),
     });
+
+    if (!response.ok) {
+      const errorText = await response.text();
+      throw new Error(`Server Error ${response.status}: ${errorText}`);
+    }
 
     const data = await response.json();
 
@@ -106,11 +119,11 @@ const saveAgentConfigToDB = async (
           "Failed to save: " + (data.details || data.error || "Unknown error"),
       };
     }
-  } catch (error) {
+  } catch (error: any) {
     console.error("API Call Error:", error);
     return {
       success: false,
-      message: "Error connecting to server or API route failed.",
+      message: `Error: ${error.message || "Connection failed"}`,
     };
   }
 };
@@ -182,10 +195,23 @@ const TextInput: React.FC<{
     e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement>
   ) => void;
   isTextArea?: boolean;
-}> = ({ label, placeholder, value, onChange, isTextArea = false }) => (
+  maxLength?: number; // Added prop
+  hint?: string; // Added prop
+}> = ({
+  label,
+  placeholder,
+  value,
+  onChange,
+  isTextArea = false,
+  maxLength,
+  hint,
+}) => (
   <div className="space-y-2">
-    <label className="text-sm font-semibold text-gray-700 dark:text-gray-300 ml-1">
+    <label className="text-sm font-semibold text-gray-700 dark:text-gray-300 ml-1 flex justify-between">
       {label}
+      {hint && (
+        <span className="text-xs font-normal text-gray-400">{hint}</span>
+      )}
     </label>
     {isTextArea ? (
       <textarea
@@ -193,6 +219,7 @@ const TextInput: React.FC<{
         value={value}
         onChange={onChange}
         placeholder={placeholder}
+        maxLength={maxLength}
         className="w-full bg-white dark:bg-gray-800/50 border border-gray-200 dark:border-gray-700 rounded-2xl px-5 py-4 text-gray-900 dark:text-white placeholder-gray-400 focus:ring-4 focus:ring-blue-500/10 focus:border-blue-500 transition-all outline-none resize-none shadow-sm hover:border-gray-300 dark:hover:border-gray-600"
       />
     ) : (
@@ -201,6 +228,7 @@ const TextInput: React.FC<{
         value={value}
         onChange={onChange as (e: React.ChangeEvent<HTMLInputElement>) => void}
         placeholder={placeholder}
+        maxLength={maxLength}
         className="w-full bg-white dark:bg-gray-800/50 border border-gray-200 dark:border-gray-700 rounded-2xl px-5 py-4 text-gray-900 dark:text-white placeholder-gray-400 focus:ring-4 focus:ring-blue-500/10 focus:border-blue-500 transition-all outline-none shadow-sm hover:border-gray-300 dark:hover:border-gray-600"
       />
     )}
@@ -376,14 +404,33 @@ export default function CreateAgentPage() {
     if (step > 1) setStep((prev) => prev - 1);
   };
 
+  // Specific handler for Trigger Code (Uppercase + 4 words limit)
+  const handleTriggerCodeChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    let value = e.target.value.toUpperCase();
+
+    // Check word count (allow if words <= 4)
+    // We check if adding another character would start a 5th word
+    const words = value.trim().split(/\s+/);
+
+    // If we have more than 4 words, don't update (unless deleting)
+    // Allow spaces at the end of the 4th word, but not a 5th word char
+    if (words.length > 4) {
+      // Simple truncation or just prevent input could be tricky with paste.
+      // Let's just prevent typing if it exceeds.
+      // Or easier: allow typing but show error state? User asked for "limitation".
+      // We will just slice the array to 4 words if pasted/typed.
+      const truncated = words.slice(0, 4).join(" ");
+      value = truncated;
+    }
+
+    setConfig((prev) => ({ ...prev, triggerCode: value }));
+  };
+
   const handleDeployAgent = async () => {
     setIsDeploying(true);
     const result = await saveAgentConfigToDB(config);
     alert(result.message);
     setIsDeploying(false);
-
-    // Optional: Redirect to Agent Management on success
-    // if (result.success) router.push('/configure-agent');
   };
 
   return (
@@ -439,6 +486,79 @@ export default function CreateAgentPage() {
                   }
                   isTextArea
                 />
+                <TextInput
+                  label="Business URL"
+                  placeholder="e.g. https://www.acmecorp.com"
+                  value={config.businessURL}
+                  onChange={(e) =>
+                    handleInputChange("businessURL", e.target.value)
+                  }
+                />
+              </div>
+            </section>
+          </div>
+        )}
+
+        {/* Step 2: Core Configuration & Communication Style */}
+        {step === 2 && (
+          <div className="space-y-6">
+            <section className="bg-white/80 dark:bg-gray-900/80 backdrop-blur-xl border border-gray-100 dark:border-gray-800 rounded-3xl p-8 shadow-xl shadow-gray-200/50 dark:shadow-none">
+              <div className="flex items-center gap-3 mb-8">
+                <div className="h-8 w-1 bg-blue-500 rounded-full" />
+                <h2 className="text-2xl font-bold text-gray-900 dark:text-white">
+                  Agent Configuration
+                </h2>
+              </div>
+              <div className="space-y-8">
+                {/* Auto-Generated Agent ID Display */}
+                <div className="bg-gray-50 dark:bg-gray-800/50 p-4 rounded-2xl border border-gray-200 dark:border-gray-700 flex items-center justify-between group">
+                  <div>
+                    <label className="text-xs font-bold text-gray-500 dark:text-gray-400 uppercase tracking-wider flex items-center gap-2">
+                      <Hash className="w-3 h-3" /> Agent ID (Auto-Generated)
+                    </label>
+                    <div className="font-mono text-lg text-gray-700 dark:text-gray-300 mt-1 select-all">
+                      {config.id}
+                    </div>
+                  </div>
+                  <div className="text-xs text-gray-400 italic opacity-0 group-hover:opacity-100 transition-opacity">
+                    System Generated
+                  </div>
+                </div>
+
+                <TextInput
+                  label="Agent Name"
+                  placeholder="e.g. Support Bot v1"
+                  value={config.agentName}
+                  onChange={(e) =>
+                    handleInputChange("agentName", e.target.value)
+                  }
+                />
+
+                {/* Agent Trigger Code Input */}
+                <TextInput
+                  label="Agent Trigger Code"
+                  placeholder="e.g. HELLO START BOT NOW"
+                  value={config.triggerCode}
+                  onChange={(e) => handleTriggerCodeChange(e as any)}
+                  hint="Max 4 words, All CAPS"
+                />
+
+                <div className="grid grid-cols-1 gap-8">
+                  <RichTextEditorMock
+                    label="Persona"
+                    placeholder="Describe the agent's persona..."
+                    value={config.persona}
+                    onChange={(e) =>
+                      handleInputChange("persona", e.target.value)
+                    }
+                  />
+                  <RichTextEditorMock
+                    label="Task"
+                    placeholder="Describe the specific tasks..."
+                    value={config.task}
+                    onChange={(e) => handleInputChange("task", e.target.value)}
+                  />
+                </div>
               </div>
             </section>
 
@@ -467,40 +587,6 @@ export default function CreateAgentPage() {
               </div>
             </section>
           </div>
-        )}
-
-        {/* Step 2: Core Configuration */}
-        {step === 2 && (
-          <section className="bg-white/80 dark:bg-gray-900/80 backdrop-blur-xl border border-gray-100 dark:border-gray-800 rounded-3xl p-8 shadow-xl shadow-gray-200/50 dark:shadow-none">
-            <div className="flex items-center gap-3 mb-8">
-              <div className="h-8 w-1 bg-blue-500 rounded-full" />
-              <h2 className="text-2xl font-bold text-gray-900 dark:text-white">
-                Agent Configuration
-              </h2>
-            </div>
-            <div className="space-y-8">
-              <TextInput
-                label="Agent Name"
-                placeholder="e.g. Support Bot v1"
-                value={config.agentName}
-                onChange={(e) => handleInputChange("agentName", e.target.value)}
-              />
-              <div className="grid grid-cols-1 gap-8">
-                <RichTextEditorMock
-                  label="Persona"
-                  placeholder="Describe the agent's persona..."
-                  value={config.persona}
-                  onChange={(e) => handleInputChange("persona", e.target.value)}
-                />
-                <RichTextEditorMock
-                  label="Task"
-                  placeholder="Describe the specific tasks..."
-                  value={config.task}
-                  onChange={(e) => handleInputChange("task", e.target.value)}
-                />
-              </div>
-            </div>
-          </section>
         )}
 
         {/* Step 3: Knowledge Base */}
