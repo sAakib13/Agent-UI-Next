@@ -42,7 +42,7 @@ type AgentConfig = {
 
   // Step 3: Knowledge
   urls: string[];
-  documents: File[];
+  documents: File[]; // Holds actual File objects on the client
 };
 
 const initialConfig: AgentConfig = {
@@ -82,6 +82,9 @@ const saveAgentConfigToDB = async (
   config: AgentConfig
 ): Promise<{ success: boolean; message: string }> => {
   try {
+    // 1. Prepare file references (Send only names/metadata, not the files themselves)
+    const documentRefs = config.documents.map((f) => f.name);
+
     const response = await fetch("/api/agents", {
       method: "POST",
       headers: {
@@ -103,6 +106,7 @@ const saveAgentConfigToDB = async (
         urls: config.urls.filter((url) => url.trim() !== ""),
         status: config.status,
         possibleActions: config.possibleActions,
+        documentRefs: documentRefs,
       }),
     });
 
