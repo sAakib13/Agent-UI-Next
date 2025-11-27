@@ -1,5 +1,5 @@
 "use client";
-
+import { AgentQR } from "@/components/agent/AgentQR";
 import React, { useState } from "react";
 import {
   ChevronDown,
@@ -449,6 +449,23 @@ export default function CreateAgentPage() {
         {step === 1 && (
           <div className="space-y-6">
             <section className="bg-white/80 dark:bg-gray-900/80 backdrop-blur-xl border border-gray-100 dark:border-gray-800 rounded-3xl p-8 shadow-xl shadow-gray-200/50 dark:shadow-none">
+              <div className="bg-gradient-to-br from-gray-900 to-gray-800 ... p-6 rounded-3xl text-white flex items-center justify-between shadow-lg">
+                <div>
+                  <p className="text-sm text-white/70 font-medium mb-1">
+                    Testing Sandbox
+                  </p>
+                  <p className="text-xl font-bold">Active on WhatsApp</p>
+                </div>
+
+                {/* Replace the static <QrCode /> icon with the dynamic component */}
+                <div className="bg-white p-2 rounded-xl">
+                  <AgentQR
+                    agentId={config.id}
+                    triggerCode={config.triggerCode}
+                  />
+                </div>
+              </div>
+
               <div className="flex items-center gap-3 mb-8">
                 <div className="h-8 w-1 bg-blue-500 rounded-full" />
                 <h2 className="text-2xl font-bold text-gray-900 dark:text-white">
