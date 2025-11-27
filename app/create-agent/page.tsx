@@ -36,6 +36,7 @@ type AgentConfig = {
   task: string;
   language: string;
   tone: string;
+  greeting: string;
 
   urls: string[];
   documents: File[];
@@ -50,14 +51,15 @@ const initialConfig: AgentConfig = {
   possibleActions: { updateContactTable: false, delegateToHuman: false },
 
   businessName: "",
-  industry: "Technology",
+  industry: "",
   shortDescription: "",
   businessURL: "",
 
   agentName: "",
   triggerCode: "",
-  language: "English",
-  tone: "Formal",
+  language: "",
+  tone: "",
+  greeting: "",
   persona: "",
   task: "",
 
@@ -124,15 +126,69 @@ const saveAgentConfigToDB = async (
         message: "Failed to save: " + (data.details || data.error),
       };
     }
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
   } catch (error: any) {
     console.error("API Call Error:", error);
     return { success: false, message: `Error: ${error.message}` };
   }
 };
 
-// ... (Keeping TextInput, SelectInput, RichTextEditorMock, FileDropZone, Stepper components exactly as they were to save space - insert them here if creating a fresh file) ...
-// For brevity in this response, I assume the UI components are present as per previous versions.
-// If you copy-paste, ensure TextInput, SelectInput, etc., are defined here.
+// --- Components ---
+
+const Stepper: React.FC<{ currentStep: number }> = ({ currentStep }) => {
+  const steps = [
+    { num: 1, label: "Profile" },
+    { num: 2, label: "Configuration" },
+    { num: 3, label: "Knowledge" },
+  ];
+
+  return (
+    <div className="relative mb-12">
+      <div className="absolute left-0 top-1/2 w-full -translate-y-1/2 px-4">
+        <div className="h-1 w-full bg-gray-100 dark:bg-gray-800 rounded-full" />
+        <div
+          className="absolute left-0 top-1/2 h-1 bg-blue-600 rounded-full -translate-y-1/2 transition-all duration-500 ease-in-out"
+          style={{
+            width: `${((currentStep - 1) / (steps.length - 1)) * 100}%`,
+          }}
+        />
+      </div>
+
+      <div className="relative flex justify-between">
+        {steps.map((step) => {
+          const isActive = step.num === currentStep;
+          const isCompleted = step.num < currentStep;
+          return (
+            <div
+              key={step.num}
+              className="flex flex-col items-center group cursor-default"
+            >
+              <div
+                className={`w-10 h-10 rounded-full flex items-center justify-center font-bold text-sm transition-all duration-300 ring-4 ring-white dark:ring-gray-950 z-10
+                  ${isActive
+                    ? "bg-blue-600 text-white shadow-lg shadow-blue-600/30 scale-110"
+                    : isCompleted
+                      ? "bg-green-500 text-white"
+                      : "bg-white dark:bg-gray-900 border-2 border-gray-200 dark:border-gray-800 text-gray-400"
+                  }`}
+              >
+                {isCompleted ? <Check className="w-5 h-5" /> : step.num}
+              </div>
+              <span
+                className={`absolute top-12 text-xs font-bold tracking-wide transition-colors duration-300 ${isActive
+                  ? "text-blue-600 dark:text-blue-400"
+                  : "text-gray-400"
+                  }`}
+              >
+                {step.label}
+              </span>
+            </div>
+          );
+        })}
+      </div>
+    </div>
+  );
+};
 
 const TextInput: React.FC<{
   label: string;
@@ -170,7 +226,7 @@ const TextInput: React.FC<{
 );
 const SelectInput: React.FC<{
   label: string;
-  value: string;
+  value: string | null;
   options: string[];
   onChange: (e: any) => void;
 }> = ({ label, value, options, onChange }) => (
@@ -180,20 +236,24 @@ const SelectInput: React.FC<{
     </label>
     <div className="relative">
       <select
-        value={value}
+        value={value ?? ""}
         onChange={onChange}
-        className="appearance-none w-full bg-white dark:bg-gray-800/50 border border-gray-200 dark:border-gray-700 rounded-2xl pl-5 pr-10 py-4 text-gray-900 dark:text-white focus:ring-4 focus:ring-blue-500/10 focus:border-blue-500 transition-all outline-none cursor-pointer shadow-sm"
+
+        className={`appearance-none w-full bg-white dark:bg-gray-800/50 border border-gray-200 dark:border-gray-700 rounded-2xl pl-5 pr-10 py-4 
+    focus:ring-4 focus:ring-blue-500/10 focus:border-blue-500 transition-all outline-none cursor-pointer shadow-sm hover:border-gray-300 dark:hover:border-gray-600
+    ${value == "" ? "text-gray-600" : "text-gray-900 dark:text-white"}`}
       >
-        <option value="" disabled>
-          Select
+        <option value="" disabled >
+          Select an option
         </option>
-        {options.map((o) => (
-          <option key={o} value={o}>
-            {o}
+        {options.map((option) => (
+          <option key={option} value={option}>
+            {option}
           </option>
         ))}
       </select>
-      <ChevronDown className="absolute right-5 top-1/2 transform -translate-y-1/2 w-4 h-4 text-gray-400 pointer-events-none" />
+
+      <ChevronDown className="absolute right-5 top-1/2 transform -translate-y-1/2 w-4 h-4 text-gray-400 pointer-events-none rounded-2xl" />
     </div>
   </div>
 );
@@ -353,6 +413,24 @@ export default function CreateAgentPage() {
 
   const handleInputChange = (field: keyof AgentConfig, value: string) =>
     setConfig((prev) => ({ ...prev, [field]: value }));
+
+  // Special handler for Trigger Code
+  const handleTriggerCodeChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const value = e.target.value.toUpperCase();
+    const words = value.trim().split(/\s+/);
+
+    // Limit to 4 words
+    if (words.length > 4 && value.endsWith(" ")) {
+      // prevent adding more words
+      return;
+    }
+    // Only update if within limit roughly (simple check)
+    if (words.length <= 5) {
+      // buffer for typing
+      setConfig((prev) => ({ ...prev, triggerCode: value }));
+    }
+  };
+
   const handleUrlChange = (index: number, value: string) => {
     const newUrls = [...config.urls];
     newUrls[index] = value;
@@ -436,11 +514,11 @@ export default function CreateAgentPage() {
   return (
     <div className="max-w-4xl mx-auto pb-32 pt-6">
       <header className="text-center mb-12">
-        <h1 className="text-4xl font-extrabold tracking-tight text-gray-900 dark:text-white mb-3">
+        <h1 className="text-5xl font-extrabold tracking-tight text-gray-900 dark:text-white mb-3">
           Create New Agent
         </h1>
-        <p className="text-lg text-gray-500 dark:text-gray-400 max-w-xl mx-auto">
-          Set up your intelligent assistant in a few simple steps.
+        <p className="text-md text-gray-400 dark:text-gray-400 max-w-xl mx-auto italic">
+          Let’s build your WhatsApp AI Assistant
         </p>
       </header>
 
@@ -452,6 +530,7 @@ export default function CreateAgentPage() {
         {step === 1 && (
           <div className="space-y-6">
             <section className="bg-white/80 dark:bg-gray-900/80 backdrop-blur-xl border border-gray-100 dark:border-gray-800 rounded-3xl p-8 shadow-xl shadow-gray-200/50 dark:shadow-none">
+
               <div className="flex items-center gap-3 mb-8">
                 <div className="h-8 w-1 bg-blue-500 rounded-full" />
                 <h2 className="text-2xl font-bold text-gray-900 dark:text-white">
@@ -461,10 +540,18 @@ export default function CreateAgentPage() {
               <div className="space-y-6">
                 <TextInput
                   label="Business Name"
-                  placeholder="e.g. Acme Corp"
+                  placeholder="e.g. Telerivet.Inc"
                   value={config.businessName}
                   onChange={(e) =>
                     handleInputChange("businessName", e.target.value)
+                  }
+                />
+                <TextInput
+                  label="Business Website"
+                  placeholder="e.g. https://www.telerivet.com"
+                  value={config.businessURL}
+                  onChange={(e) =>
+                    handleInputChange("businessURL", e.target.value)
                   }
                 />
                 <SelectInput
@@ -472,9 +559,10 @@ export default function CreateAgentPage() {
                   value={config.industry}
                   options={industries}
                   onChange={(e) =>
-                    handleInputChange("industry", e.target.value)
+                    handleInputChange("industry", e.target.value || "")
                   }
                 />
+
                 <TextInput
                   label="Short Description"
                   placeholder="Briefly describe your business..."
@@ -484,14 +572,7 @@ export default function CreateAgentPage() {
                   }
                   isTextArea
                 />
-                <TextInput
-                  label="Business URL"
-                  placeholder="e.g. https://www.acmecorp.com"
-                  value={config.businessURL}
-                  onChange={(e) =>
-                    handleInputChange("businessURL", e.target.value)
-                  }
-                />
+
               </div>
             </section>
           </div>
@@ -508,7 +589,7 @@ export default function CreateAgentPage() {
               </div>
               <div className="space-y-8">
                 {/* Agent ID Display */}
-                <div className="bg-gray-50 dark:bg-gray-800/50 p-4 rounded-2xl border border-gray-200 dark:border-gray-700 flex items-center justify-between group">
+                {/* <div className="bg-gray-50 dark:bg-gray-800/50 p-4 rounded-2xl border border-gray-200 dark:border-gray-700 flex items-center justify-between group">
                   <div>
                     <label className="text-xs font-bold text-gray-500 dark:text-gray-400 uppercase tracking-wider flex items-center gap-2">
                       <Hash className="w-3 h-3" /> Agent ID (Auto-Generated)
@@ -520,22 +601,48 @@ export default function CreateAgentPage() {
                 </div>
                 <TextInput
                   label="Agent Name"
-                  placeholder="e.g. Support Bot v1"
+                  placeholder="e.g. Customer Support Assistant"
                   value={config.agentName}
                   onChange={(e) =>
                     handleInputChange("agentName", e.target.value)
                   }
                 />
-                <TextInput
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+                  <SelectInput
+                    label="Agent Language"
+                    value={config.language}
+                    options={languages}
+                    onChange={(e) =>
+                      handleInputChange("language", e.target.value)
+                    }
+                  />
+                  <SelectInput
+                    label="Agent Tone"
+                    value={config.tone}
+                    options={tones}
+                    onChange={(e) => handleInputChange("tone", e.target.value)}
+                  />
+                </div>
+
+                {/* <TextInput
                   label="Trigger Code"
                   placeholder="e.g. HELLO START"
                   value={config.triggerCode}
+                  // eslint-disable-next-line @typescript-eslint/no-explicit-any
                   onChange={(e) => handleTriggerCodeChange(e as any)}
                   hint="Max 4 words, Uppercase"
+
+
+                /> */}
+                <TextInput
+                  label="Agent Intial Greeting"
+                  placeholder="e.g. Hello! How can I assist you today?"
+                  value={config.greeting || ""}
+                  onChange={(e) => handleInputChange("greeting", e.target.value)}
                 />
                 <div className="grid grid-cols-1 gap-8">
                   <RichTextEditorMock
-                    label="Persona"
+                    label="Agent Persona"
                     placeholder="Describe the agent's persona..."
                     value={config.persona}
                     onChange={(e) =>
@@ -543,36 +650,12 @@ export default function CreateAgentPage() {
                     }
                   />
                   <RichTextEditorMock
-                    label="Task"
+                    label="Agent's Task"
                     placeholder="Describe the specific tasks..."
                     value={config.task}
                     onChange={(e) => handleInputChange("task", e.target.value)}
                   />
                 </div>
-              </div>
-            </section>
-            <section className="bg-white/80 dark:bg-gray-900/80 backdrop-blur-xl border border-gray-100 dark:border-gray-800 rounded-3xl p-8 shadow-xl shadow-gray-200/50 dark:shadow-none">
-              <div className="flex items-center gap-3 mb-8">
-                <div className="h-8 w-1 bg-indigo-500 rounded-full" />
-                <h2 className="text-2xl font-bold text-gray-900 dark:text-white">
-                  Communication Style
-                </h2>
-              </div>
-              <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-                <SelectInput
-                  label="Language"
-                  value={config.language}
-                  options={languages}
-                  onChange={(e) =>
-                    handleInputChange("language", e.target.value)
-                  }
-                />
-                <SelectInput
-                  label="Tone"
-                  value={config.tone}
-                  options={tones}
-                  onChange={(e) => handleInputChange("tone", e.target.value)}
-                />
               </div>
             </section>
           </div>
@@ -629,7 +712,7 @@ export default function CreateAgentPage() {
       </form>
 
       {/* Modern Floating Footer */}
-      <div className="fixed bottom-8 left-0 right-0 flex justify-center z-50 pointer-events-none px-4">
+      <div className="fixed bottom-8 left-60 right-0 flex justify-center z-50 pointer-events-none px-4 items-center">
         <div className="bg-white/90 dark:bg-gray-900/90 backdrop-blur-2xl border border-gray-200/50 dark:border-gray-700/50 p-2 rounded-2xl shadow-2xl shadow-blue-900/20 pointer-events-auto flex items-center gap-2">
           <button
             type="button"
@@ -654,7 +737,7 @@ export default function CreateAgentPage() {
               type="button"
               onClick={handleDeployAgent}
               disabled={isDeploying}
-              className="px-8 py-3 bg-gradient-to-r from-blue-600 to-indigo-600 text-white rounded-xl font-semibold hover:from-blue-700 hover:to-indigo-700 shadow-lg shadow-blue-600/30 hover:shadow-blue-600/40 hover:-translate-y-0.5 transition-all flex items-center gap-2 disabled:opacity-50 disabled:cursor-not-allowed"
+              className="px-8 py-3 bg-linear-to-r from-blue-600 to-indigo-600 text-white rounded-xl font-semibold hover:from-blue-700 hover:to-indigo-700 shadow-lg shadow-blue-600/30 hover:shadow-blue-600/40 hover:-translate-y-0.5 transition-all flex items-center gap-2 disabled:opacity-50 disabled:cursor-not-allowed"
             >
               {isDeploying ? (
                 <Loader2 className="w-5 h-5 animate-spin" />
