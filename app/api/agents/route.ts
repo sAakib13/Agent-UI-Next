@@ -2,11 +2,11 @@ import { NextResponse } from "next/server";
 import { Pool } from "pg";
 
 const pool = new Pool({
-  host: "52.186.169.156",
-  port: 5432,
-  database: "db_sbdev",
-  user: "sb_devs",
-  password: "eBNW[9PThcFg65Q",
+  host: process.env.PG_HOST,
+  port: Number(process.env.PG_PORT),
+  database: process.env.PG_DATABASE,
+  user: process.env.PG_USER,
+  password: process.env.PG_PASSWORD,
 });
 
 // --- GET Handler (Fetches Agents + Org Info) ---
