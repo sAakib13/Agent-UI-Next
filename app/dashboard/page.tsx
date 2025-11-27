@@ -138,7 +138,7 @@ export default function DashboardPage() {
               {/* Updated QR Code Integration */}
               <div className="bg-white p-2 rounded-xl">
                 <AgentQR
-                  agentId="550e8400-e29b-41d4-a716-446655440000" // Valid UUID required for API
+                  agentId="550e8400-e29b-41d4-a716-446655440000"
                   agentName="Demo Agent" // Required prop
                   triggerCode="START"
                   className="!border-none !shadow-none !bg-transparent !p-0" // Override container styles

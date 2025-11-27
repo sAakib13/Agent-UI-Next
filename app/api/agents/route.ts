@@ -16,6 +16,7 @@ const TABLE = process.env.PG_TABLE || "agents";
 // SQL statement to create the schema/table if it does not exist
 const CREATE_SCHEMA_QUERY = `CREATE SCHEMA IF NOT EXISTS ${SCHEMA};`;
 
+// 1. Update Schema to include qr_code
 const CREATE_TABLE_QUERY = `
   CREATE TABLE IF NOT EXISTS agentstudio.agents (
     id UUID PRIMARY KEY,
@@ -30,73 +31,46 @@ const CREATE_TABLE_QUERY = `
     persona TEXT,
     task TEXT,
     status VARCHAR(50) DEFAULT 'Training',
+    qr_code TEXT,
     urls JSONB DEFAULT '[]'::jsonb,
+    document_refs JSONB DEFAULT '[]'::jsonb,
     actions JSONB DEFAULT '{}'::jsonb,
     created_at TIMESTAMP WITH TIME ZONE DEFAULT NOW(),
     updated_at TIMESTAMP WITH TIME ZONE DEFAULT NOW()
   );
 `;
 
-// 2. Migration Helper: Adds columns if they are missing (for existing tables)
+// 2. Migration Helper: Check for qr_code column
 const MIGRATE_COLUMNS_QUERY = `
   DO $$
   BEGIN
-    -- Check and add trigger_code
-    IF NOT EXISTS (SELECT 1 FROM information_schema.columns WHERE table_schema='agentstudio' AND table_name='agents' AND column_name='trigger_code') THEN
-      ALTER TABLE agentstudio.agents ADD COLUMN trigger_code VARCHAR(100);
-    END IF;
-    -- Check and add business_name
-    IF NOT EXISTS (SELECT 1 FROM information_schema.columns WHERE table_schema='agentstudio' AND table_name='agents' AND column_name='business_name') THEN
-      ALTER TABLE agentstudio.agents ADD COLUMN business_name VARCHAR(255);
-    END IF;
-    -- Check and add industry
-    IF NOT EXISTS (SELECT 1 FROM information_schema.columns WHERE table_schema='agentstudio' AND table_name='agents' AND column_name='industry') THEN
-      ALTER TABLE agentstudio.agents ADD COLUMN industry VARCHAR(100);
-    END IF;
-    -- Check and add short_description
-    IF NOT EXISTS (SELECT 1 FROM information_schema.columns WHERE table_schema='agentstudio' AND table_name='agents' AND column_name='short_description') THEN
-      ALTER TABLE agentstudio.agents ADD COLUMN short_description TEXT;
-    END IF;
-    -- Check and add business_url
-    IF NOT EXISTS (SELECT 1 FROM information_schema.columns WHERE table_schema='agentstudio' AND table_name='agents' AND column_name='business_url') THEN
-      ALTER TABLE agentstudio.agents ADD COLUMN business_url TEXT;
-    END IF;
-    -- Check and add language
-    IF NOT EXISTS (SELECT 1 FROM information_schema.columns WHERE table_schema='agentstudio' AND table_name='agents' AND column_name='language') THEN
-      ALTER TABLE agentstudio.agents ADD COLUMN language VARCHAR(50);
-    END IF;
-    -- Check and add tone
-    IF NOT EXISTS (SELECT 1 FROM information_schema.columns WHERE table_schema='agentstudio' AND table_name='agents' AND column_name='tone') THEN
-      ALTER TABLE agentstudio.agents ADD COLUMN tone VARCHAR(50);
-    END IF;
+    IF NOT EXISTS (SELECT 1 FROM information_schema.columns WHERE table_schema='agentstudio' AND table_name='agents' AND column_name='trigger_code') THEN ALTER TABLE agentstudio.agents ADD COLUMN trigger_code VARCHAR(100); END IF;
+    IF NOT EXISTS (SELECT 1 FROM information_schema.columns WHERE table_schema='agentstudio' AND table_name='agents' AND column_name='business_name') THEN ALTER TABLE agentstudio.agents ADD COLUMN business_name VARCHAR(255); END IF;
+    IF NOT EXISTS (SELECT 1 FROM information_schema.columns WHERE table_schema='agentstudio' AND table_name='agents' AND column_name='industry') THEN ALTER TABLE agentstudio.agents ADD COLUMN industry VARCHAR(100); END IF;
+    IF NOT EXISTS (SELECT 1 FROM information_schema.columns WHERE table_schema='agentstudio' AND table_name='agents' AND column_name='short_description') THEN ALTER TABLE agentstudio.agents ADD COLUMN short_description TEXT; END IF;
+    IF NOT EXISTS (SELECT 1 FROM information_schema.columns WHERE table_schema='agentstudio' AND table_name='agents' AND column_name='business_url') THEN ALTER TABLE agentstudio.agents ADD COLUMN business_url TEXT; END IF;
+    IF NOT EXISTS (SELECT 1 FROM information_schema.columns WHERE table_schema='agentstudio' AND table_name='agents' AND column_name='language') THEN ALTER TABLE agentstudio.agents ADD COLUMN language VARCHAR(50); END IF;
+    IF NOT EXISTS (SELECT 1 FROM information_schema.columns WHERE table_schema='agentstudio' AND table_name='agents' AND column_name='tone') THEN ALTER TABLE agentstudio.agents ADD COLUMN tone VARCHAR(50); END IF;
+    IF NOT EXISTS (SELECT 1 FROM information_schema.columns WHERE table_schema='agentstudio' AND table_name='agents' AND column_name='document_refs') THEN ALTER TABLE agentstudio.agents ADD COLUMN document_refs JSONB DEFAULT '[]'::jsonb; END IF;
+    -- NEW: Add qr_code column if missing
+    IF NOT EXISTS (SELECT 1 FROM information_schema.columns WHERE table_schema='agentstudio' AND table_name='agents' AND column_name='qr_code') THEN ALTER TABLE agentstudio.agents ADD COLUMN qr_code TEXT; END IF;
   END $$;
 `;
 
-// --- NEW GET FUNCTION (Fixes 405 Error) ---
 export async function GET() {
   let client;
   try {
     client = await pool.connect();
-
-    // Ensure table structure is valid before querying
     await client.query(CREATE_TABLE_QUERY);
     await client.query(MIGRATE_COLUMNS_QUERY);
-
     const result = await client.query(
       "SELECT * FROM agentstudio.agents ORDER BY updated_at DESC"
     );
-
-    // The driver returns JSONB columns (urls, actions) as parsed JSON objects in Node.js,
-    // so we don't need JSON.parse here, just return the rows.
     return NextResponse.json({ success: true, data: result.rows });
   } catch (error: any) {
     console.error("Database Fetch Error:", error);
     return NextResponse.json(
-      {
-        success: false,
-        error: "Failed to process request or save to database.",
-        details: error.message,
-      },
+      { success: false, error: "Database Error", details: error.message },
       { status: 500 }
     );
   } finally {
@@ -109,7 +83,7 @@ export async function POST(request: Request) {
   try {
     const body = await request.json();
 
-    // Destructure ALL fields sent from the frontend
+    // Destructure qrCode from body
     const {
       id,
       agentName,
@@ -123,24 +97,22 @@ export async function POST(request: Request) {
       persona,
       task,
       urls,
+      documentRefs,
       status,
       possibleActions,
+      qrCode,
     } = body;
 
     client = await pool.connect();
-
-    // Ensure table exists
     await client.query(CREATE_TABLE_QUERY);
-    // Ensure new columns exist
     await client.query(MIGRATE_COLUMNS_QUERY);
 
-    // Insert or Update with all fields
     const queryText = `
       INSERT INTO agentstudio.agents (
         id, name, trigger_code, business_name, industry, short_description, business_url, 
-        language, tone, persona, task, status, urls, actions, updated_at
+        language, tone, persona, task, status, qr_code, urls, document_refs, actions, updated_at
       )
-      VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12, $13, $14, NOW())
+      VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12, $13, $14, $15, $16, NOW())
       ON CONFLICT (name) DO UPDATE 
       SET 
           trigger_code = EXCLUDED.trigger_code,
@@ -153,13 +125,15 @@ export async function POST(request: Request) {
           persona = EXCLUDED.persona, 
           task = EXCLUDED.task,
           status = EXCLUDED.status,
-          urls = EXCLUDED.urls, 
-          actions = EXCLUDED.actions,
+          qr_code = EXCLUDED.qr_code,
+          urls = $14, 
+          document_refs = $15,
+          actions = $16,
           updated_at = NOW()
       RETURNING *;
     `;
 
-    // Map the values to the SQL placeholders ($1, $2, etc.)
+    // Map values ($13 is qrCode)
     const values = [
       id,
       agentName,
@@ -173,8 +147,10 @@ export async function POST(request: Request) {
       persona,
       task,
       status || "Training",
-      JSON.stringify(urls || []), // Ensure Arrays are stringified for JSONB
-      JSON.stringify(possibleActions || {}), // Ensure Objects are stringified for JSONB
+      qrCode || null, // Pass the base64 string here
+      JSON.stringify(urls || []),
+      JSON.stringify(documentRefs || []),
+      JSON.stringify(possibleActions || {}),
     ];
 
     const result = await client.query(queryText, values);
@@ -183,11 +159,7 @@ export async function POST(request: Request) {
   } catch (error: any) {
     console.error("Database Operation Error:", error);
     return NextResponse.json(
-      {
-        success: false,
-        error: "Failed to process request or save to database.",
-        details: error.message,
-      },
+      { success: false, error: "Database Error", details: error.message },
       { status: 500 }
     );
   } finally {
