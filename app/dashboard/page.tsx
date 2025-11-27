@@ -1,4 +1,5 @@
 import { MetricCard, ActiveAgentCard } from "@/components/ui/MetricCard";
+import { AgentQR } from "@/components/agent/AgentQR";
 import {
   MessageSquare,
   FileText,
@@ -6,11 +7,8 @@ import {
   Users,
   User,
   Building,
-  Zap,
   ArrowUpRight,
 } from "lucide-react";
-
-
 
 const metricsData = {
   messagesProcessed: 14500,
@@ -129,13 +127,23 @@ export default function DashboardPage() {
             <h2 className="text-xl font-bold text-gray-900 dark:text-white mb-6">
               Test Agent
             </h2>
-            <div className="bg-white dark:bg-gray-900 border border-gray-100 dark:border-gray-800 rounded-2xl p-6 flex flex-col items-center justify-center text-center h-48 hover:border-blue-200 dark:hover:border-blue-800 transition-colors group cursor-pointer">
-              <div className="w-16 h-16 bg-gray-50 dark:bg-gray-800 rounded-2xl flex items-center justify-center mb-4 group-hover:scale-110 transition-transform duration-300">
-                <Zap className="w-8 h-8 text-gray-400 dark:text-gray-500 group-hover:text-blue-500 transition-colors" />
+            <div className="bg-gradient-to-br from-gray-900 to-gray-800 dark:from-blue-900/40 dark:to-indigo-900/40 p-4 rounded-3xl text-white flex flex-col gap-4 items-center justify-between shadow-lg">
+              <div>
+                <p className="text-sm text-white/70 font-medium mb-1">
+                  Testing Sandbox
+                </p>
+                <p className="text-xl font-bold">Active on WhatsApp</p>
               </div>
-              <p className="text-sm font-medium text-gray-600 dark:text-gray-400">
-                Scan via WhatsApp
-              </p>
+
+              {/* Updated QR Code Integration */}
+              <div className="bg-white p-2 rounded-xl">
+                <AgentQR
+                  agentId="550e8400-e29b-41d4-a716-446655440000" // Valid UUID required for API
+                  agentName="Demo Agent" // Required prop
+                  triggerCode="START"
+                  className="!border-none !shadow-none !bg-transparent !p-0" // Override container styles
+                />
+              </div>
             </div>
           </section>
         </div>
