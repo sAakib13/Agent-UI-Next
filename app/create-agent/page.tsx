@@ -135,61 +135,6 @@ const saveAgentConfigToDB = async (
 
 // --- Components ---
 
-const Stepper: React.FC<{ currentStep: number }> = ({ currentStep }) => {
-  const steps = [
-    { num: 1, label: "Profile" },
-    { num: 2, label: "Configuration" },
-    { num: 3, label: "Knowledge" },
-  ];
-
-  return (
-    <div className="relative mb-12">
-      <div className="absolute left-0 top-1/2 w-full -translate-y-1/2 px-4">
-        <div className="h-1 w-full bg-gray-100 dark:bg-gray-800 rounded-full" />
-        <div
-          className="absolute left-0 top-1/2 h-1 bg-blue-600 rounded-full -translate-y-1/2 transition-all duration-500 ease-in-out"
-          style={{
-            width: `${((currentStep - 1) / (steps.length - 1)) * 100}%`,
-          }}
-        />
-      </div>
-
-      <div className="relative flex justify-between">
-        {steps.map((step) => {
-          const isActive = step.num === currentStep;
-          const isCompleted = step.num < currentStep;
-          return (
-            <div
-              key={step.num}
-              className="flex flex-col items-center group cursor-default"
-            >
-              <div
-                className={`w-10 h-10 rounded-full flex items-center justify-center font-bold text-sm transition-all duration-300 ring-4 ring-white dark:ring-gray-950 z-10
-                  ${isActive
-                    ? "bg-blue-600 text-white shadow-lg shadow-blue-600/30 scale-110"
-                    : isCompleted
-                      ? "bg-green-500 text-white"
-                      : "bg-white dark:bg-gray-900 border-2 border-gray-200 dark:border-gray-800 text-gray-400"
-                  }`}
-              >
-                {isCompleted ? <Check className="w-5 h-5" /> : step.num}
-              </div>
-              <span
-                className={`absolute top-12 text-xs font-bold tracking-wide transition-colors duration-300 ${isActive
-                  ? "text-blue-600 dark:text-blue-400"
-                  : "text-gray-400"
-                  }`}
-              >
-                {step.label}
-              </span>
-            </div>
-          );
-        })}
-      </div>
-    </div>
-  );
-};
-
 const TextInput: React.FC<{
   label: string;
   placeholder: string;
@@ -238,12 +183,11 @@ const SelectInput: React.FC<{
       <select
         value={value ?? ""}
         onChange={onChange}
-
         className={`appearance-none w-full bg-white dark:bg-gray-800/50 border border-gray-200 dark:border-gray-700 rounded-2xl pl-5 pr-10 py-4 
     focus:ring-4 focus:ring-blue-500/10 focus:border-blue-500 transition-all outline-none cursor-pointer shadow-sm hover:border-gray-300 dark:hover:border-gray-600
     ${value == "" ? "text-gray-600" : "text-gray-900 dark:text-white"}`}
       >
-        <option value="" disabled >
+        <option value="" disabled>
           Select an option
         </option>
         {options.map((option) => (
@@ -414,23 +358,6 @@ export default function CreateAgentPage() {
   const handleInputChange = (field: keyof AgentConfig, value: string) =>
     setConfig((prev) => ({ ...prev, [field]: value }));
 
-  // Special handler for Trigger Code
-  const handleTriggerCodeChange = (e: React.ChangeEvent<HTMLInputElement>) => {
-    const value = e.target.value.toUpperCase();
-    const words = value.trim().split(/\s+/);
-
-    // Limit to 4 words
-    if (words.length > 4 && value.endsWith(" ")) {
-      // prevent adding more words
-      return;
-    }
-    // Only update if within limit roughly (simple check)
-    if (words.length <= 5) {
-      // buffer for typing
-      setConfig((prev) => ({ ...prev, triggerCode: value }));
-    }
-  };
-
   const handleUrlChange = (index: number, value: string) => {
     const newUrls = [...config.urls];
     newUrls[index] = value;
@@ -530,7 +457,6 @@ export default function CreateAgentPage() {
         {step === 1 && (
           <div className="space-y-6">
             <section className="bg-white/80 dark:bg-gray-900/80 backdrop-blur-xl border border-gray-100 dark:border-gray-800 rounded-3xl p-8 shadow-xl shadow-gray-200/50 dark:shadow-none">
-
               <div className="flex items-center gap-3 mb-8">
                 <div className="h-8 w-1 bg-blue-500 rounded-full" />
                 <h2 className="text-2xl font-bold text-gray-900 dark:text-white">
@@ -572,7 +498,6 @@ export default function CreateAgentPage() {
                   }
                   isTextArea
                 />
-
               </div>
             </section>
           </div>
@@ -598,7 +523,10 @@ export default function CreateAgentPage() {
                       {config.id}
                     </div>
                   </div>
-                </div>
+                  <div className="text-xs text-gray-400 italic opacity-0 group-hover:opacity-100 transition-opacity">
+                    System Generated
+                  </div>
+                </div> */}
                 <TextInput
                   label="Agent Name"
                   placeholder="e.g. Customer Support Assistant"
@@ -623,7 +551,6 @@ export default function CreateAgentPage() {
                     onChange={(e) => handleInputChange("tone", e.target.value)}
                   />
                 </div>
-
                 {/* <TextInput
                   label="Trigger Code"
                   placeholder="e.g. HELLO START"
@@ -631,14 +558,14 @@ export default function CreateAgentPage() {
                   // eslint-disable-next-line @typescript-eslint/no-explicit-any
                   onChange={(e) => handleTriggerCodeChange(e as any)}
                   hint="Max 4 words, Uppercase"
-
-
                 /> */}
                 <TextInput
                   label="Agent Intial Greeting"
                   placeholder="e.g. Hello! How can I assist you today?"
                   value={config.greeting || ""}
-                  onChange={(e) => handleInputChange("greeting", e.target.value)}
+                  onChange={(e) =>
+                    handleInputChange("greeting", e.target.value)
+                  }
                 />
                 <div className="grid grid-cols-1 gap-8">
                   <RichTextEditorMock
