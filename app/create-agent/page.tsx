@@ -100,6 +100,7 @@ const saveAgentConfigToDB = async (
     const payload = {
       // We send organization data so the backend can find-or-create the Org
       organization_data: {
+        id: "", // Backend will auto-generate
         name: config.businessName,
         industry: config.industry,
         website: config.businessURL,
@@ -140,18 +141,6 @@ const saveAgentConfigToDB = async (
       success: true,
       message: "Agent deployed and saved successfully!",
     };
-    if (data.success) {
-      return {
-        success: true,
-        message: "Agent deployed and saved successfully!",
-      };
-    } else {
-      return {
-        success: false,
-        message: "Failed to save: " + (data.details || data.error),
-      };
-    }
-    // eslint-disable-next-line @typescript-eslint/no-explicit-any
   } catch (error: any) {
     console.error("API Call Error:", error);
     return { success: false, message: `Error: ${error.message}` };
