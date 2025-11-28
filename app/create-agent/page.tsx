@@ -83,45 +83,50 @@ const tones = ["Formal", "Casual", "Friendly", "Professional"];
 
 // --- Reusable DB Function ---
 
+// Inside app/create-agent/page.tsx
+
 const saveAgentConfigToDB = async (
   config: AgentConfig
 ): Promise<{ success: boolean; message: string }> => {
   try {
-    // 1. Convert File objects to references (Since we can't send Files in JSON)
-    // In a real app, you would upload these to S3/Blob storage first, then send URLs.
     const documentRefs = config.documents.map((f) => f.name);
 
-    // 2. Transform UI Actions object to Database Array (JSONB)
+    // Transform UI Actions to Array
     const allowedActionsArray = Object.entries(config.possibleActions)
       .filter(([_, enabled]) => enabled)
       .map(([key]) => key);
 
-    // 3. Construct Payload matching the DB Schema
+    // --- FIX: STRUCTURE PAYLOAD TO MATCH ZOD SCHEMA ---
     const payload = {
-      // We send organization data so the backend can find-or-create the Org
-      organization_data: {
-        id: "", // Backend will auto-generate
+      // 1. "organization" object (matches Zod: organization)
+      organization: {
         name: config.businessName,
-        industry: config.industry,
         website: config.businessURL,
-        description: config.shortDescription,
+        industry: config.industry,
+        short_description: config.shortDescription,
+        is_active: true,
       },
+      // 2. "agents" array (matches Zod: agents array)
+      agents: [
+        {
+          name: config.agentName,
+          language: config.language,
+          tone: config.tone,
+          persona_prompt: config.persona,
+          task_prompt: config.task,
+          trigger_code: config.triggerCode,
+          allowed_actions: allowedActionsArray,
 
-      // Agent Data (Mapped to snake_case DB columns)
-      name: config.agentName,
-      language: config.language,
-      tone: config.tone,
-      persona_prompt: config.persona,
-      task_prompt: config.task,
-      trigger_code: config.triggerCode,
-      allowed_actions: allowedActionsArray, // Sent as array for JSONB
-      qr_code_base64: config.qrCode,
-      greeting_message: `Hello! I am ${config.agentName}.`, // Default
+          // Extra fields (Make sure Backend accepts these too)
+          qr_code_base64: config.qrCode,
+          greeting_message: `Hello! I am ${config.agentName}.`,
 
-      // Extra metadata
-      status: config.status,
-      document_refs: documentRefs,
-      source_urls: config.urls.filter((url) => url.trim() !== ""),
+          // Metadata (Optional, handled by frontend logic mostly)
+          status: config.status,
+          document_refs: documentRefs,
+          source_urls: config.urls.filter((url) => url.trim() !== ""),
+        },
+      ],
     };
 
     const response = await fetch("/api/agents", {
@@ -132,10 +137,15 @@ const saveAgentConfigToDB = async (
 
     if (!response.ok) {
       const errorText = await response.text();
-      throw new Error(`Server Error ${response.status}: ${errorText}`);
+      // Parse error text if it's JSON to show a better message
+      try {
+        const errorJson = JSON.parse(errorText);
+        console.error("Validation Error:", errorJson);
+        throw new Error(`Validation Failed: Check console for details`);
+      } catch {
+        throw new Error(`Server Error ${response.status}: ${errorText}`);
+      }
     }
-
-    const data = await response.json();
 
     return {
       success: true,
@@ -569,14 +579,14 @@ export default function CreateAgentPage() {
                     onChange={(e) => handleInputChange("tone", e.target.value)}
                   />
                 </div>
-                {/* <TextInput
+                <TextInput
                   label="Trigger Code"
                   placeholder="e.g. HELLO START"
                   value={config.triggerCode}
                   // eslint-disable-next-line @typescript-eslint/no-explicit-any
                   onChange={(e) => handleTriggerCodeChange(e as any)}
                   hint="Max 4 words, Uppercase"
-                /> */}
+                />
                 <TextInput
                   label="Agent Intial Greeting"
                   placeholder="e.g. Hello! How can I assist you today?"
