@@ -40,7 +40,7 @@ type AgentConfig = {
   task: string;
   language: string;
   tone: string;
-  greeting: string;
+  greeting_message: string;
 
   urls: string[];
   documents: File[];
@@ -63,7 +63,7 @@ const initialConfig: AgentConfig = {
   triggerCode: "",
   language: "",
   tone: "",
-  greeting: "",
+  greeting_message: "",
   persona: "",
   task: "",
 
@@ -119,8 +119,7 @@ const saveAgentConfigToDB = async (
 
           // Extra fields (Make sure Backend accepts these too)
           qr_code_base64: config.qrCode,
-          greeting_message: `Hello! I am ${config.agentName}.`,
-
+          greeting_message: config.greeting_message,
           // Metadata (Optional, handled by frontend logic mostly)
           status: config.status,
           document_refs: documentRefs,
@@ -590,9 +589,9 @@ export default function CreateAgentPage() {
                 <TextInput
                   label="Agent Intial Greeting"
                   placeholder="e.g. Hello! How can I assist you today?"
-                  value={config.greeting || ""}
+                  value={config.greeting_message || ""}
                   onChange={(e) =>
-                    handleInputChange("greeting", e.target.value)
+                    handleInputChange("greeting_message", e.target.value)
                   }
                 />
                 <div className="grid grid-cols-1 gap-8">

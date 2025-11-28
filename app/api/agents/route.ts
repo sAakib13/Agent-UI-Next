@@ -54,9 +54,12 @@ export async function POST(request: Request) {
 
     // Validate request body
     const parsed = bodySchema.safeParse(body);
+
     if (!parsed.success) {
       return NextResponse.json({ error: parsed.error }, { status: 400 });
     }
+
+    console.log("PARSED AGENT DATA:", parsed.data.agents[0]);
     const { organization, agents } = parsed.data;
 
     // Begin transaction
@@ -100,6 +103,8 @@ export async function POST(request: Request) {
           agent.persona_prompt,
           agent.task_prompt,
           agent.trigger_code,
+          // agent.greeting_message,
+          // agent.qr_code_base64 || null,
           JSON.stringify(agent.allowed_actions),
         ]
       );
