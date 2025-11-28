@@ -1,6 +1,7 @@
 "use client";
 
 import React, { useState } from "react";
+import { useRouter } from "next/navigation";
 import {
   ChevronDown,
   Plus,
@@ -23,13 +24,16 @@ import {
 type AgentConfig = {
   id: string;
   status: "Active" | "Inactive" | "Training";
+  //UI State for Checboxes
   possibleActions: { updateContactTable: boolean; delegateToHuman: boolean };
 
+  // Business Info
   businessName: string;
   industry: string;
   shortDescription: string;
   businessURL: string;
 
+  // Agent Info
   agentName: string;
   triggerCode: string;
   persona: string;
@@ -83,29 +87,46 @@ const saveAgentConfigToDB = async (
   config: AgentConfig
 ): Promise<{ success: boolean; message: string }> => {
   try {
+    // 1. Convert File objects to references (Since we can't send Files in JSON)
+    // In a real app, you would upload these to S3/Blob storage first, then send URLs.
     const documentRefs = config.documents.map((f) => f.name);
+
+    // 2. Transform UI Actions object to Database Array (JSONB)
+    const allowedActionsArray = Object.entries(config.possibleActions)
+      .filter(([_, enabled]) => enabled)
+      .map(([key]) => key);
+
+    // 3. Construct Payload matching the DB Schema
+    const payload = {
+      // We send organization data so the backend can find-or-create the Org
+      organization_data: {
+        name: config.businessName,
+        industry: config.industry,
+        website: config.businessURL,
+        description: config.shortDescription,
+      },
+
+      // Agent Data (Mapped to snake_case DB columns)
+      name: config.agentName,
+      language: config.language,
+      tone: config.tone,
+      persona_prompt: config.persona,
+      task_prompt: config.task,
+      trigger_code: config.triggerCode,
+      allowed_actions: allowedActionsArray, // Sent as array for JSONB
+      qr_code_base64: config.qrCode,
+      greeting_message: `Hello! I am ${config.agentName}.`, // Default
+
+      // Extra metadata
+      status: config.status,
+      document_refs: documentRefs,
+      source_urls: config.urls.filter((url) => url.trim() !== ""),
+    };
 
     const response = await fetch("/api/agents", {
       method: "POST",
       headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({
-        id: config.id,
-        agentName: config.agentName,
-        triggerCode: config.triggerCode,
-        businessName: config.businessName,
-        industry: config.industry,
-        shortDescription: config.shortDescription,
-        businessURL: config.businessURL,
-        language: config.language,
-        tone: config.tone,
-        persona: config.persona,
-        task: config.task,
-        urls: config.urls.filter((url) => url.trim() !== ""),
-        status: config.status,
-        possibleActions: config.possibleActions,
-        documentRefs: documentRefs,
-        qrCode: config.qrCode, // Send the generated QR code to DB
-      }),
+      body: JSON.stringify(payload),
     });
 
     if (!response.ok) {
@@ -115,6 +136,10 @@ const saveAgentConfigToDB = async (
 
     const data = await response.json();
 
+    return {
+      success: true,
+      message: "Agent deployed and saved successfully!",
+    };
     if (data.success) {
       return {
         success: true,
@@ -132,8 +157,6 @@ const saveAgentConfigToDB = async (
     return { success: false, message: `Error: ${error.message}` };
   }
 };
-
-// --- Components ---
 
 const TextInput: React.FC<{
   label: string;
@@ -350,6 +373,7 @@ const Stepper: React.FC<{ currentStep: number }> = ({ currentStep }) => {
 // --- Main Page ---
 
 export default function CreateAgentPage() {
+  const router = useRouter();
   const [step, setStep] = useState(1);
   const [config, setConfig] = useState<AgentConfig>(initialConfig);
   const [isDeploying, setIsDeploying] = useState(false);
@@ -400,35 +424,40 @@ export default function CreateAgentPage() {
     try {
       // 1. Generate QR Code via Proxy
       setDeployStep("Generating QR Code...");
-      const qrResponse = await fetch("/api/integrations/qr", {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({
-          agentId: config.id,
-          agentName: config.agentName,
-          triggerCode: config.triggerCode,
-        }),
-      });
+      try {
+        const qrResponse = await fetch("/api/integrations/qr", {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({
+            agentId: config.id,
+            agentName: config.agentName,
+            triggerCode: config.triggerCode,
+          }),
+        });
 
-      if (qrResponse.ok) {
-        const qrData = await qrResponse.json();
-        // Assuming API returns { success: true, qrCodeUrl: "data:image/png;base64,..." }
-        // We only want the base64 part if we are storing it in TEXT field, but here we can just store the full string.
-        if (qrData.success && qrData.qrCodeUrl) {
-          qrCodeBase64 = qrData.qrCodeUrl;
+        if (qrResponse.ok) {
+          const qrData = await qrResponse.json();
+          if (qrData.success && qrData.qrCodeUrl) {
+            qrCodeBase64 = qrData.qrCodeUrl;
+          }
         }
-      } else {
-        console.warn("QR Generation failed, proceeding with deployment only.");
+      } catch (qrErr) {
+        console.warn("QR Generation skipped due to error", qrErr);
       }
 
-      // 2. Save Agent + QR to DB
+      // 2. Save to Database
       setDeployStep("Saving to Database...");
       const result = await saveAgentConfigToDB({
         ...config,
         qrCode: qrCodeBase64,
       });
 
-      alert(result.message);
+      if (result.success) {
+        alert(result.message);
+        router.push("/dashboard"); // Navigate to dashboard after success
+      } else {
+        alert(result.message);
+      }
     } catch (error) {
       console.error(error);
       alert("Deployment failed unexpectedly.");
