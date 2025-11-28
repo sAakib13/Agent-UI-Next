@@ -7,7 +7,7 @@
     "build": "next build",
     "start": "next start",
     "lint": "eslint",
-    "db:migrate": "node -r dotenv/config ./node_modules/node-pg-migrate/bin/node-pg-migrate up"
+    "db:migrate": "node -r dotenv/config ./node_modules/node-pg-migrate/bin/node-pg-migrate up dotenv_config_path=.env.local"
   },
   "dependencies": {
     "dotenv": "^17.2.3",
