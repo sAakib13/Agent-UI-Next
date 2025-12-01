@@ -18,6 +18,7 @@ import {
   Loader2,
   Hash,
 } from "lucide-react";
+import { TiMediaFastForward } from "react-icons/ti";
 
 // --- Types & Config ---
 
@@ -160,10 +161,12 @@ const TextInput: React.FC<{
   label: string;
   placeholder: string;
   value: string;
+  disabled?: boolean;
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
   onChange: (e: any) => void;
   isTextArea?: boolean;
   hint?: string;
-}> = ({ label, placeholder, value, onChange, isTextArea, hint }) => (
+}> = ({ label, placeholder, value, onChange, disabled, isTextArea, hint }) => (
   <div className="space-y-2">
     <label className="text-sm font-semibold text-gray-700 dark:text-gray-300 ml-1 flex justify-between">
       {label}{" "}
@@ -177,6 +180,7 @@ const TextInput: React.FC<{
         value={value}
         onChange={onChange}
         placeholder={placeholder}
+        disabled={disabled}
         className="w-full bg-white dark:bg-gray-800/50 border border-gray-200 dark:border-gray-700 rounded-2xl px-5 py-4 text-gray-900 dark:text-white placeholder-gray-400 focus:ring-4 focus:ring-blue-500/10 focus:border-blue-500 transition-all outline-none resize-none shadow-sm"
       />
     ) : (
@@ -185,6 +189,7 @@ const TextInput: React.FC<{
         value={value}
         onChange={onChange}
         placeholder={placeholder}
+        disabled={disabled}
         className="w-full bg-white dark:bg-gray-800/50 border border-gray-200 dark:border-gray-700 rounded-2xl px-5 py-4 text-gray-900 dark:text-white placeholder-gray-400 focus:ring-4 focus:ring-blue-500/10 focus:border-blue-500 transition-all outline-none shadow-sm"
       />
     )}
@@ -194,8 +199,10 @@ const SelectInput: React.FC<{
   label: string;
   value: string | null;
   options: string[];
+  disabled?: boolean
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
   onChange: (e: any) => void;
-}> = ({ label, value, options, onChange }) => (
+}> = ({ label, value, options, disabled, onChange }) => (
   <div className="space-y-2">
     <label className="text-sm font-semibold text-gray-700 dark:text-gray-300 ml-1">
       {label}
@@ -204,6 +211,7 @@ const SelectInput: React.FC<{
       <select
         value={value ?? ""}
         onChange={onChange}
+        disabled={disabled}
         className={`appearance-none w-full bg-white dark:bg-gray-800/50 border border-gray-200 dark:border-gray-700 rounded-2xl pl-5 pr-10 py-4 
     focus:ring-4 focus:ring-blue-500/10 focus:border-blue-500 transition-all outline-none cursor-pointer shadow-sm hover:border-gray-300 dark:hover:border-gray-600
     ${value == "" ? "text-gray-600" : "text-gray-900 dark:text-white"}`}
@@ -226,8 +234,10 @@ const RichTextEditorMock: React.FC<{
   label: string;
   placeholder: string;
   value: string;
+  disabled?: boolean
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
   onChange: (e: any) => void;
-}> = ({ label, placeholder, value, onChange }) => (
+}> = ({ label, placeholder, value, disabled, onChange }) => (
   <div className="space-y-2">
     <label className="text-sm font-semibold text-gray-700 dark:text-gray-300 ml-1">
       {label}
@@ -238,6 +248,7 @@ const RichTextEditorMock: React.FC<{
           <button
             key={i}
             type="button"
+            disabled={disabled}
             className="p-2 rounded-lg text-gray-500 hover:bg-white dark:hover:bg-gray-700 hover:text-blue-600 dark:hover:text-blue-400 transition-all shadow-sm hover:shadow"
           >
             <Icon className="w-4 h-4" />
@@ -258,7 +269,8 @@ const FileDropZone: React.FC<{
   files: File[];
   onFilesAdded: (f: File[]) => void;
   onFileRemoved: (i: number) => void;
-}> = ({ files, onFilesAdded, onFileRemoved }) => {
+  disabled?: boolean
+}> = ({ files, onFilesAdded, onFileRemoved, disabled }) => {
   const inputRef = React.useRef<HTMLInputElement>(null);
   return (
     <div className="space-y-4">
@@ -272,6 +284,7 @@ const FileDropZone: React.FC<{
           multiple
           accept=".pdf,.doc,.docx"
           className="hidden"
+          disabled={disabled}
           onChange={(e) => {
             if (e.target.files) {
               onFilesAdded(Array.from(e.target.files));
@@ -299,6 +312,7 @@ const FileDropZone: React.FC<{
               </span>
               <button
                 type="button"
+                disabled={disabled}
                 onClick={(e) => {
                   e.stopPropagation();
                   onFileRemoved(index);
@@ -314,7 +328,7 @@ const FileDropZone: React.FC<{
     </div>
   );
 };
-const Stepper: React.FC<{ currentStep: number }> = ({ currentStep }) => {
+const Stepper: React.FC<{ currentStep: number; deployed: boolean }> = ({ currentStep, deployed }) => {
   const steps = [
     { num: 1, label: "Profile" },
     { num: 2, label: "Configuration" },
@@ -327,7 +341,7 @@ const Stepper: React.FC<{ currentStep: number }> = ({ currentStep }) => {
         <div
           className="absolute left-0 top-1/2 h-1 bg-blue-600 rounded-full -translate-y-1/2 transition-all duration-500 ease-in-out"
           style={{
-            width: `${((currentStep - 1) / (steps.length - 1)) * 100}%`,
+            width: deployed ? "100%" : `${((currentStep - 1) / (steps.length - 1)) * 100}%`,
           }}
         />
       </div>
@@ -341,22 +355,20 @@ const Stepper: React.FC<{ currentStep: number }> = ({ currentStep }) => {
               className="flex flex-col items-center group cursor-default"
             >
               <div
-                className={`w-10 h-10 rounded-full flex items-center justify-center font-bold text-sm transition-all duration-300 ring-4 ring-white dark:ring-gray-950 z-10 ${
-                  isActive
-                    ? "bg-blue-600 text-white shadow-lg shadow-blue-600/30 scale-110"
-                    : isCompleted
+                className={`w-10 h-10 rounded-full flex items-center justify-center font-bold text-sm transition-all duration-300 ring-4 ring-white dark:ring-gray-950 z-10 ${isActive
+                  ? "bg-blue-600 text-white shadow-lg shadow-blue-600/30 scale-110"
+                  : isCompleted
                     ? "bg-green-500 text-white"
-                    : "bg-white dark:bg-gray-900 border-2 border-gray-200 dark:border-gray-800 text-gray-400"
-                }`}
+                    : deployed ? "bg-green-500 text-white" : "bg-white dark:bg-gray-900 border-2 border-gray-200 dark:border-gray-800 text-gray-400"
+                  }`}
               >
                 {isCompleted ? <Check className="w-5 h-5" /> : step.num}
               </div>
               <span
-                className={`absolute top-12 text-xs font-bold tracking-wide transition-colors duration-300 ${
-                  isActive
-                    ? "text-blue-600 dark:text-blue-400"
-                    : "text-gray-400"
-                }`}
+                className={`absolute top-12 text-xs font-bold tracking-wide transition-colors duration-300 ${isActive
+                  ? "text-blue-600 dark:text-blue-400"
+                  : "text-gray-400"
+                  }`}
               >
                 {step.label}
               </span>
@@ -376,6 +388,11 @@ export default function CreateAgentPage() {
   const [config, setConfig] = useState<AgentConfig>(initialConfig);
   const [isDeploying, setIsDeploying] = useState(false);
   const [deployStep, setDeployStep] = useState(""); // Feedback for user
+  const [resultMessage, setResultMessage] = useState("")
+  const [deployed, setDeployed] = useState(false)
+  const [expanded, setExpanded] = useState(false);
+
+
 
   const handleInputChange = (field: keyof AgentConfig, value: string) =>
     setConfig((prev) => ({ ...prev, [field]: value }));
@@ -400,13 +417,13 @@ export default function CreateAgentPage() {
       documents: prev.documents.filter((_, i) => i !== index),
     }));
 
-  const handleTriggerCodeChange = (e: React.ChangeEvent<HTMLInputElement>) => {
-    let value = e.target.value.toUpperCase();
-    const words = value.trim().split(/\s+/);
-    if (words.length > 4 && value.endsWith(" ")) return;
-    if (words.length <= 5)
-      setConfig((prev) => ({ ...prev, triggerCode: value }));
-  };
+  // const handleTriggerCodeChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+  //   let value = e.target.value.toUpperCase();
+  //   const words = value.trim().split(/\s+/);
+  //   if (words.length > 4 && value.endsWith(" ")) return;
+  //   if (words.length <= 5)
+  //     setConfig((prev) => ({ ...prev, triggerCode: value }));
+  // };
 
   const handleNext = () => {
     if (step < 3) setStep((prev) => prev + 1);
@@ -454,16 +471,22 @@ export default function CreateAgentPage() {
         alert(result.message);
         router.push("/dashboard"); // Navigate to dashboard after success
       } else {
-        alert(result.message);
+        // alert(result.message);
       }
+      setResultMessage(result.message)
     } catch (error) {
       console.error(error);
-      alert("Deployment failed unexpectedly.");
+      // alert("Deployment failed unexpectedly.");
+      setResultMessage("Deployment failed unexpectedly.")
     } finally {
       setIsDeploying(false);
       setDeployStep("");
+      setDeployed(true)
     }
   };
+  const handleExpand = () => {
+    setExpanded(true)
+  }
 
   return (
     <div className="max-w-4xl mx-auto pb-32 pt-6">
@@ -477,8 +500,15 @@ export default function CreateAgentPage() {
       </header>
 
       <div className="px-4 md:px-0">
-        <Stepper currentStep={step} />
+        <Stepper currentStep={step} deployed={deployed} />
       </div>
+      <div className="flex justify-center items-center w-full">
+        {resultMessage && (<div className="px-8 py-6 w-fit bg-green-600 text-white rounded-xl font-semibold shadow-lg shadow-blue-600/30 transition-all ease-in flex items-center justify-center gap-2">
+
+          <p> {resultMessage} </p>
+
+        </div>)}</div>
+
 
       <form className="mt-8 space-y-8 animate-in fade-in slide-in-from-bottom-8 duration-700">
         {step === 1 && (
@@ -495,6 +525,7 @@ export default function CreateAgentPage() {
                   label="Business Name"
                   placeholder="e.g. Telerivet.Inc"
                   value={config.businessName}
+                  disabled={deployed}
                   onChange={(e) =>
                     handleInputChange("businessName", e.target.value)
                   }
@@ -503,6 +534,7 @@ export default function CreateAgentPage() {
                   label="Business Website"
                   placeholder="e.g. https://www.telerivet.com"
                   value={config.businessURL}
+                  disabled={deployed}
                   onChange={(e) =>
                     handleInputChange("businessURL", e.target.value)
                   }
@@ -511,6 +543,7 @@ export default function CreateAgentPage() {
                   label="Industry"
                   value={config.industry}
                   options={industries}
+                  disabled={deployed}
                   onChange={(e) =>
                     handleInputChange("industry", e.target.value || "")
                   }
@@ -520,6 +553,7 @@ export default function CreateAgentPage() {
                   label="Short Description"
                   placeholder="Briefly describe your business..."
                   value={config.shortDescription}
+                  disabled={deployed}
                   onChange={(e) =>
                     handleInputChange("shortDescription", e.target.value)
                   }
@@ -558,6 +592,7 @@ export default function CreateAgentPage() {
                   label="Agent Name"
                   placeholder="e.g. Customer Support Assistant"
                   value={config.agentName}
+                  disabled={deployed}
                   onChange={(e) =>
                     handleInputChange("agentName", e.target.value)
                   }
@@ -567,6 +602,7 @@ export default function CreateAgentPage() {
                     label="Agent Language"
                     value={config.language}
                     options={languages}
+                    disabled={deployed}
                     onChange={(e) =>
                       handleInputChange("language", e.target.value)
                     }
@@ -575,6 +611,7 @@ export default function CreateAgentPage() {
                     label="Agent Tone"
                     value={config.tone}
                     options={tones}
+                    disabled={deployed}
                     onChange={(e) => handleInputChange("tone", e.target.value)}
                   />
                 </div>
@@ -590,6 +627,7 @@ export default function CreateAgentPage() {
                   label="Agent Intial Greeting"
                   placeholder="e.g. Hello! How can I assist you today?"
                   value={config.greeting_message || ""}
+                  disabled={deployed}
                   onChange={(e) =>
                     handleInputChange("greeting_message", e.target.value)
                   }
@@ -599,6 +637,7 @@ export default function CreateAgentPage() {
                     label="Agent Persona"
                     placeholder="Describe the agent's persona..."
                     value={config.persona}
+                    disabled={deployed}
                     onChange={(e) =>
                       handleInputChange("persona", e.target.value)
                     }
@@ -607,9 +646,39 @@ export default function CreateAgentPage() {
                     label="Agent's Task"
                     placeholder="Describe the specific tasks..."
                     value={config.task}
+                    disabled={deployed}
                     onChange={(e) => handleInputChange("task", e.target.value)}
                   />
                 </div>
+                <button onClick={handleExpand}>
+
+                  Advanced
+
+                </button>
+                {expanded && (
+                  <div>
+                    <div>
+                      <TextInput
+                        label="Agent Intial Greeting"
+                        placeholder="e.g. Hello! How can I assist you today?"
+                        value=""
+                        onChange={
+                          handleExpand
+                        }
+                      />
+                    </div>
+                    <div>
+                      <TextInput
+                        label="Agent Intial Greeting"
+                        placeholder="e.g. Hello! How can I assist you today?"
+                        value=""
+                        onChange={
+                          handleExpand
+                        }
+                      />
+                    </div>
+                  </div>
+                )}
               </div>
             </section>
           </div>
@@ -635,6 +704,7 @@ export default function CreateAgentPage() {
                         label=""
                         placeholder="https://example.com"
                         value={url}
+                        disabled={deployed}
                         onChange={(e) => handleUrlChange(index, e.target.value)}
                       />
                     </div>
@@ -644,6 +714,7 @@ export default function CreateAgentPage() {
                   <button
                     type="button"
                     onClick={handleAddUrl}
+                    disabled={deployed}
                     className="flex items-center px-4 py-2 text-sm font-medium text-blue-600 bg-blue-50 dark:bg-blue-900/20 dark:text-blue-400 rounded-xl hover:bg-blue-100 dark:hover:bg-blue-900/40 transition-colors"
                   >
                     <Plus className="w-4 h-4 mr-2" /> Add another URL
@@ -658,6 +729,7 @@ export default function CreateAgentPage() {
                   files={config.documents}
                   onFilesAdded={handleFilesAdded}
                   onFileRemoved={handleFileRemoved}
+                  disabled={deployed}
                 />
               </div>
             </div>
@@ -666,7 +738,7 @@ export default function CreateAgentPage() {
       </form>
 
       {/* Modern Floating Footer */}
-      <div className="fixed bottom-8 left-60 right-0 flex justify-center z-50 pointer-events-none px-4 items-center">
+      <div className="fixed bottom-8 w-full left-50 right-0 flex justify-center z-50 pointer-events-none px-4 items-center">
         <div className="bg-white/90 dark:bg-gray-900/90 backdrop-blur-2xl border border-gray-200/50 dark:border-gray-700/50 p-2 rounded-2xl shadow-2xl shadow-blue-900/20 pointer-events-auto flex items-center gap-2">
           <button
             type="button"
@@ -690,7 +762,7 @@ export default function CreateAgentPage() {
             <button
               type="button"
               onClick={handleDeployAgent}
-              disabled={isDeploying}
+              disabled={deployed}
               className="px-8 py-3 bg-linear-to-r from-blue-600 to-indigo-600 text-white rounded-xl font-semibold hover:from-blue-700 hover:to-indigo-700 shadow-lg shadow-blue-600/30 hover:shadow-blue-600/40 hover:-translate-y-0.5 transition-all flex items-center gap-2 disabled:opacity-50 disabled:cursor-not-allowed"
             >
               {isDeploying ? (
