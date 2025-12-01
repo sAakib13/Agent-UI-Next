@@ -18,7 +18,6 @@ import {
   Loader2,
   Hash,
 } from "lucide-react";
-import { TiMediaFastForward } from "react-icons/ti";
 
 // --- Types & Config ---
 
@@ -199,7 +198,7 @@ const SelectInput: React.FC<{
   label: string;
   value: string | null;
   options: string[];
-  disabled?: boolean
+  disabled?: boolean;
   // eslint-disable-next-line @typescript-eslint/no-explicit-any
   onChange: (e: any) => void;
 }> = ({ label, value, options, disabled, onChange }) => (
@@ -234,7 +233,7 @@ const RichTextEditorMock: React.FC<{
   label: string;
   placeholder: string;
   value: string;
-  disabled?: boolean
+  disabled?: boolean;
   // eslint-disable-next-line @typescript-eslint/no-explicit-any
   onChange: (e: any) => void;
 }> = ({ label, placeholder, value, disabled, onChange }) => (
@@ -269,7 +268,7 @@ const FileDropZone: React.FC<{
   files: File[];
   onFilesAdded: (f: File[]) => void;
   onFileRemoved: (i: number) => void;
-  disabled?: boolean
+  disabled?: boolean;
 }> = ({ files, onFilesAdded, onFileRemoved, disabled }) => {
   const inputRef = React.useRef<HTMLInputElement>(null);
   return (
@@ -328,7 +327,10 @@ const FileDropZone: React.FC<{
     </div>
   );
 };
-const Stepper: React.FC<{ currentStep: number; deployed: boolean }> = ({ currentStep, deployed }) => {
+const Stepper: React.FC<{ currentStep: number; deployed: boolean }> = ({
+  currentStep,
+  deployed,
+}) => {
   const steps = [
     { num: 1, label: "Profile" },
     { num: 2, label: "Configuration" },
@@ -341,7 +343,9 @@ const Stepper: React.FC<{ currentStep: number; deployed: boolean }> = ({ current
         <div
           className="absolute left-0 top-1/2 h-1 bg-blue-600 rounded-full -translate-y-1/2 transition-all duration-500 ease-in-out"
           style={{
-            width: deployed ? "100%" : `${((currentStep - 1) / (steps.length - 1)) * 100}%`,
+            width: deployed
+              ? "100%"
+              : `${((currentStep - 1) / (steps.length - 1)) * 100}%`,
           }}
         />
       </div>
@@ -355,20 +359,24 @@ const Stepper: React.FC<{ currentStep: number; deployed: boolean }> = ({ current
               className="flex flex-col items-center group cursor-default"
             >
               <div
-                className={`w-10 h-10 rounded-full flex items-center justify-center font-bold text-sm transition-all duration-300 ring-4 ring-white dark:ring-gray-950 z-10 ${isActive
-                  ? "bg-blue-600 text-white shadow-lg shadow-blue-600/30 scale-110"
-                  : isCompleted
+                className={`w-10 h-10 rounded-full flex items-center justify-center font-bold text-sm transition-all duration-300 ring-4 ring-white dark:ring-gray-950 z-10 ${
+                  isActive
+                    ? "bg-blue-600 text-white shadow-lg shadow-blue-600/30 scale-110"
+                    : isCompleted
                     ? "bg-green-500 text-white"
-                    : deployed ? "bg-green-500 text-white" : "bg-white dark:bg-gray-900 border-2 border-gray-200 dark:border-gray-800 text-gray-400"
-                  }`}
+                    : deployed
+                    ? "bg-green-500 text-white"
+                    : "bg-white dark:bg-gray-900 border-2 border-gray-200 dark:border-gray-800 text-gray-400"
+                }`}
               >
                 {isCompleted ? <Check className="w-5 h-5" /> : step.num}
               </div>
               <span
-                className={`absolute top-12 text-xs font-bold tracking-wide transition-colors duration-300 ${isActive
-                  ? "text-blue-600 dark:text-blue-400"
-                  : "text-gray-400"
-                  }`}
+                className={`absolute top-12 text-xs font-bold tracking-wide transition-colors duration-300 ${
+                  isActive
+                    ? "text-blue-600 dark:text-blue-400"
+                    : "text-gray-400"
+                }`}
               >
                 {step.label}
               </span>
@@ -388,11 +396,9 @@ export default function CreateAgentPage() {
   const [config, setConfig] = useState<AgentConfig>(initialConfig);
   const [isDeploying, setIsDeploying] = useState(false);
   const [deployStep, setDeployStep] = useState(""); // Feedback for user
-  const [resultMessage, setResultMessage] = useState("")
-  const [deployed, setDeployed] = useState(false)
+  const [resultMessage, setResultMessage] = useState("");
+  const [deployed, setDeployed] = useState(false);
   const [expanded, setExpanded] = useState(false);
-
-
 
   const handleInputChange = (field: keyof AgentConfig, value: string) =>
     setConfig((prev) => ({ ...prev, [field]: value }));
@@ -417,13 +423,13 @@ export default function CreateAgentPage() {
       documents: prev.documents.filter((_, i) => i !== index),
     }));
 
-  // const handleTriggerCodeChange = (e: React.ChangeEvent<HTMLInputElement>) => {
-  //   let value = e.target.value.toUpperCase();
-  //   const words = value.trim().split(/\s+/);
-  //   if (words.length > 4 && value.endsWith(" ")) return;
-  //   if (words.length <= 5)
-  //     setConfig((prev) => ({ ...prev, triggerCode: value }));
-  // };
+  const handleTriggerCodeChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    let value = e.target.value.toUpperCase();
+    const words = value.trim().split(/\s+/);
+    if (words.length > 4 && value.endsWith(" ")) return;
+    if (words.length <= 5)
+      setConfig((prev) => ({ ...prev, triggerCode: value }));
+  };
 
   const handleNext = () => {
     if (step < 3) setStep((prev) => prev + 1);
@@ -473,20 +479,20 @@ export default function CreateAgentPage() {
       } else {
         // alert(result.message);
       }
-      setResultMessage(result.message)
+      setResultMessage(result.message);
     } catch (error) {
       console.error(error);
       // alert("Deployment failed unexpectedly.");
-      setResultMessage("Deployment failed unexpectedly.")
+      setResultMessage("Deployment failed unexpectedly.");
     } finally {
       setIsDeploying(false);
       setDeployStep("");
-      setDeployed(true)
+      setDeployed(true);
     }
   };
   const handleExpand = () => {
-    setExpanded(true)
-  }
+    setExpanded(true);
+  };
 
   return (
     <div className="max-w-4xl mx-auto pb-32 pt-6">
@@ -503,12 +509,12 @@ export default function CreateAgentPage() {
         <Stepper currentStep={step} deployed={deployed} />
       </div>
       <div className="flex justify-center items-center w-full">
-        {resultMessage && (<div className="px-8 py-6 w-fit bg-green-600 text-white rounded-xl font-semibold shadow-lg shadow-blue-600/30 transition-all ease-in flex items-center justify-center gap-2">
-
-          <p> {resultMessage} </p>
-
-        </div>)}</div>
-
+        {resultMessage && (
+          <div className="px-8 py-6 w-fit bg-green-600 text-white rounded-xl font-semibold shadow-lg shadow-blue-600/30 transition-all ease-in flex items-center justify-center gap-2">
+            <p> {resultMessage} </p>
+          </div>
+        )}
+      </div>
 
       <form className="mt-8 space-y-8 animate-in fade-in slide-in-from-bottom-8 duration-700">
         {step === 1 && (
@@ -650,11 +656,7 @@ export default function CreateAgentPage() {
                     onChange={(e) => handleInputChange("task", e.target.value)}
                   />
                 </div>
-                <button onClick={handleExpand}>
-
-                  Advanced
-
-                </button>
+                <button onClick={handleExpand}>Advanced</button>
                 {expanded && (
                   <div>
                     <div>
@@ -662,9 +664,7 @@ export default function CreateAgentPage() {
                         label="Agent Intial Greeting"
                         placeholder="e.g. Hello! How can I assist you today?"
                         value=""
-                        onChange={
-                          handleExpand
-                        }
+                        onChange={handleExpand}
                       />
                     </div>
                     <div>
@@ -672,9 +672,7 @@ export default function CreateAgentPage() {
                         label="Agent Intial Greeting"
                         placeholder="e.g. Hello! How can I assist you today?"
                         value=""
-                        onChange={
-                          handleExpand
-                        }
+                        onChange={handleExpand}
                       />
                     </div>
                   </div>
