@@ -1,6 +1,6 @@
 "use client";
 
-import React, { useState, useEffect } from "react";
+import React, { useState } from "react";
 import { useRouter } from "next/navigation";
 import {
   ChevronDown,
@@ -18,6 +18,7 @@ import {
   Loader2,
   Settings2,
   AlertCircle,
+  Wand2, // Auto-fill icon
 } from "lucide-react";
 
 // --- Types & Config ---
@@ -53,7 +54,7 @@ type AgentConfig = {
   qrCode?: string;
 };
 
-// We remove the ID from here to prevent static generation issues
+// Initial state without ID (ID is generated on mount/state init)
 const initialConfigBase: Omit<AgentConfig, "id"> = {
   status: "Training",
   possibleActions: { updateContactTable: false, delegateToHuman: false },
@@ -81,6 +82,7 @@ const industries = [
   "Healthcare",
   "Education",
   "Real Estate",
+  "Hospitality",
 ];
 const languages = ["English", "Spanish", "French", "German", "Portuguese"];
 const tones = ["Formal", "Casual", "Friendly", "Professional", "Empathetic"];
@@ -436,7 +438,7 @@ export default function CreateAgentPage() {
   const router = useRouter();
   const [step, setStep] = useState(1);
 
-  // FIX: Initialize ID in state to ensure uniqueness per session/render
+  // Initialize ID in state to ensure uniqueness per session/render
   const [config, setConfig] = useState<AgentConfig>(() => ({
     ...initialConfigBase,
     id: typeof crypto !== "undefined" ? crypto.randomUUID() : "temp-id",
@@ -483,37 +485,100 @@ export default function CreateAgentPage() {
     }));
 
   const handleTriggerCodeChange = (
-    e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement | HTMLSelectElement>
+    e: React.ChangeEvent<
+      HTMLInputElement | HTMLTextAreaElement | HTMLSelectElement
+    >
   ) => {
-    const target = e.target as HTMLInputElement;
-    let value = target.value.toUpperCase();
+    let value = e.target.value.toUpperCase();
     const words = value.trim().split(/\s+/);
     if (words.length > 4 && value.endsWith(" ")) return;
     if (words.length <= 5)
       setConfig((prev) => ({ ...prev, triggerCode: value }));
   };
 
+  // --- Auto-Fill Logic ---
+  const handleAutoFill = () => {
+    const presets = [
+      {
+        businessName: "Nexus Tech Solutions",
+        industry: "Technology",
+        businessURL: "https://nexus-demo.com",
+        shortDescription:
+          "A leading provider of cloud infrastructure and cybersecurity solutions for enterprise clients.",
+        agentName: "NexusBot",
+        language: "English",
+        tone: "Professional",
+        triggerCode: "START NEXUS",
+        greeting_message:
+          "Welcome to Nexus Tech! I am your virtual assistant. How can I help you with our cloud services today?",
+        persona:
+          "You are a knowledgeable and precise technical support assistant for a cloud infrastructure company. You prioritize security and uptime in your answers.",
+        task: "Answer FAQs about server pricing, troubleshoot basic login issues, and schedule consultations for enterprise plans.",
+        model: "gpt-4-turbo",
+        temperature: 0.5,
+        urls: [
+          "https://nexus-demo.com/docs",
+          "https://nexus-demo.com/pricing",
+          "https://nexus-demo.com/support",
+        ],
+      },
+      {
+        businessName: "The Bean & Leaf",
+        industry: "E-commerce",
+        businessURL: "https://bean-leaf-cafe.com",
+        shortDescription:
+          "An artisanal coffee roaster and tea shop specializing in organic, fair-trade blends.",
+        agentName: "Barista Buddy",
+        language: "English",
+        tone: "Friendly",
+        triggerCode: "ORDER COFFEE",
+        greeting_message:
+          "Hey there! ☕ Welcome to Bean & Leaf. Looking for a fresh brew or some beans?",
+        persona:
+          "You are a warm, energetic, and coffee-obsessed barista. You use emojis occasionally and love suggesting pairings.",
+        task: "Take coffee orders, explain the difference between roasts, and provide store hours and location.",
+        model: "gpt-4o",
+        temperature: 0.8,
+        urls: [
+          "https://bean-leaf-cafe.com/menu",
+          "https://bean-leaf-cafe.com/sustainability",
+        ],
+      },
+    ];
+
+    const randomPreset = presets[Math.floor(Math.random() * presets.length)];
+
+    setConfig((prev) => ({
+      ...prev,
+      ...randomPreset,
+    }));
+
+    setResultMessage({ type: "success", text: "Auto-filled with demo data!" });
+    setTimeout(() => setResultMessage(null), 2000);
+  };
+
   const validateStep = (currentStep: number): boolean => {
     if (currentStep === 1) {
       if (!config.businessName) {
-        alert("Please enter a Business Name");
+        setResultMessage({ type: "error", text: "Enter a Business Name" });
         return false;
       }
       if (!config.industry) {
-        alert("Please select an Industry");
+        setResultMessage({ type: "error", text: "Select an Industry" });
         return false;
       }
     }
     if (currentStep === 2) {
       if (!config.agentName) {
-        alert("Please enter an Agent Name");
+        setResultMessage({ type: "error", text: "Enter an Agent Name" });
         return false;
       }
       if (!config.triggerCode) {
-        alert("Please set a Trigger Code");
+        setResultMessage({ type: "error", text: "Set a Trigger Code" });
         return false;
       }
     }
+    setResultMessage(null); // Clear errors
     return true;
   };
 
@@ -566,7 +631,7 @@ export default function CreateAgentPage() {
       if (result.success) {
         setResultMessage({ type: "success", text: result.message });
         setDeployed(true);
-        // Optional: Redirect after delay
+        // Optional: Redirect
         // setTimeout(() => router.push("/dashboard"), 2000);
       } else {
         setResultMessage({ type: "error", text: result.message });
@@ -586,16 +651,28 @@ export default function CreateAgentPage() {
         <h1 className="text-5xl font-extrabold tracking-tight text-gray-900 dark:text-white mb-3">
           Create New Agent
         </h1>
-        <p className="text-md text-gray-400 dark:text-gray-400 max-w-xl mx-auto italic">
+        <p className="text-md text-gray-400 dark:text-gray-400 max-w-xl mx-auto italic mb-6">
           Let’s build your WhatsApp AI Assistant
         </p>
+
+        {/* --- Auto-Fill Button --- */}
+        {!deployed && (
+          <button
+            type="button"
+            onClick={handleAutoFill}
+            className="inline-flex items-center px-4 py-2 bg-purple-50 dark:bg-purple-900/20 text-purple-600 dark:text-purple-300 rounded-full text-sm font-semibold hover:bg-purple-100 dark:hover:bg-purple-900/40 transition-all shadow-sm hover:shadow-md border border-purple-100 dark:border-purple-800"
+          >
+            <Wand2 className="w-4 h-4 mr-2" />
+            Auto-Fill Demo Data
+          </button>
+        )}
       </header>
 
       <div className="px-4 md:px-0">
         <Stepper currentStep={step} deployed={deployed} />
       </div>
 
-      <div className="flex justify-center items-center w-full min-h-[60px]">
+      <div className="flex justify-center items-center w-full min-h-[60px] mb-4">
         {resultMessage && (
           <div
             className={`px-6 py-3 w-fit rounded-xl font-medium shadow-lg transition-all ease-in flex items-center justify-center gap-2
@@ -615,7 +692,7 @@ export default function CreateAgentPage() {
         )}
       </div>
 
-      <form className="mt-8 space-y-8 animate-in fade-in slide-in-from-bottom-8 duration-700">
+      <form className="space-y-8 animate-in fade-in slide-in-from-bottom-8 duration-700">
         {step === 1 && (
           <div className="space-y-6">
             <section className="bg-white/80 dark:bg-gray-900/80 backdrop-blur-xl border border-gray-100 dark:border-gray-800 rounded-3xl p-8 shadow-xl shadow-gray-200/50 dark:shadow-none">
