@@ -1,6 +1,6 @@
 "use client";
 
-import React, { useState } from "react";
+import React, { useState, useEffect } from "react";
 import { useRouter } from "next/navigation";
 import {
   ChevronDown,
@@ -16,15 +16,17 @@ import {
   ArrowRight,
   ArrowLeft,
   Loader2,
-  Hash,
+  Settings2,
+  AlertCircle,
 } from "lucide-react";
 
 // --- Types & Config ---
 
+type AgentStatus = "Active" | "Inactive" | "Training";
+
 type AgentConfig = {
   id: string;
-  status: "Active" | "Inactive" | "Training";
-  //UI State for Checboxes
+  status: AgentStatus;
   possibleActions: { updateContactTable: boolean; delegateToHuman: boolean };
 
   // Business Info
@@ -42,23 +44,23 @@ type AgentConfig = {
   tone: string;
   greeting_message: string;
 
+  // Advanced Settings
+  model: string;
+  temperature: number;
+
   urls: string[];
   documents: File[];
-
-  // New optional field for local state
   qrCode?: string;
 };
 
-const initialConfig: AgentConfig = {
-  id: crypto.randomUUID(),
+// We remove the ID from here to prevent static generation issues
+const initialConfigBase: Omit<AgentConfig, "id"> = {
   status: "Training",
   possibleActions: { updateContactTable: false, delegateToHuman: false },
-
   businessName: "",
   industry: "",
   shortDescription: "",
   businessURL: "",
-
   agentName: "",
   triggerCode: "",
   language: "",
@@ -66,7 +68,8 @@ const initialConfig: AgentConfig = {
   greeting_message: "",
   persona: "",
   task: "",
-
+  model: "gpt-4o",
+  temperature: 0.7,
   urls: [""],
   documents: [],
 };
@@ -77,13 +80,23 @@ const industries = [
   "Finance",
   "Healthcare",
   "Education",
+  "Real Estate",
 ];
-const languages = ["English", "Spanish", "French", "German"];
-const tones = ["Formal", "Casual", "Friendly", "Professional"];
+const languages = ["English", "Spanish", "French", "German", "Portuguese"];
+const tones = ["Formal", "Casual", "Friendly", "Professional", "Empathetic"];
+const models = ["gpt-4o", "gpt-4-turbo", "gpt-3.5-turbo"];
+
+// --- Utility: Safe Error Message Extraction ---
+const getErrorMessage = (error: unknown): string => {
+  if (error instanceof Error) return error.message;
+  if (typeof error === "string") return error;
+  if (typeof error === "object" && error !== null && "message" in error) {
+    return String((error as { message: unknown }).message);
+  }
+  return "An unknown error occurred";
+};
 
 // --- Reusable DB Function ---
-
-// Inside app/create-agent/page.tsx
 
 const saveAgentConfigToDB = async (
   config: AgentConfig
@@ -91,14 +104,11 @@ const saveAgentConfigToDB = async (
   try {
     const documentRefs = config.documents.map((f) => f.name);
 
-    // Transform UI Actions to Array
     const allowedActionsArray = Object.entries(config.possibleActions)
       .filter(([_, enabled]) => enabled)
       .map(([key]) => key);
 
-    // --- FIX: STRUCTURE PAYLOAD TO MATCH ZOD SCHEMA ---
     const payload = {
-      // 1. "organization" object (matches Zod: organization)
       organization: {
         name: config.businessName,
         website: config.businessURL,
@@ -106,7 +116,6 @@ const saveAgentConfigToDB = async (
         short_description: config.shortDescription,
         is_active: true,
       },
-      // 2. "agents" array (matches Zod: agents array)
       agents: [
         {
           name: config.agentName,
@@ -116,14 +125,16 @@ const saveAgentConfigToDB = async (
           task_prompt: config.task,
           trigger_code: config.triggerCode,
           allowed_actions: allowedActionsArray,
-
-          // Extra fields (Make sure Backend accepts these too)
           qr_code_base64: config.qrCode,
           greeting_message: config.greeting_message,
-          // Metadata (Optional, handled by frontend logic mostly)
           status: config.status,
           document_refs: documentRefs,
           source_urls: config.urls.filter((url) => url.trim() !== ""),
+          // Advanced fields
+          model_config: {
+            model: config.model,
+            temperature: config.temperature,
+          },
         },
       ],
     };
@@ -136,11 +147,9 @@ const saveAgentConfigToDB = async (
 
     if (!response.ok) {
       const errorText = await response.text();
-      // Parse error text if it's JSON to show a better message
       try {
         const errorJson = JSON.parse(errorText);
-        console.error("Validation Error:", errorJson);
-        throw new Error(`Validation Failed: Check console for details`);
+        throw new Error(errorJson.message || "Validation Failed");
       } catch {
         throw new Error(`Server Error ${response.status}: ${errorText}`);
       }
@@ -150,27 +159,48 @@ const saveAgentConfigToDB = async (
       success: true,
       message: "Agent deployed and saved successfully!",
     };
-  } catch (error: any) {
+  } catch (error: unknown) {
     console.error("API Call Error:", error);
-    return { success: false, message: `Error: ${error.message}` };
+    return { success: false, message: getErrorMessage(error) };
   }
 };
 
-const TextInput: React.FC<{
+// --- Components ---
+
+interface InputProps {
   label: string;
-  placeholder: string;
-  value: string;
+  placeholder?: string;
+  value: string | number;
   disabled?: boolean;
-  // eslint-disable-next-line @typescript-eslint/no-explicit-any
-  onChange: (e: any) => void;
+  onChange: (
+    e: React.ChangeEvent<
+      HTMLInputElement | HTMLTextAreaElement | HTMLSelectElement
+    >
+  ) => void;
   isTextArea?: boolean;
   hint?: string;
-}> = ({ label, placeholder, value, onChange, disabled, isTextArea, hint }) => (
+  type?: string;
+  min?: number;
+  max?: number;
+  step?: number;
+}
+
+const TextInput: React.FC<InputProps> = ({
+  label,
+  placeholder,
+  value,
+  onChange,
+  disabled,
+  isTextArea,
+  hint,
+  type = "text",
+  ...props
+}) => (
   <div className="space-y-2">
-    <label className="text-sm font-semibold text-gray-700 dark:text-gray-300 ml-1 flex justify-between">
+    <label className="text-sm font-semibold text-gray-700 dark:text-gray-300 ml-1 flex justify-between items-center">
       {label}{" "}
       {hint && (
-        <span className="text-xs font-normal text-gray-400">{hint}</span>
+        <span className="text-xs font-normal text-gray-400 ml-2">{hint}</span>
       )}
     </label>
     {isTextArea ? (
@@ -184,23 +214,24 @@ const TextInput: React.FC<{
       />
     ) : (
       <input
-        type="text"
+        type={type}
         value={value}
         onChange={onChange}
         placeholder={placeholder}
         disabled={disabled}
         className="w-full bg-white dark:bg-gray-800/50 border border-gray-200 dark:border-gray-700 rounded-2xl px-5 py-4 text-gray-900 dark:text-white placeholder-gray-400 focus:ring-4 focus:ring-blue-500/10 focus:border-blue-500 transition-all outline-none shadow-sm"
+        {...props}
       />
     )}
   </div>
 );
+
 const SelectInput: React.FC<{
   label: string;
   value: string | null;
   options: string[];
   disabled?: boolean;
-  // eslint-disable-next-line @typescript-eslint/no-explicit-any
-  onChange: (e: any) => void;
+  onChange: (e: React.ChangeEvent<HTMLSelectElement>) => void;
 }> = ({ label, value, options, disabled, onChange }) => (
   <div className="space-y-2">
     <label className="text-sm font-semibold text-gray-700 dark:text-gray-300 ml-1">
@@ -213,7 +244,7 @@ const SelectInput: React.FC<{
         disabled={disabled}
         className={`appearance-none w-full bg-white dark:bg-gray-800/50 border border-gray-200 dark:border-gray-700 rounded-2xl pl-5 pr-10 py-4 
     focus:ring-4 focus:ring-blue-500/10 focus:border-blue-500 transition-all outline-none cursor-pointer shadow-sm hover:border-gray-300 dark:hover:border-gray-600
-    ${value == "" ? "text-gray-600" : "text-gray-900 dark:text-white"}`}
+    ${value === "" ? "text-gray-400" : "text-gray-900 dark:text-white"}`}
       >
         <option value="" disabled>
           Select an option
@@ -224,18 +255,17 @@ const SelectInput: React.FC<{
           </option>
         ))}
       </select>
-
-      <ChevronDown className="absolute right-5 top-1/2 transform -translate-y-1/2 w-4 h-4 text-gray-400 pointer-events-none rounded-2xl" />
+      <ChevronDown className="absolute right-5 top-1/2 transform -translate-y-1/2 w-4 h-4 text-gray-400 pointer-events-none" />
     </div>
   </div>
 );
+
 const RichTextEditorMock: React.FC<{
   label: string;
   placeholder: string;
   value: string;
   disabled?: boolean;
-  // eslint-disable-next-line @typescript-eslint/no-explicit-any
-  onChange: (e: any) => void;
+  onChange: (e: React.ChangeEvent<HTMLTextAreaElement>) => void;
 }> = ({ label, placeholder, value, disabled, onChange }) => (
   <div className="space-y-2">
     <label className="text-sm font-semibold text-gray-700 dark:text-gray-300 ml-1">
@@ -258,12 +288,14 @@ const RichTextEditorMock: React.FC<{
         rows={6}
         value={value}
         onChange={onChange}
+        disabled={disabled}
         placeholder={placeholder}
         className="w-full p-5 bg-transparent text-gray-900 dark:text-white placeholder-gray-400 outline-none resize-none"
       />
     </div>
   </div>
 );
+
 const FileDropZone: React.FC<{
   files: File[];
   onFilesAdded: (f: File[]) => void;
@@ -274,8 +306,13 @@ const FileDropZone: React.FC<{
   return (
     <div className="space-y-4">
       <div
-        className="group border-2 border-dashed border-gray-200 dark:border-gray-700 rounded-2xl p-10 text-center transition-all hover:border-blue-500 hover:bg-blue-50/30 dark:hover:bg-blue-900/10 cursor-pointer bg-white dark:bg-gray-900/50"
-        onClick={() => inputRef.current?.click()}
+        className={`group border-2 border-dashed border-gray-200 dark:border-gray-700 rounded-2xl p-10 text-center transition-all cursor-pointer bg-white dark:bg-gray-900/50 
+        ${
+          disabled
+            ? "opacity-50 cursor-not-allowed"
+            : "hover:border-blue-500 hover:bg-blue-50/30 dark:hover:bg-blue-900/10"
+        }`}
+        onClick={() => !disabled && inputRef.current?.click()}
       >
         <input
           type="file"
@@ -291,16 +328,18 @@ const FileDropZone: React.FC<{
             }
           }}
         />
-        <div className="w-14 h-14 bg-blue-50 dark:bg-gray-800 rounded-2xl flex items-center justify-center mx-auto mb-4 group-hover:scale-110 group-hover:bg-blue-100 dark:group-hover:bg-gray-700 transition-all duration-300">
-          <UploadCloud className="w-7 h-7 text-blue-500 group-hover:text-blue-600 transition-colors" />
+        <div className="w-14 h-14 bg-blue-50 dark:bg-gray-800 rounded-2xl flex items-center justify-center mx-auto mb-4 group-hover:scale-110 transition-all duration-300">
+          <UploadCloud className="w-7 h-7 text-blue-500" />
         </div>
         <h4 className="text-lg font-semibold text-gray-900 dark:text-white mb-1">
           Upload Documents
         </h4>
-        <p className="text-sm text-gray-500">Drag & drop files here</p>
+        <p className="text-sm text-gray-500">
+          Drag & drop files here (PDF, DOCX)
+        </p>
       </div>
       {files.length > 0 && (
-        <div className="grid grid-cols-1 gap-3">
+        <div className="grid grid-cols-1 gap-3 animate-in fade-in slide-in-from-bottom-2">
           {files.map((file, index) => (
             <div
               key={index}
@@ -327,6 +366,7 @@ const FileDropZone: React.FC<{
     </div>
   );
 };
+
 const Stepper: React.FC<{ currentStep: number; deployed: boolean }> = ({
   currentStep,
   deployed,
@@ -362,14 +402,16 @@ const Stepper: React.FC<{ currentStep: number; deployed: boolean }> = ({
                 className={`w-10 h-10 rounded-full flex items-center justify-center font-bold text-sm transition-all duration-300 ring-4 ring-white dark:ring-gray-950 z-10 ${
                   isActive
                     ? "bg-blue-600 text-white shadow-lg shadow-blue-600/30 scale-110"
-                    : isCompleted
-                    ? "bg-green-500 text-white"
-                    : deployed
+                    : isCompleted || deployed
                     ? "bg-green-500 text-white"
                     : "bg-white dark:bg-gray-900 border-2 border-gray-200 dark:border-gray-800 text-gray-400"
                 }`}
               >
-                {isCompleted ? <Check className="w-5 h-5" /> : step.num}
+                {isCompleted || deployed ? (
+                  <Check className="w-5 h-5" />
+                ) : (
+                  step.num
+                )}
               </div>
               <span
                 className={`absolute top-12 text-xs font-bold tracking-wide transition-colors duration-300 ${
@@ -393,57 +435,105 @@ const Stepper: React.FC<{ currentStep: number; deployed: boolean }> = ({
 export default function CreateAgentPage() {
   const router = useRouter();
   const [step, setStep] = useState(1);
-  const [config, setConfig] = useState<AgentConfig>(initialConfig);
+
+  // FIX: Initialize ID in state to ensure uniqueness per session/render
+  const [config, setConfig] = useState<AgentConfig>(() => ({
+    ...initialConfigBase,
+    id: typeof crypto !== "undefined" ? crypto.randomUUID() : "temp-id",
+  }));
+
   const [isDeploying, setIsDeploying] = useState(false);
-  const [deployStep, setDeployStep] = useState(""); // Feedback for user
-  const [resultMessage, setResultMessage] = useState("");
+  const [deployStep, setDeployStep] = useState("");
+  const [resultMessage, setResultMessage] = useState<{
+    type: "success" | "error";
+    text: string;
+  } | null>(null);
   const [deployed, setDeployed] = useState(false);
   const [expanded, setExpanded] = useState(false);
 
-  const handleInputChange = (field: keyof AgentConfig, value: string) =>
+  // Type-safe change handlers
+  const handleInputChange = (
+    field: keyof AgentConfig,
+    value: string | number | boolean
+  ) => {
     setConfig((prev) => ({ ...prev, [field]: value }));
+  };
 
   const handleUrlChange = (index: number, value: string) => {
     const newUrls = [...config.urls];
     newUrls[index] = value;
     setConfig((prev) => ({ ...prev, urls: newUrls }));
   };
+
   const handleAddUrl = () => {
     if (config.urls.length < 3)
       setConfig((prev) => ({ ...prev, urls: [...prev.urls, ""] }));
   };
+
   const handleFilesAdded = (newFiles: File[]) =>
     setConfig((prev) => ({
       ...prev,
       documents: [...prev.documents, ...newFiles],
     }));
+
   const handleFileRemoved = (index: number) =>
     setConfig((prev) => ({
       ...prev,
       documents: prev.documents.filter((_, i) => i !== index),
     }));
 
-  const handleTriggerCodeChange = (e: React.ChangeEvent<HTMLInputElement>) => {
-    let value = e.target.value.toUpperCase();
+  const handleTriggerCodeChange = (
+    e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement | HTMLSelectElement>
+  ) => {
+    const target = e.target as HTMLInputElement;
+    let value = target.value.toUpperCase();
     const words = value.trim().split(/\s+/);
     if (words.length > 4 && value.endsWith(" ")) return;
     if (words.length <= 5)
       setConfig((prev) => ({ ...prev, triggerCode: value }));
   };
 
-  const handleNext = () => {
-    if (step < 3) setStep((prev) => prev + 1);
+  const validateStep = (currentStep: number): boolean => {
+    if (currentStep === 1) {
+      if (!config.businessName) {
+        alert("Please enter a Business Name");
+        return false;
+      }
+      if (!config.industry) {
+        alert("Please select an Industry");
+        return false;
+      }
+    }
+    if (currentStep === 2) {
+      if (!config.agentName) {
+        alert("Please enter an Agent Name");
+        return false;
+      }
+      if (!config.triggerCode) {
+        alert("Please set a Trigger Code");
+        return false;
+      }
+    }
+    return true;
   };
+
+  const handleNext = () => {
+    if (validateStep(step)) {
+      if (step < 3) setStep((prev) => prev + 1);
+    }
+  };
+
   const handleBack = () => {
     if (step > 1) setStep((prev) => prev - 1);
   };
 
   const handleDeployAgent = async () => {
     setIsDeploying(true);
+    setResultMessage(null);
     let qrCodeBase64 = "";
 
     try {
-      // 1. Generate QR Code via Proxy
+      // 1. Generate QR Code
       setDeployStep("Generating QR Code...");
       try {
         const qrResponse = await fetch("/api/integrations/qr", {
@@ -474,24 +564,20 @@ export default function CreateAgentPage() {
       });
 
       if (result.success) {
-        alert(result.message);
-        router.push("/dashboard"); // Navigate to dashboard after success
+        setResultMessage({ type: "success", text: result.message });
+        setDeployed(true);
+        // Optional: Redirect after delay
+        // setTimeout(() => router.push("/dashboard"), 2000);
       } else {
-        // alert(result.message);
+        setResultMessage({ type: "error", text: result.message });
       }
-      setResultMessage(result.message);
-    } catch (error) {
+    } catch (error: unknown) {
       console.error(error);
-      // alert("Deployment failed unexpectedly.");
-      setResultMessage("Deployment failed unexpectedly.");
+      setResultMessage({ type: "error", text: getErrorMessage(error) });
     } finally {
       setIsDeploying(false);
       setDeployStep("");
-      setDeployed(true);
     }
-  };
-  const handleExpand = () => {
-    setExpanded(true);
   };
 
   return (
@@ -508,10 +594,23 @@ export default function CreateAgentPage() {
       <div className="px-4 md:px-0">
         <Stepper currentStep={step} deployed={deployed} />
       </div>
-      <div className="flex justify-center items-center w-full">
+
+      <div className="flex justify-center items-center w-full min-h-[60px]">
         {resultMessage && (
-          <div className="px-8 py-6 w-fit bg-green-600 text-white rounded-xl font-semibold shadow-lg shadow-blue-600/30 transition-all ease-in flex items-center justify-center gap-2">
-            <p> {resultMessage} </p>
+          <div
+            className={`px-6 py-3 w-fit rounded-xl font-medium shadow-lg transition-all ease-in flex items-center justify-center gap-2
+            ${
+              resultMessage.type === "success"
+                ? "bg-green-100 text-green-800 border border-green-200"
+                : "bg-red-100 text-red-800 border border-red-200"
+            }`}
+          >
+            {resultMessage.type === "success" ? (
+              <Check className="w-4 h-4" />
+            ) : (
+              <AlertCircle className="w-4 h-4" />
+            )}
+            <p>{resultMessage.text}</p>
           </div>
         )}
       </div>
@@ -551,7 +650,7 @@ export default function CreateAgentPage() {
                   options={industries}
                   disabled={deployed}
                   onChange={(e) =>
-                    handleInputChange("industry", e.target.value || "")
+                    handleInputChange("industry", e.target.value)
                   }
                 />
 
@@ -580,20 +679,6 @@ export default function CreateAgentPage() {
                 </h2>
               </div>
               <div className="space-y-8">
-                {/* Agent ID Display */}
-                {/* <div className="bg-gray-50 dark:bg-gray-800/50 p-4 rounded-2xl border border-gray-200 dark:border-gray-700 flex items-center justify-between group">
-                  <div>
-                    <label className="text-xs font-bold text-gray-500 dark:text-gray-400 uppercase tracking-wider flex items-center gap-2">
-                      <Hash className="w-3 h-3" /> Agent ID (Auto-Generated)
-                    </label>
-                    <div className="font-mono text-lg text-gray-700 dark:text-gray-300 mt-1 select-all">
-                      {config.id}
-                    </div>
-                  </div>
-                  <div className="text-xs text-gray-400 italic opacity-0 group-hover:opacity-100 transition-opacity">
-                    System Generated
-                  </div>
-                </div> */}
                 <TextInput
                   label="Agent Name"
                   placeholder="e.g. Customer Support Assistant"
@@ -625,14 +710,13 @@ export default function CreateAgentPage() {
                   label="Trigger Code"
                   placeholder="e.g. HELLO START"
                   value={config.triggerCode}
-                  // eslint-disable-next-line @typescript-eslint/no-explicit-any
-                  onChange={(e) => handleTriggerCodeChange(e as any)}
+                  onChange={handleTriggerCodeChange}
                   hint="Max 4 words, Uppercase"
                 />
                 <TextInput
-                  label="Agent Intial Greeting"
+                  label="Agent Initial Greeting"
                   placeholder="e.g. Hello! How can I assist you today?"
-                  value={config.greeting_message || ""}
+                  value={config.greeting_message}
                   disabled={deployed}
                   onChange={(e) =>
                     handleInputChange("greeting_message", e.target.value)
@@ -656,27 +740,50 @@ export default function CreateAgentPage() {
                     onChange={(e) => handleInputChange("task", e.target.value)}
                   />
                 </div>
-                <button onClick={handleExpand}>Advanced</button>
-                {expanded && (
-                  <div>
-                    <div>
+
+                {/* Advanced Section Toggle */}
+                <div className="border-t border-gray-100 dark:border-gray-800 pt-4">
+                  <button
+                    type="button"
+                    onClick={() => setExpanded(!expanded)}
+                    className="flex items-center text-sm font-semibold text-blue-600 dark:text-blue-400 hover:underline"
+                  >
+                    <Settings2 className="w-4 h-4 mr-2" />
+                    {expanded
+                      ? "Hide Advanced Settings"
+                      : "Show Advanced Settings"}
+                  </button>
+
+                  {expanded && (
+                    <div className="mt-6 grid grid-cols-1 md:grid-cols-2 gap-6 animate-in fade-in slide-in-from-top-2">
+                      <SelectInput
+                        label="AI Model"
+                        value={config.model}
+                        options={models}
+                        disabled={deployed}
+                        onChange={(e) =>
+                          handleInputChange("model", e.target.value)
+                        }
+                      />
                       <TextInput
-                        label="Agent Intial Greeting"
-                        placeholder="e.g. Hello! How can I assist you today?"
-                        value=""
-                        onChange={handleExpand}
+                        label="Temperature"
+                        value={config.temperature}
+                        type="number"
+                        step={0.1}
+                        min={0}
+                        max={1}
+                        hint="0.0 (Strict) to 1.0 (Creative)"
+                        disabled={deployed}
+                        onChange={(e) =>
+                          handleInputChange(
+                            "temperature",
+                            parseFloat(e.target.value)
+                          )
+                        }
                       />
                     </div>
-                    <div>
-                      <TextInput
-                        label="Agent Intial Greeting"
-                        placeholder="e.g. Hello! How can I assist you today?"
-                        value=""
-                        onChange={handleExpand}
-                      />
-                    </div>
-                  </div>
-                )}
+                  )}
+                </div>
               </div>
             </section>
           </div>
@@ -735,8 +842,8 @@ export default function CreateAgentPage() {
         )}
       </form>
 
-      {/* Modern Floating Footer */}
-      <div className="fixed bottom-8 w-full left-50 right-0 flex justify-center z-50 pointer-events-none px-4 items-center">
+      {/* Floating Footer */}
+      <div className="fixed bottom-8 w-full left-0 right-0 flex justify-center z-50 pointer-events-none px-4 items-center">
         <div className="bg-white/90 dark:bg-gray-900/90 backdrop-blur-2xl border border-gray-200/50 dark:border-gray-700/50 p-2 rounded-2xl shadow-2xl shadow-blue-900/20 pointer-events-auto flex items-center gap-2">
           <button
             type="button"
@@ -760,15 +867,26 @@ export default function CreateAgentPage() {
             <button
               type="button"
               onClick={handleDeployAgent}
-              disabled={deployed}
-              className="px-8 py-3 bg-linear-to-r from-blue-600 to-indigo-600 text-white rounded-xl font-semibold hover:from-blue-700 hover:to-indigo-700 shadow-lg shadow-blue-600/30 hover:shadow-blue-600/40 hover:-translate-y-0.5 transition-all flex items-center gap-2 disabled:opacity-50 disabled:cursor-not-allowed"
+              disabled={deployed || isDeploying}
+              className={`px-8 py-3 bg-gradient-to-r from-blue-600 to-indigo-600 text-white rounded-xl font-semibold shadow-lg hover:shadow-xl transition-all flex items-center gap-2 
+                ${
+                  deployed
+                    ? "opacity-50 cursor-default"
+                    : "hover:from-blue-700 hover:to-indigo-700 hover:-translate-y-0.5"
+                }`}
             >
               {isDeploying ? (
                 <Loader2 className="w-5 h-5 animate-spin" />
-              ) : (
+              ) : deployed ? (
                 <Check className="w-5 h-5" />
+              ) : (
+                <UploadCloud className="w-5 h-5" />
               )}
-              {isDeploying ? deployStep || "Deploying..." : "Deploy Agent"}
+              {isDeploying
+                ? deployStep || "Deploying..."
+                : deployed
+                ? "Deployed!"
+                : "Deploy Agent"}
             </button>
           )}
         </div>
