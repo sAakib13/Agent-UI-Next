@@ -46,8 +46,8 @@ type AgentConfig = {
   greeting_message: string;
 
   // Advanced Settings
+  route: string;
   model: string;
-  temperature: number;
 
   urls: string[];
   documents: File[];
@@ -69,8 +69,8 @@ const initialConfigBase: Omit<AgentConfig, "id"> = {
   greeting_message: "",
   persona: "",
   task: "",
-  model: "gpt-4o",
-  temperature: 0.7,
+  model: "",
+  route: "",
   urls: [""],
   documents: [],
 };
@@ -86,7 +86,7 @@ const industries = [
 ];
 const languages = ["English", "Spanish", "French", "German", "Portuguese"];
 const tones = ["Formal", "Casual", "Friendly", "Professional", "Empathetic"];
-const models = ["gpt-4o", "gpt-4-turbo", "gpt-3.5-turbo"];
+const route = ["gpt-4o", "gpt-4-turbo", "gpt-3.5-turbo"];
 
 // --- Utility: Safe Error Message Extraction ---
 const getErrorMessage = (error: unknown): string => {
@@ -135,7 +135,7 @@ const saveAgentConfigToDB = async (
           // Advanced fields
           model_config: {
             model: config.model,
-            temperature: config.temperature,
+            route: config.route,
           },
         },
       ],
@@ -309,11 +309,10 @@ const FileDropZone: React.FC<{
     <div className="space-y-4">
       <div
         className={`group border-2 border-dashed border-gray-200 dark:border-gray-700 rounded-2xl p-10 text-center transition-all cursor-pointer bg-white dark:bg-gray-900/50 
-        ${
-          disabled
+        ${disabled
             ? "opacity-50 cursor-not-allowed"
             : "hover:border-blue-500 hover:bg-blue-50/30 dark:hover:bg-blue-900/10"
-        }`}
+          }`}
         onClick={() => !disabled && inputRef.current?.click()}
       >
         <input
@@ -401,13 +400,12 @@ const Stepper: React.FC<{ currentStep: number; deployed: boolean }> = ({
               className="flex flex-col items-center group cursor-default"
             >
               <div
-                className={`w-10 h-10 rounded-full flex items-center justify-center font-bold text-sm transition-all duration-300 ring-4 ring-white dark:ring-gray-950 z-10 ${
-                  isActive
-                    ? "bg-blue-600 text-white shadow-lg shadow-blue-600/30 scale-110"
-                    : isCompleted || deployed
+                className={`w-10 h-10 rounded-full flex items-center justify-center font-bold text-sm transition-all duration-300 ring-4 ring-white dark:ring-gray-950 z-10 ${isActive
+                  ? "bg-blue-600 text-white shadow-lg shadow-blue-600/30 scale-110"
+                  : isCompleted || deployed
                     ? "bg-green-500 text-white"
                     : "bg-white dark:bg-gray-900 border-2 border-gray-200 dark:border-gray-800 text-gray-400"
-                }`}
+                  }`}
               >
                 {isCompleted || deployed ? (
                   <Check className="w-5 h-5" />
@@ -416,11 +414,10 @@ const Stepper: React.FC<{ currentStep: number; deployed: boolean }> = ({
                 )}
               </div>
               <span
-                className={`absolute top-12 text-xs font-bold tracking-wide transition-colors duration-300 ${
-                  isActive
-                    ? "text-blue-600 dark:text-blue-400"
-                    : "text-gray-400"
-                }`}
+                className={`absolute top-12 text-xs font-bold tracking-wide transition-colors duration-300 ${isActive
+                  ? "text-blue-600 dark:text-blue-400"
+                  : "text-gray-400"
+                  }`}
               >
                 {step.label}
               </span>
@@ -489,7 +486,8 @@ export default function CreateAgentPage() {
       HTMLInputElement | HTMLTextAreaElement | HTMLSelectElement
     >
   ) => {
-    let value = e.target.value.toUpperCase();
+    const target = e.target as HTMLInputElement;
+    const value = target.value.toUpperCase();
     const words = value.trim().split(/\s+/);
     if (words.length > 4 && value.endsWith(" ")) return;
     if (words.length <= 5)
@@ -676,11 +674,10 @@ export default function CreateAgentPage() {
         {resultMessage && (
           <div
             className={`px-6 py-3 w-fit rounded-xl font-medium shadow-lg transition-all ease-in flex items-center justify-center gap-2
-            ${
-              resultMessage.type === "success"
+            ${resultMessage.type === "success"
                 ? "bg-green-100 text-green-800 border border-green-200"
                 : "bg-red-100 text-red-800 border border-red-200"
-            }`}
+              }`}
           >
             {resultMessage.type === "success" ? (
               <Check className="w-4 h-4" />
@@ -823,7 +820,7 @@ export default function CreateAgentPage() {
                   <button
                     type="button"
                     onClick={() => setExpanded(!expanded)}
-                    className="flex items-center text-sm font-semibold text-blue-600 dark:text-blue-400 hover:underline"
+                    className="flex items-center text-sm font-semibold text-blue-600 dark:text-blue-400 hover:underline cursor-pointer"
                   >
                     <Settings2 className="w-4 h-4 mr-2" />
                     {expanded
@@ -833,29 +830,22 @@ export default function CreateAgentPage() {
 
                   {expanded && (
                     <div className="mt-6 grid grid-cols-1 md:grid-cols-2 gap-6 animate-in fade-in slide-in-from-top-2">
-                      <SelectInput
-                        label="AI Model"
+
+                      <TextInput
+                        label="Project ID"
                         value={config.model}
-                        options={models}
                         disabled={deployed}
                         onChange={(e) =>
                           handleInputChange("model", e.target.value)
                         }
                       />
-                      <TextInput
-                        label="Temperature"
-                        value={config.temperature}
-                        type="number"
-                        step={0.1}
-                        min={0}
-                        max={1}
-                        hint="0.0 (Strict) to 1.0 (Creative)"
+                      <SelectInput
+                        label="Route Name"
+                        value={config.route}
+                        options={route}
                         disabled={deployed}
                         onChange={(e) =>
-                          handleInputChange(
-                            "temperature",
-                            parseFloat(e.target.value)
-                          )
+                          handleInputChange("route", e.target.value)
                         }
                       />
                     </div>
@@ -920,7 +910,7 @@ export default function CreateAgentPage() {
       </form>
 
       {/* Floating Footer */}
-      <div className="fixed bottom-8 w-full left-0 right-0 flex justify-center z-50 pointer-events-none px-4 items-center">
+      <div className="fixed bottom-8 w-full left-40 right-0 flex justify-center z-50 pointer-events-none px-4 items-center">
         <div className="bg-white/90 dark:bg-gray-900/90 backdrop-blur-2xl border border-gray-200/50 dark:border-gray-700/50 p-2 rounded-2xl shadow-2xl shadow-blue-900/20 pointer-events-auto flex items-center gap-2">
           <button
             type="button"
@@ -945,11 +935,10 @@ export default function CreateAgentPage() {
               type="button"
               onClick={handleDeployAgent}
               disabled={deployed || isDeploying}
-              className={`px-8 py-3 bg-gradient-to-r from-blue-600 to-indigo-600 text-white rounded-xl font-semibold shadow-lg hover:shadow-xl transition-all flex items-center gap-2 
-                ${
-                  deployed
-                    ? "opacity-50 cursor-default"
-                    : "hover:from-blue-700 hover:to-indigo-700 hover:-translate-y-0.5"
+              className={`px-8 py-3 bg-linear-to-r from-blue-600 to-indigo-600 text-white rounded-xl font-semibold shadow-lg hover:shadow-xl transition-all flex items-center gap-2 
+                ${deployed
+                  ? "opacity-50 cursor-default"
+                  : "hover:from-blue-700 hover:to-indigo-700 hover:-translate-y-0.5"
                 }`}
             >
               {isDeploying ? (
@@ -962,8 +951,8 @@ export default function CreateAgentPage() {
               {isDeploying
                 ? deployStep || "Deploying..."
                 : deployed
-                ? "Deployed!"
-                : "Deploy Agent"}
+                  ? "Deployed!"
+                  : "Deploy Agent"}
             </button>
           )}
         </div>
