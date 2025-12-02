@@ -24,6 +24,7 @@ import {
   ChevronRight,
   Loader2,
   Hash,
+  Trash2,
 } from "lucide-react";
 
 // --- Types & Helpers ---
@@ -31,7 +32,7 @@ import {
 type AgentConfig = {
   id: string;
   agentName: string;
-  triggerCode: string; // New field
+  triggerCode: string;
   status: "Active" | "Inactive" | "Training";
   lastActive: string;
 
@@ -56,7 +57,6 @@ const parseJSONField = <T,>(value: unknown, fallback: T): T => {
   if (value === null || value === undefined) {
     return fallback;
   }
-
   if (typeof value === "string") {
     try {
       return JSON.parse(value) as T;
@@ -64,7 +64,6 @@ const parseJSONField = <T,>(value: unknown, fallback: T): T => {
       return fallback;
     }
   }
-
   return value as T;
 };
 
@@ -249,7 +248,8 @@ export default function AgentManagementPage() {
 
         return {
           id: row?.id || crypto.randomUUID(),
-          agentName: row?.name || "Untitled Agent",
+          // FIX: Check aliases 'agent_name' or fallback to 'name'
+          agentName: row?.name || row?.agent_name || "Untitled Agent",
           triggerCode: row?.trigger_code || "",
           status: normalizeStatus(row?.status),
           lastActive: formatLastActive(row?.updated_at),
@@ -263,8 +263,10 @@ export default function AgentManagementPage() {
           // Mapped Config Fields
           language: row?.language || "English",
           tone: row?.tone || "Formal",
-          persona: row?.persona || "",
-          task: row?.task || "",
+          // FIX: Map 'persona_prompt' to 'persona'
+          persona: row?.persona_prompt || row?.persona || "",
+          // FIX: Map 'task_prompt' to 'task'
+          task: row?.task_prompt || row?.task || "",
 
           urls: Array.isArray(urls) ? urls : [],
           documents: [], // Files are client-side only for now in this demo
@@ -302,10 +304,58 @@ export default function AgentManagementPage() {
     setView("LIST");
   };
 
+  // --- Handlers for Input Changes ---
+
   const handleInputChange = (field: keyof AgentConfig, value: string) => {
     if (currentAgent) {
       setCurrentAgent({ ...currentAgent, [field]: value });
     }
+  };
+
+  // Capability Toggle Handler
+  const handleToggleAction = (action: keyof AgentConfig["possibleActions"]) => {
+    if (!currentAgent) return;
+    setCurrentAgent({
+      ...currentAgent,
+      possibleActions: {
+        ...currentAgent.possibleActions,
+        [action]: !currentAgent.possibleActions[action],
+      },
+    });
+  };
+
+  // URL Handlers
+  const handleAddUrl = () => {
+    if (!currentAgent) return;
+    setCurrentAgent({ ...currentAgent, urls: [...currentAgent.urls, ""] });
+  };
+
+  const handleUpdateUrl = (index: number, value: string) => {
+    if (!currentAgent) return;
+    const newUrls = [...currentAgent.urls];
+    newUrls[index] = value;
+    setCurrentAgent({ ...currentAgent, urls: newUrls });
+  };
+
+  const handleRemoveUrl = (index: number) => {
+    if (!currentAgent) return;
+    const newUrls = currentAgent.urls.filter((_, i) => i !== index);
+    setCurrentAgent({ ...currentAgent, urls: newUrls });
+  };
+
+  // File Handlers
+  const handleFilesAdded = (newFiles: File[]) => {
+    if (!currentAgent) return;
+    setCurrentAgent({
+      ...currentAgent,
+      documents: [...currentAgent.documents, ...newFiles],
+    });
+  };
+
+  const handleFileRemoved = (index: number) => {
+    if (!currentAgent) return;
+    const newDocs = currentAgent.documents.filter((_, i) => i !== index);
+    setCurrentAgent({ ...currentAgent, documents: newDocs });
   };
 
   // --- DB Save Handler ---
@@ -314,27 +364,25 @@ export default function AgentManagementPage() {
 
     setIsSaving(true);
     try {
+      // NOTE: Ensure your API supports updating a single agent
       const response = await fetch("/api/agents", {
-        method: "POST",
+        method: "POST", // Or PUT if you have a specific update endpoint
         headers: {
           "Content-Type": "application/json",
         },
-        // Send ALL fields to match schema
         body: JSON.stringify({
+          // Sending structure that matches what API likely needs
           id: currentAgent.id,
-          agentName: currentAgent.agentName,
-          triggerCode: currentAgent.triggerCode,
-          businessName: currentAgent.businessName,
-          industry: currentAgent.industry,
-          shortDescription: currentAgent.shortDescription,
-          businessURL: currentAgent.businessURL,
+          name: currentAgent.agentName,
+          trigger_code: currentAgent.triggerCode,
+          persona_prompt: currentAgent.persona,
+          task_prompt: currentAgent.task,
           language: currentAgent.language,
           tone: currentAgent.tone,
-          persona: currentAgent.persona,
-          task: currentAgent.task,
-          status: currentAgent.status,
+          allowed_actions: currentAgent.possibleActions,
           urls: currentAgent.urls,
-          possibleActions: currentAgent.possibleActions,
+          // Note: Business fields might be read-only for agent update
+          // depending on your API logic
         }),
       });
 
@@ -344,8 +392,8 @@ export default function AgentManagementPage() {
 
       const data = await response.json();
 
-      if (!data.success) {
-        throw new Error(data.error || "Failed to save agent.");
+      if (!data.success && data.error) {
+        throw new Error(data.error);
       }
 
       await fetchAgents(); // Refresh list
@@ -483,21 +531,6 @@ export default function AgentManagementPage() {
               </button>
             </div>
           )}
-
-          {/* Add New Agent Placeholder Card */}
-          {/* <button className="group border-2 border-dashed border-gray-200 dark:border-gray-800 rounded-3xl p-6 flex flex-col items-center justify-center text-gray-400 hover:border-blue-500 hover:bg-blue-50/30 dark:hover:bg-blue-900/10 transition-all gap-4 min-h-[320px]">
-            <div className="w-16 h-16 rounded-full bg-gray-50 dark:bg-gray-800 flex items-center justify-center group-hover:scale-110 group-hover:bg-blue-100 dark:group-hover:bg-blue-900/30 transition-all duration-300">
-              <Plus className="w-8 h-8 text-gray-400 group-hover:text-blue-600 dark:group-hover:text-blue-400 transition-colors" />
-            </div>
-            <div>
-              <span className="block font-bold text-lg text-gray-600 dark:text-gray-300 group-hover:text-blue-700 dark:group-hover:text-blue-400">
-                Deploy New Agent
-              </span>
-              <span className="block text-sm text-gray-400 mt-1">
-                Start from scratch or template
-              </span>
-            </div>
-          </button> */}
         </div>
       </div>
     );
@@ -662,8 +695,8 @@ export default function AgentManagementPage() {
               </h2>
               <FileDropZone
                 files={currentAgent.documents}
-                onFilesAdded={() => { }}
-                onFileRemoved={() => { }}
+                onFilesAdded={handleFilesAdded}
+                onFileRemoved={handleFileRemoved}
               />
               <div className="space-y-4 pt-8">
                 <h3 className="text-sm font-bold text-gray-900 dark:text-white">
@@ -671,15 +704,26 @@ export default function AgentManagementPage() {
                 </h3>
                 {currentAgent.urls.map((url, i) => (
                   <div key={i} className="flex gap-2">
-                    <TextInput
-                      label=""
-                      placeholder="https://"
-                      value={url}
-                      onChange={() => { }}
-                    />
+                    <div className="flex-1">
+                      <TextInput
+                        label=""
+                        placeholder="https://"
+                        value={url}
+                        onChange={(e) => handleUpdateUrl(i, e.target.value)}
+                      />
+                    </div>
+                    <button
+                      onClick={() => handleRemoveUrl(i)}
+                      className="p-3 mt-2 h-[58px] rounded-2xl bg-red-50 text-red-500 hover:bg-red-100 dark:bg-red-900/20 dark:hover:bg-red-900/40 transition-colors"
+                    >
+                      <Trash2 className="w-5 h-5" />
+                    </button>
                   </div>
                 ))}
-                <button className="text-sm font-medium text-blue-600 dark:text-blue-400 flex items-center hover:underline">
+                <button
+                  onClick={handleAddUrl}
+                  className="text-sm font-medium text-blue-600 dark:text-blue-400 flex items-center hover:underline"
+                >
                   <Plus className="w-4 h-4 mr-1" /> Add Source URL
                 </button>
               </div>
@@ -698,7 +742,7 @@ export default function AgentManagementPage() {
                     <input
                       type="checkbox"
                       checked={currentAgent.possibleActions.updateContactTable}
-                      onChange={() => { }}
+                      onChange={() => handleToggleAction("updateContactTable")}
                       className="w-5 h-5 text-blue-600 rounded-md focus:ring-blue-500 border-gray-300"
                     />
                   </div>
@@ -716,7 +760,7 @@ export default function AgentManagementPage() {
                     <input
                       type="checkbox"
                       checked={currentAgent.possibleActions.delegateToHuman}
-                      onChange={() => { }}
+                      onChange={() => handleToggleAction("delegateToHuman")}
                       className="w-5 h-5 text-blue-600 rounded-md focus:ring-blue-500 border-gray-300"
                     />
                   </div>

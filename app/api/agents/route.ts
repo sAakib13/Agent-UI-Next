@@ -30,19 +30,37 @@ const bodySchema = z.object({
   agents: z.array(agentSchema).min(1, "At least one agent is required"),
 });
 
-// --- GET Handler (Fetches Agents + Org Info) ---
-export async function GET(request: Request) {
+// pages/api/agents/route.ts (Superadmin View)
+export async function GET(_request: Request) {
   try {
-    // Ideally, get organization_id from the authenticated user's session
-    const organizationId = uuidv4();
+    // It is appropriate for a Superadmin role.
+    const result = await db.query(`
+      SELECT
+        a.id, a.name AS agent_name, a.trigger_code, a.updated_at, a.language, a.tone,
+        a.persona_prompt, a.task_prompt, a.allowed_actions AS actions,
+        o.name AS business_name, o.industry, o.short_description, o.website AS business_url
+      FROM agents a
+      JOIN organizations o ON a.organization_id = o.id
+    `);
 
-    const result = await db.query(`SELECT * FROM agents`, [organizationId]);
+    const agents = result.rows.map((row) => ({
+      ...row,
+    }));
 
-    const agents: Agent[] = result.rows;
-    return NextResponse.json(agents);
+    return NextResponse.json({
+      success: true,
+      data: agents,
+    });
   } catch (error) {
+    console.error("--- SUPERADMIN AGENT FETCH FAILED ---");
+    console.error("FULL DATABASE ERROR:", error);
+
     return NextResponse.json(
-      { error: "Failed to fetch agents" },
+      {
+        success: false,
+        error:
+          "Server error during agent aggregation. Check database connection and schema.",
+      },
       { status: 500 }
     );
   }
