@@ -531,21 +531,6 @@ export default function AgentManagementPage() {
               </button>
             </div>
           )}
-
-          {/* Add New Agent Placeholder Card */}
-          <button className="group border-2 border-dashed border-gray-200 dark:border-gray-800 rounded-3xl p-6 flex flex-col items-center justify-center text-gray-400 hover:border-blue-500 hover:bg-blue-50/30 dark:hover:bg-blue-900/10 transition-all gap-4 min-h-[320px]">
-            <div className="w-16 h-16 rounded-full bg-gray-50 dark:bg-gray-800 flex items-center justify-center group-hover:scale-110 group-hover:bg-blue-100 dark:group-hover:bg-blue-900/30 transition-all duration-300">
-              <Plus className="w-8 h-8 text-gray-400 group-hover:text-blue-600 dark:group-hover:text-blue-400 transition-colors" />
-            </div>
-            <div>
-              <span className="block font-bold text-lg text-gray-600 dark:text-gray-300 group-hover:text-blue-700 dark:group-hover:text-blue-400">
-                Deploy New Agent
-              </span>
-              <span className="block text-sm text-gray-400 mt-1">
-                Start from scratch or template
-              </span>
-            </div>
-          </button>
         </div>
       </div>
     );
