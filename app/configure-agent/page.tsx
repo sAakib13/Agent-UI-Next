@@ -1,3 +1,4 @@
+/* eslint-disable @typescript-eslint/no-unused-vars */
 "use client";
 
 import React, { useCallback, useEffect, useState } from "react";
@@ -80,11 +81,11 @@ const formatLastActive = (timestamp?: string | null) => {
   return Number.isNaN(parsed.getTime())
     ? "Unknown"
     : parsed.toLocaleString(undefined, {
-        hour: "2-digit",
-        minute: "2-digit",
-        month: "short",
-        day: "numeric",
-      });
+      hour: "2-digit",
+      minute: "2-digit",
+      month: "short",
+      day: "numeric",
+    });
 };
 
 // --- Reusable Modern Components ---
@@ -108,6 +109,7 @@ const TextInput: React.FC<{
     <input
       type="text"
       value={value}
+      // eslint-disable-next-line @typescript-eslint/no-explicit-any
       onChange={onChange as any}
       placeholder={placeholder}
       className="w-full bg-white dark:bg-gray-800/50 border border-gray-200 dark:border-gray-700 rounded-2xl px-5 py-4 text-gray-900 dark:text-white placeholder-gray-400 focus:ring-4 focus:ring-blue-500/10 focus:border-blue-500 transition-all outline-none shadow-sm"
@@ -237,6 +239,7 @@ export default function AgentManagementPage() {
         );
       }
 
+      // eslint-disable-next-line @typescript-eslint/no-explicit-any
       const mapped: AgentConfig[] = (payload.data ?? []).map((row: any) => {
         const urls = parseJSONField<string[]>(row?.urls, []);
         const actions = parseJSONField<Record<string, boolean>>(
@@ -409,32 +412,29 @@ export default function AgentManagementPage() {
               >
                 <div className="flex justify-between items-start mb-6">
                   <div
-                    className={`w-14 h-14 rounded-2xl flex items-center justify-center shadow-inner ${
-                      agent.status === "Active"
-                        ? "bg-gradient-to-br from-green-50 to-green-100 dark:from-green-900/20 dark:to-green-900/10"
-                        : agent.status === "Training"
-                        ? "bg-gradient-to-br from-amber-50 to-amber-100 dark:from-amber-900/20 dark:to-amber-900/10"
-                        : "bg-gradient-to-br from-gray-50 to-gray-100 dark:from-gray-800 dark:to-gray-900"
-                    }`}
+                    className={`w-14 h-14 rounded-2xl flex items-center justify-center shadow-inner ${agent.status === "Active"
+                      ? "bg-linear-to-br from-green-50 to-green-100 dark:from-green-900/20 dark:to-green-900/10"
+                      : agent.status === "Training"
+                        ? "bg-linear-to-br from-amber-50 to-amber-100 dark:from-amber-900/20 dark:to-amber-900/10"
+                        : "bg-linear-to-br from-gray-50 to-gray-100 dark:from-gray-800 dark:to-gray-900"
+                      }`}
                   >
                     <Zap
-                      className={`w-7 h-7 ${
-                        agent.status === "Active"
-                          ? "text-green-600 dark:text-green-400"
-                          : agent.status === "Training"
+                      className={`w-7 h-7 ${agent.status === "Active"
+                        ? "text-green-600 dark:text-green-400"
+                        : agent.status === "Training"
                           ? "text-amber-600 dark:text-amber-400"
                           : "text-gray-400"
-                      }`}
+                        }`}
                     />
                   </div>
                   <div
-                    className={`px-3 py-1 rounded-full text-xs font-bold border ${
-                      agent.status === "Active"
-                        ? "bg-green-50 text-green-700 border-green-200 dark:bg-green-900/20 dark:border-green-900"
-                        : agent.status === "Training"
+                    className={`px-3 py-1 rounded-full text-xs font-bold border ${agent.status === "Active"
+                      ? "bg-green-50 text-green-700 border-green-200 dark:bg-green-900/20 dark:border-green-900"
+                      : agent.status === "Training"
                         ? "bg-amber-50 text-amber-700 border-amber-200 dark:bg-amber-900/20 dark:border-amber-900"
                         : "bg-gray-50 text-gray-600 border-gray-200 dark:bg-gray-800 dark:border-gray-700"
-                    }`}
+                      }`}
                   >
                     {agent.status}
                   </div>
@@ -485,7 +485,7 @@ export default function AgentManagementPage() {
           )}
 
           {/* Add New Agent Placeholder Card */}
-          <button className="group border-2 border-dashed border-gray-200 dark:border-gray-800 rounded-3xl p-6 flex flex-col items-center justify-center text-gray-400 hover:border-blue-500 hover:bg-blue-50/30 dark:hover:bg-blue-900/10 transition-all gap-4 min-h-[320px]">
+          {/* <button className="group border-2 border-dashed border-gray-200 dark:border-gray-800 rounded-3xl p-6 flex flex-col items-center justify-center text-gray-400 hover:border-blue-500 hover:bg-blue-50/30 dark:hover:bg-blue-900/10 transition-all gap-4 min-h-[320px]">
             <div className="w-16 h-16 rounded-full bg-gray-50 dark:bg-gray-800 flex items-center justify-center group-hover:scale-110 group-hover:bg-blue-100 dark:group-hover:bg-blue-900/30 transition-all duration-300">
               <Plus className="w-8 h-8 text-gray-400 group-hover:text-blue-600 dark:group-hover:text-blue-400 transition-colors" />
             </div>
@@ -497,7 +497,7 @@ export default function AgentManagementPage() {
                 Start from scratch or template
               </span>
             </div>
-          </button>
+          </button> */}
         </div>
       </div>
     );
@@ -520,11 +520,10 @@ export default function AgentManagementPage() {
               <h1 className="text-3xl font-extrabold tracking-tight text-gray-900 dark:text-white flex items-center gap-4">
                 {currentAgent.agentName}
                 <span
-                  className={`text-sm font-bold px-3 py-1 rounded-full border ${
-                    currentAgent.status === "Active"
-                      ? "bg-green-50 border-green-200 text-green-700 dark:bg-green-900/20 dark:border-green-900 dark:text-green-400"
-                      : "bg-gray-50 border-gray-200 text-gray-600 dark:bg-gray-800 dark:border-gray-700 dark:text-gray-400"
-                  }`}
+                  className={`text-sm font-bold px-3 py-1 rounded-full border ${currentAgent.status === "Active"
+                    ? "bg-green-50 border-green-200 text-green-700 dark:bg-green-900/20 dark:border-green-900 dark:text-green-400"
+                    : "bg-gray-50 border-gray-200 text-gray-600 dark:bg-gray-800 dark:border-gray-700 dark:text-gray-400"
+                    }`}
                 >
                   {currentAgent.status}
                 </span>
@@ -663,8 +662,8 @@ export default function AgentManagementPage() {
               </h2>
               <FileDropZone
                 files={currentAgent.documents}
-                onFilesAdded={() => {}}
-                onFileRemoved={() => {}}
+                onFilesAdded={() => { }}
+                onFileRemoved={() => { }}
               />
               <div className="space-y-4 pt-8">
                 <h3 className="text-sm font-bold text-gray-900 dark:text-white">
@@ -676,7 +675,7 @@ export default function AgentManagementPage() {
                       label=""
                       placeholder="https://"
                       value={url}
-                      onChange={() => {}}
+                      onChange={() => { }}
                     />
                   </div>
                 ))}
@@ -699,7 +698,7 @@ export default function AgentManagementPage() {
                     <input
                       type="checkbox"
                       checked={currentAgent.possibleActions.updateContactTable}
-                      onChange={() => {}}
+                      onChange={() => { }}
                       className="w-5 h-5 text-blue-600 rounded-md focus:ring-blue-500 border-gray-300"
                     />
                   </div>
@@ -717,7 +716,7 @@ export default function AgentManagementPage() {
                     <input
                       type="checkbox"
                       checked={currentAgent.possibleActions.delegateToHuman}
-                      onChange={() => {}}
+                      onChange={() => { }}
                       className="w-5 h-5 text-blue-600 rounded-md focus:ring-blue-500 border-gray-300"
                     />
                   </div>

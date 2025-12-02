@@ -1,3 +1,4 @@
+/* eslint-disable @typescript-eslint/no-unused-vars */
 "use client";
 
 import React, { useState } from "react";
@@ -86,7 +87,7 @@ const industries = [
 ];
 const languages = ["English", "Spanish", "French", "German", "Portuguese"];
 const tones = ["Formal", "Casual", "Friendly", "Professional", "Empathetic"];
-const route = ["gpt-4o", "gpt-4-turbo", "gpt-3.5-turbo"];
+const route = ["WhatsApp", "Viber", "Messenger"];
 
 // --- Utility: Safe Error Message Extraction ---
 const getErrorMessage = (error: unknown): string => {
@@ -512,7 +513,7 @@ export default function CreateAgentPage() {
         persona:
           "You are a knowledgeable and precise technical support assistant for a cloud infrastructure company. You prioritize security and uptime in your answers.",
         task: "Answer FAQs about server pricing, troubleshoot basic login issues, and schedule consultations for enterprise plans.",
-        model: "gpt-4-turbo",
+        model: "",
         temperature: 0.5,
         urls: [
           "https://nexus-demo.com/docs",
@@ -535,7 +536,7 @@ export default function CreateAgentPage() {
         persona:
           "You are a warm, energetic, and coffee-obsessed barista. You use emojis occasionally and love suggesting pairings.",
         task: "Take coffee orders, explain the difference between roasts, and provide store hours and location.",
-        model: "gpt-4o",
+        model: "",
         temperature: 0.8,
         urls: [
           "https://bean-leaf-cafe.com/menu",
