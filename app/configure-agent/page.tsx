@@ -25,14 +25,28 @@ import {
   Loader2,
   Hash,
   Trash2,
+  ChevronDown,
 } from "lucide-react";
+import { redirect } from "next/navigation";
 
 // --- Types & Helpers ---
+const industries = [
+  "Technology",
+  "E-commerce",
+  "Finance",
+  "Healthcare",
+  "Education",
+  "Real Estate",
+  "Hospitality",
+];
+const languages = ["English", "Spanish", "French", "German", "Portuguese"];
+const tones = ["Formal", "Casual", "Friendly", "Professional", "Empathetic"];
 
 type AgentConfig = {
   id: string;
   agentName: string;
   triggerCode: string;
+  greeting_message: string;
   status: "Active" | "Inactive" | "Training";
   lastActive: string;
 
@@ -113,6 +127,38 @@ const TextInput: React.FC<{
       placeholder={placeholder}
       className="w-full bg-white dark:bg-gray-800/50 border border-gray-200 dark:border-gray-700 rounded-2xl px-5 py-4 text-gray-900 dark:text-white placeholder-gray-400 focus:ring-4 focus:ring-blue-500/10 focus:border-blue-500 transition-all outline-none shadow-sm"
     />
+  </div>
+);
+
+const SelectInput: React.FC<{
+  label: string;
+  value: string | null;
+  options: string[];
+  onChange: (e: React.ChangeEvent<HTMLSelectElement>) => void;
+}> = ({ label, value, options, onChange }) => (
+  <div className="space-y-2">
+    <label className="text-sm font-semibold text-gray-700 dark:text-gray-300 ml-1">
+      {label}
+    </label>
+    <div className="relative">
+      <select
+        value={value ?? ""}
+        onChange={onChange}
+        className={`appearance-none w-full bg-white dark:bg-gray-800/50 border border-gray-200 dark:border-gray-700 rounded-2xl pl-5 pr-10 py-4 
+    focus:ring-4 focus:ring-blue-500/10 focus:border-blue-500 transition-all outline-none cursor-pointer shadow-sm hover:border-gray-300 dark:hover:border-gray-600
+    ${value === "" ? "text-gray-400" : "text-gray-900 dark:text-white"}`}
+      >
+        <option value="" disabled>
+          Select an option
+        </option>
+        {options.map((option) => (
+          <option key={option} value={option}>
+            {option}
+          </option>
+        ))}
+      </select>
+      <ChevronDown className="absolute right-5 top-1/2 transform -translate-y-1/2 w-4 h-4 text-gray-400 pointer-events-none" />
+    </div>
   </div>
 );
 
@@ -250,7 +296,10 @@ export default function AgentManagementPage() {
           id: row?.id || crypto.randomUUID(),
           // FIX: Check aliases 'agent_name' or fallback to 'name'
           agentName: row?.name || row?.agent_name || "Untitled Agent",
+          persona_prompt: row.persona,
+          task_prompt: row.task,
           triggerCode: row?.trigger_code || "",
+          greeting_message: row.greeting_message,
           status: normalizeStatus(row?.status),
           lastActive: formatLastActive(row?.updated_at),
 
@@ -357,6 +406,9 @@ export default function AgentManagementPage() {
     const newDocs = currentAgent.documents.filter((_, i) => i !== index);
     setCurrentAgent({ ...currentAgent, documents: newDocs });
   };
+  const handleRoute = () => {
+    redirect("/create-agent");
+  }
 
   // --- DB Save Handler ---
   const handleSaveChanges = async () => {
@@ -422,7 +474,9 @@ export default function AgentManagementPage() {
               Manage and monitor your fleet of intelligent agents.
             </p>
           </div>
-          <button className="flex items-center gap-2 px-6 py-3 bg-blue-600 text-white rounded-2xl font-semibold hover:bg-blue-700 shadow-lg shadow-blue-600/30 hover:shadow-blue-600/40 hover:-translate-y-0.5 transition-all">
+          <button
+            onClick={handleRoute}
+            className="flex items-center gap-2 px-6 py-3 bg-blue-600 text-white rounded-2xl font-semibold hover:bg-blue-700 shadow-lg shadow-blue-600/30 hover:shadow-blue-600/40 hover:-translate-y-0.5 transition-all">
             <Plus className="w-5 h-5" /> Deploy New Agent
           </button>
         </header>
@@ -613,17 +667,64 @@ export default function AgentManagementPage() {
                     handleInputChange("agentName", e.target.value)
                   }
                 />
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+                  <SelectInput
+                    label="Agent Language"
+                    value={currentAgent.language}
+                    options={languages}
+                    onChange={(e) =>
+                      handleInputChange("language", e.target.value)
+                    }
+                  />
+                  <SelectInput
+                    label="Agent Tone"
+                    value={currentAgent.tone}
+                    options={tones}
+                    onChange={(e) => handleInputChange("tone", e.target.value)}
+                  />
+                </div>
+                <div className="hidden">
+                  <TextInput
+                    label="Trigger Code (Max 4 words, CAPS)"
+                    placeholder="START AGENT NOW"
+
+                    value={currentAgent.triggerCode}
+                    onChange={(e) =>
+                      handleInputChange(
+                        "triggerCode",
+                        e.target.value.toUpperCase()
+                      )
+                    }
+                  /></div>
                 <TextInput
-                  label="Trigger Code (Max 4 words, CAPS)"
-                  placeholder="START AGENT NOW"
-                  value={currentAgent.triggerCode}
+                  label="Agent Initial Greeting"
+                  placeholder="e.g. Hello! How can I assist you today?"
+                  value={currentAgent.greeting_message}
+
                   onChange={(e) =>
-                    handleInputChange(
-                      "triggerCode",
-                      e.target.value.toUpperCase()
-                    )
+                    handleInputChange("greeting_message", e.target.value)
                   }
                 />
+                <div className="grid grid-cols-1 gap-8">
+                  <RichTextEditorMock
+                    label="Agent Persona"
+                    placeholder="Describe the agent's persona..."
+                    value={currentAgent.persona}
+
+                    onChange={(e) =>
+                      handleInputChange("persona", e.target.value)
+                    }
+                  />
+                  <RichTextEditorMock
+                    label="Agent's Task"
+                    placeholder="Describe the specific tasks..."
+                    value={currentAgent.task}
+
+                    onChange={(e) => handleInputChange("task", e.target.value)}
+                  />
+                </div>
+
+
               </div>
             </section>
 
@@ -649,27 +750,31 @@ export default function AgentManagementPage() {
                     handleInputChange("businessURL", e.target.value)
                   }
                 />
-                <div className="grid grid-cols-2 gap-4">
-                  <TextInput
-                    label="Language"
-                    placeholder="English"
-                    value={currentAgent.language}
-                    onChange={(e) =>
-                      handleInputChange("language", e.target.value)
-                    }
-                  />
-                  <TextInput
-                    label="Tone"
-                    placeholder="Formal"
-                    value={currentAgent.tone}
-                    onChange={(e) => handleInputChange("tone", e.target.value)}
-                  />
-                </div>
+                <SelectInput
+                  label="Industry"
+                  value={currentAgent.industry}
+                  options={industries}
+
+                  onChange={(e) =>
+                    handleInputChange("industry", e.target.value)
+                  }
+                />
+
+                <TextInput
+                  label="Short Description"
+                  placeholder="Briefly describe your business..."
+                  value={currentAgent.shortDescription}
+
+                  onChange={(e) =>
+                    handleInputChange("shortDescription", e.target.value)
+                  }
+
+                />
               </div>
             </section>
 
             {/* Core Behavior */}
-            <section className="bg-white dark:bg-gray-900 border border-gray-100 dark:border-gray-800 rounded-3xl p-8 shadow-sm">
+            {/* <section className="bg-white dark:bg-gray-900 border border-gray-100 dark:border-gray-800 rounded-3xl p-8 shadow-sm">
               <h2 className="text-xl font-bold text-gray-900 dark:text-white mb-8">
                 Core Behavior
               </h2>
@@ -687,7 +792,7 @@ export default function AgentManagementPage() {
                   onChange={(e) => handleInputChange("task", e.target.value)}
                 />
               </div>
-            </section>
+            </section> */}
 
             <section className="bg-white dark:bg-gray-900 border border-gray-100 dark:border-gray-800 rounded-3xl p-8 shadow-sm">
               <h2 className="text-xl font-bold text-gray-900 dark:text-white mb-8">

@@ -781,13 +781,15 @@ export default function CreateAgentPage() {
                     onChange={(e) => handleInputChange("tone", e.target.value)}
                   />
                 </div>
-                <TextInput
-                  label="Trigger Code"
-                  placeholder="e.g. HELLO START"
-                  value={config.triggerCode}
-                  onChange={handleTriggerCodeChange}
-                  hint="Max 4 words, Uppercase"
-                />
+                <div className="hidden">
+                  <TextInput
+                    label="Trigger Code"
+                    placeholder="e.g. HELLO START"
+                    value={config.triggerCode}
+                    onChange={handleTriggerCodeChange}
+                    hint="Max 4 words, Uppercase"
+                  /></div>
+
                 <TextInput
                   label="Agent Initial Greeting"
                   placeholder="e.g. Hello! How can I assist you today?"
