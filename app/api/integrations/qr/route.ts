@@ -1,18 +1,17 @@
 import { NextResponse } from "next/server";
+import axios from "axios";
+import https from "https";
 
 const SYMBIOSIS_API_URL =
   "https://agentapi.symbiosis.solutions/api/v1/qr_codes";
-// Use the key from env or fallback to the one provided in your curl example for testing
-const API_KEY =
-  process.env.SYMBIOSIS_API_KEY ||
-  "V3Uzbiuhx1893871928798x38127x3987x8937b8937xb219837xb98";
+const API_KEY = process.env.SYMBIOSIS_API_KEY || "";
 
 export async function POST(request: Request) {
   try {
     const body = await request.json();
     const { agentId, agentName, triggerCode } = body;
 
-    // Validate inputs
+    // 1. Validate inputs
     if (!agentId || !agentName) {
       return NextResponse.json(
         { success: false, error: "Agent ID and Name are required" },
@@ -20,44 +19,59 @@ export async function POST(request: Request) {
       );
     }
 
-    // Call Symbiosis API
-    const externalResponse = await fetch(SYMBIOSIS_API_URL, {
-      method: "POST",
-      headers: {
-        "Content-Type": "application/json",
-        accept: "application/json",
-        "api-key": API_KEY, // Correct header name based on your curl
-      },
-      body: JSON.stringify({
-        agent_id: agentId,
-        agent_name: agentName,
-        trigger_code: triggerCode || "START", // Provide default if missing
-      }),
+    // 2. Configure the HTTPS Agent to ignore SSL errors
+    const httpsAgent = new https.Agent({
+      rejectUnauthorized: false,
     });
 
-    if (!externalResponse.ok) {
-      const errorText = await externalResponse.text();
-      console.error("Symbiosis API Error Body:", errorText);
-      throw new Error(
-        `Symbiosis API Error: ${externalResponse.status} ${errorText}`
-      );
-    }
+    // 3. Call Symbiosis API using Axios
+    // Axios throws an error automatically if the status is not 2xx,
+    // so we catch it in the catch block below.
+    const response = await axios.post(
+      SYMBIOSIS_API_URL,
+      {
+        agent_id: agentId,
+        agent_name: agentName,
+        trigger_code: triggerCode || "START",
+      },
+      {
+        headers: {
+          "Content-Type": "application/json",
+          accept: "application/json",
+          "api-key": API_KEY,
+        },
+        httpsAgent: httpsAgent, // This applies the SSL fix
+      }
+    );
 
-    const data = await externalResponse.json();
+    const data = response.data;
 
     return NextResponse.json({
       success: true,
-      // The API returns 'qr_image_base64' based on the schema
       qrCodeUrl: data.qr_image_base64
         ? `data:image/png;base64,${data.qr_image_base64}`
         : null,
     });
   } catch (error: any) {
-    console.error("QR Integration Error:", error);
+    console.error("QR Integration Error:", error.message);
+
+    // Axios specific error handling to see external API details
+    if (axios.isAxiosError(error)) {
+      console.error("External API Response:", error.response?.data);
+      return NextResponse.json(
+        {
+          success: false,
+          error: "Failed to generate QR Code via External API",
+          details: error.response?.data || error.message,
+        },
+        { status: error.response?.status || 500 }
+      );
+    }
+
     return NextResponse.json(
       {
         success: false,
-        error: "Failed to generate QR Code",
+        error: "Internal Server Error",
         details: error.message,
       },
       { status: 500 }
