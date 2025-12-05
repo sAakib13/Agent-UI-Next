@@ -310,10 +310,11 @@ const FileDropZone: React.FC<{
     <div className="space-y-4">
       <div
         className={`group border-2 border-dashed border-gray-200 dark:border-gray-700 rounded-2xl p-10 text-center transition-all cursor-pointer bg-white dark:bg-gray-900/50 
-        ${disabled
+        ${
+          disabled
             ? "opacity-50 cursor-not-allowed"
             : "hover:border-blue-500 hover:bg-blue-50/30 dark:hover:bg-blue-900/10"
-          }`}
+        }`}
         onClick={() => !disabled && inputRef.current?.click()}
       >
         <input
@@ -401,12 +402,13 @@ const Stepper: React.FC<{ currentStep: number; deployed: boolean }> = ({
               className="flex flex-col items-center group cursor-default"
             >
               <div
-                className={`w-10 h-10 rounded-full flex items-center justify-center font-bold text-sm transition-all duration-300 ring-4 ring-white dark:ring-gray-950 z-10 ${isActive
-                  ? "bg-blue-600 text-white shadow-lg shadow-blue-600/30 scale-110"
-                  : isCompleted || deployed
+                className={`w-10 h-10 rounded-full flex items-center justify-center font-bold text-sm transition-all duration-300 ring-4 ring-white dark:ring-gray-950 z-10 ${
+                  isActive
+                    ? "bg-blue-600 text-white shadow-lg shadow-blue-600/30 scale-110"
+                    : isCompleted || deployed
                     ? "bg-green-500 text-white"
                     : "bg-white dark:bg-gray-900 border-2 border-gray-200 dark:border-gray-800 text-gray-400"
-                  }`}
+                }`}
               >
                 {isCompleted || deployed ? (
                   <Check className="w-5 h-5" />
@@ -415,10 +417,11 @@ const Stepper: React.FC<{ currentStep: number; deployed: boolean }> = ({
                 )}
               </div>
               <span
-                className={`absolute top-12 text-xs font-bold tracking-wide transition-colors duration-300 ${isActive
-                  ? "text-blue-600 dark:text-blue-400"
-                  : "text-gray-400"
-                  }`}
+                className={`absolute top-12 text-xs font-bold tracking-wide transition-colors duration-300 ${
+                  isActive
+                    ? "text-blue-600 dark:text-blue-400"
+                    : "text-gray-400"
+                }`}
               >
                 {step.label}
               </span>
@@ -499,48 +502,69 @@ export default function CreateAgentPage() {
   const handleAutoFill = () => {
     const presets = [
       {
-        businessName: "Nexus Tech Solutions",
-        industry: "Technology",
-        businessURL: "https://nexus-demo.com",
+        businessName: "GlowWave Cosmetics",
+        industry: "Beauty & Skincare",
+        businessURL: "https://glowwavebeauty.com",
         shortDescription:
-          "A leading provider of cloud infrastructure and cybersecurity solutions for enterprise clients.",
-        agentName: "NexusBot",
+          "A modern skincare brand offering dermatologist-approved, cruelty-free beauty essentials for glowing skin.",
+        agentName: "GlowBot",
         language: "English",
-        tone: "Professional",
-        triggerCode: "START NEXUS",
+        tone: "Empowering",
         greeting_message:
-          "Welcome to Nexus Tech! I am your virtual assistant. How can I help you with our cloud services today?",
+          "Hi beautiful! ✨ I’m GlowBot — here to help you find the perfect skincare routine. What’s your glow goal today?",
         persona:
-          "You are a knowledgeable and precise technical support assistant for a cloud infrastructure company. You prioritize security and uptime in your answers.",
-        task: "Answer FAQs about server pricing, troubleshoot basic login issues, and schedule consultations for enterprise plans.",
+          "You are an upbeat, supportive beauty expert who loves recommending products based on skin type and lifestyle.",
+        task: "Assist customers with product recommendations, explain ingredients, and guide them through checkout.",
         model: "",
-        temperature: 0.5,
+        temperature: 0.7,
         urls: [
-          "https://nexus-demo.com/docs",
-          "https://nexus-demo.com/pricing",
-          "https://nexus-demo.com/support",
+          "https://glowwavebeauty.com/products",
+          "https://glowwavebeauty.com/routines",
+          "https://glowwavebeauty.com/ingredients",
         ],
       },
       {
-        businessName: "The Bean & Leaf",
-        industry: "E-commerce",
-        businessURL: "https://bean-leaf-cafe.com",
+        businessName: "Peak Performance Fitness",
+        industry: "Health & Wellness",
+        businessURL: "https://peakperformfit.com",
         shortDescription:
-          "An artisanal coffee roaster and tea shop specializing in organic, fair-trade blends.",
-        agentName: "Barista Buddy",
+          "A fitness coaching company specializing in personalized workout plans and nutrition guidance for all levels.",
+        agentName: "Coach Peak",
         language: "English",
-        tone: "Friendly",
-        triggerCode: "ORDER COFFEE",
+        tone: "Motivational",
         greeting_message:
-          "Hey there! ☕ Welcome to Bean & Leaf. Looking for a fresh brew or some beans?",
+          "Welcome athlete! 💪 I’m Coach Peak — ready to help you crush your fitness goals. What are we working on today?",
         persona:
-          "You are a warm, energetic, and coffee-obsessed barista. You use emojis occasionally and love suggesting pairings.",
-        task: "Take coffee orders, explain the difference between roasts, and provide store hours and location.",
+          "You are a high-energy fitness coach who motivates users and provides educated health advice with encouragement.",
+        task: "Create workout suggestions, provide gym membership info, and answer nutrition FAQs.",
         model: "",
-        temperature: 0.8,
+        temperature: 0.6,
         urls: [
-          "https://bean-leaf-cafe.com/menu",
-          "https://bean-leaf-cafe.com/sustainability",
+          "https://peakperformfit.com/workouts",
+          "https://peakperformfit.com/nutrition",
+          "https://peakperformfit.com/membership",
+        ],
+      },
+      {
+        businessName: "Voyager Travel Co.",
+        industry: "Travel & Hospitality",
+        businessURL: "https://voyagertravelco.com",
+        shortDescription:
+          "A personalized travel planning agency that specializes in curated itineraries and unforgettable vacations.",
+        agentName: "VoyageMate",
+        language: "English",
+        tone: "Adventurous",
+        greeting_message:
+          "Hello traveler! 🌍 I’m VoyageMate — ready to plan your next adventure. Where would you like to explore?",
+        persona:
+          "You are a friendly travel planner with deep destination knowledge. You inspire users with fun facts and trip tips.",
+        task: "Suggest destinations, provide pricing estimates, and help book travel packages worldwide.",
+        model: "",
+        temperature: 0.75,
+        urls: [
+          "https://voyagertravelco.com/destinations",
+          "https://voyagertravelco.com/packages",
+          "https://voyagertravelco.com/contact",
         ],
       },
     ];
@@ -675,10 +699,11 @@ export default function CreateAgentPage() {
         {resultMessage && (
           <div
             className={`px-6 py-3 w-fit rounded-xl font-medium shadow-lg transition-all ease-in flex items-center justify-center gap-2
-            ${resultMessage.type === "success"
+            ${
+              resultMessage.type === "success"
                 ? "bg-green-100 text-green-800 border border-green-200"
                 : "bg-red-100 text-red-800 border border-red-200"
-              }`}
+            }`}
           >
             {resultMessage.type === "success" ? (
               <Check className="w-4 h-4" />
@@ -788,7 +813,8 @@ export default function CreateAgentPage() {
                     value={config.triggerCode}
                     onChange={handleTriggerCodeChange}
                     hint="Max 4 words, Uppercase"
-                  /></div>
+                  />
+                </div>
 
                 <TextInput
                   label="Agent Initial Greeting"
@@ -833,7 +859,6 @@ export default function CreateAgentPage() {
 
                   {expanded && (
                     <div className="mt-6 grid grid-cols-1 md:grid-cols-2 gap-6 animate-in fade-in slide-in-from-top-2">
-
                       <TextInput
                         label="Project ID"
                         value={config.model}
@@ -939,9 +964,10 @@ export default function CreateAgentPage() {
               onClick={handleDeployAgent}
               disabled={deployed || isDeploying}
               className={`px-8 py-3 bg-linear-to-r from-blue-600 to-indigo-600 text-white rounded-xl font-semibold shadow-lg hover:shadow-xl transition-all flex items-center gap-2 
-                ${deployed
-                  ? "opacity-50 cursor-default"
-                  : "hover:from-blue-700 hover:to-indigo-700 hover:-translate-y-0.5"
+                ${
+                  deployed
+                    ? "opacity-50 cursor-default"
+                    : "hover:from-blue-700 hover:to-indigo-700 hover:-translate-y-0.5"
                 }`}
             >
               {isDeploying ? (
@@ -954,8 +980,8 @@ export default function CreateAgentPage() {
               {isDeploying
                 ? deployStep || "Deploying..."
                 : deployed
-                  ? "Deployed!"
-                  : "Deploy Agent"}
+                ? "Deployed!"
+                : "Deploy Agent"}
             </button>
           )}
         </div>
