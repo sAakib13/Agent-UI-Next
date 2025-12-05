@@ -1,3 +1,6 @@
+"use client";
+
+import React, { useEffect, useState } from "react";
 import { MetricCard, ActiveAgentCard } from "@/components/ui/MetricCard";
 import { AgentQR } from "@/components/agent/AgentQR";
 import {
@@ -8,22 +11,85 @@ import {
   User,
   Building,
   ArrowUpRight,
+  Loader2,
 } from "lucide-react";
 
-const metricsData = {
-  messagesProcessed: 14500,
-  documentsUploaded: 75,
-  urlsCrawled: 420,
-  agentStatus: "Active",
-  lastUpdated: "11/20/2025 4:21 PM",
-  numberOfAgents: 3,
-  contacts: 12,
-  organizations: 8,
-};
+// Define the shape of the data coming from your API
+interface AgentData {
+  id: string;
+  agent_name: string;
+  trigger_code: string;
+  updated_at: string;
+  language: string;
+  tone: string;
+  business_name: string;
+  industry: string;
+  business_url: string;
+  greeting_message?: string;
+  qr_code_base64?: string;
+}
 
 export default function DashboardPage() {
+  const [agents, setAgents] = useState<AgentData[]>([]);
+  const [loading, setLoading] = useState(true);
+  const [error, setError] = useState<string | null>(null);
+
+  // 1. Fetch Data on Mount
+  useEffect(() => {
+    const fetchAgents = async () => {
+      try {
+        const response = await fetch("/api/agents");
+        if (!response.ok) throw new Error("Failed to fetch agents");
+        const json = await response.json();
+
+        if (json.success && Array.isArray(json.data)) {
+          setAgents(json.data);
+        }
+      } catch (err) {
+        console.error(err);
+        setError("Could not load dashboard data.");
+      } finally {
+        setLoading(false);
+      }
+    };
+
+    fetchAgents();
+  }, []);
+
+  // 2. Calculate Dynamic Metrics
+  const numberOfAgents = agents.length;
+  // Get unique organizations count
+  const uniqueOrgs = new Set(agents.map((a) => a.business_name)).size;
+
+  // 3. Get the "Latest" Agent
+  // We sort by updated_at descending, so the first item is the newest
+  const latestAgent = agents.sort(
+    (a, b) =>
+      new Date(b.updated_at).getTime() - new Date(a.updated_at).getTime()
+  )[0];
+
+  // Hardcoded mocks for metrics not yet in DB (e.g., message counts)
+  const mockMetrics = {
+    messagesProcessed: 14500,
+    documentsUploaded: 75,
+    urlsCrawled: 420,
+    contacts: 12,
+  };
+
+  if (loading) {
+    return (
+      <div className="flex h-screen items-center justify-center">
+        <Loader2 className="w-10 h-10 animate-spin text-blue-600" />
+      </div>
+    );
+  }
+
+  if (error) {
+    return <div className="p-8 text-red-500 text-center">{error}</div>;
+  }
+
   return (
-    <div className="max-w-7xl mx-auto space-y-12 pb-10">
+    <div className="max-w-7xl mx-auto space-y-12 pb-10 pt-6">
       {/* Header */}
       <header className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 pb-6 border-b border-gray-100 dark:border-gray-800">
         <div>
@@ -31,11 +97,10 @@ export default function DashboardPage() {
             Dashboard
           </h1>
           <p className="text-gray-500 dark:text-gray-400 mt-2">
-            Welcome back, here&apos;s what&apos;s happening today.
+            Welcome back, here&apos;s your live overview.
           </p>
         </div>
         <div className="flex space-x-3">
-          {/* Example Action Button */}
           <button className="px-4 py-2 bg-white dark:bg-gray-800 border border-gray-200 dark:border-gray-700 text-gray-700 dark:text-gray-300 rounded-lg text-sm font-medium hover:bg-gray-50 dark:hover:bg-gray-700 transition-colors">
             Download Report
           </button>
@@ -51,24 +116,28 @@ export default function DashboardPage() {
         </div>
         <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-4 gap-6">
           <ActiveAgentCard
-            status={metricsData.agentStatus as "Active" | "Inactive"}
-            lastUpdated={metricsData.lastUpdated}
+            status={numberOfAgents > 0 ? "Active" : "Inactive"}
+            lastUpdated={
+              latestAgent
+                ? new Date(latestAgent.updated_at).toLocaleDateString()
+                : "N/A"
+            }
           />
           <MetricCard
             title="Messages Processed"
-            value={metricsData.messagesProcessed.toLocaleString()}
+            value={mockMetrics.messagesProcessed.toLocaleString()}
             icon={MessageSquare}
             iconBgColor="text-emerald-600 dark:text-emerald-400"
           />
           <MetricCard
             title="Documents Uploaded"
-            value={metricsData.documentsUploaded.toLocaleString()}
+            value={mockMetrics.documentsUploaded.toLocaleString()}
             icon={FileText}
             iconBgColor="text-amber-600 dark:text-amber-400"
           />
           <MetricCard
             title="URLs Crawled"
-            value={metricsData.urlsCrawled.toLocaleString()}
+            value={mockMetrics.urlsCrawled.toLocaleString()}
             icon={Globe}
             iconBgColor="text-rose-600 dark:text-rose-400"
           />
@@ -85,22 +154,52 @@ export default function DashboardPage() {
           <div className="grid grid-cols-1 sm:grid-cols-3 gap-6">
             <MetricCard
               title="Agents"
-              value={metricsData.numberOfAgents.toLocaleString()}
+              value={numberOfAgents.toLocaleString()}
               icon={Users}
               iconBgColor="text-indigo-600 dark:text-indigo-400"
             />
             <MetricCard
               title="Contacts"
-              value={metricsData.contacts.toLocaleString()}
+              value={mockMetrics.contacts.toLocaleString()}
               icon={User}
               iconBgColor="text-fuchsia-600 dark:text-fuchsia-400"
             />
             <MetricCard
               title="Organizations"
-              value={metricsData.organizations.toLocaleString()}
+              value={uniqueOrgs.toLocaleString()}
               icon={Building}
               iconBgColor="text-cyan-600 dark:text-cyan-400"
             />
+          </div>
+
+          {/* Optional: List of Recent Agents */}
+          <div className="bg-white dark:bg-gray-900 rounded-2xl border border-gray-100 dark:border-gray-800 p-6 mt-6">
+            <h3 className="font-semibold mb-4 text-gray-900 dark:text-white">
+              Recent Agents
+            </h3>
+            <div className="space-y-3">
+              {agents.slice(0, 3).map((agent) => (
+                <div
+                  key={agent.id}
+                  className="flex justify-between items-center p-3 bg-gray-50 dark:bg-gray-800/50 rounded-xl"
+                >
+                  <div>
+                    <p className="font-medium text-gray-900 dark:text-white">
+                      {agent.agent_name}
+                    </p>
+                    <p className="text-xs text-gray-500">
+                      {agent.business_name}
+                    </p>
+                  </div>
+                  <span className="text-xs font-mono bg-blue-100 dark:bg-blue-900/30 text-blue-700 dark:text-blue-300 px-2 py-1 rounded">
+                    {agent.trigger_code}
+                  </span>
+                </div>
+              ))}
+              {agents.length === 0 && (
+                <p className="text-sm text-gray-500">No agents found.</p>
+              )}
+            </div>
           </div>
         </div>
 
@@ -116,7 +215,10 @@ export default function DashboardPage() {
                 Create a new instance or update existing configurations
                 instantly.
               </p>
-              <button className="w-full py-2.5 bg-white text-blue-600 font-semibold rounded-xl hover:bg-blue-50 transition-colors flex items-center justify-center gap-2">
+              <button
+                onClick={() => (window.location.href = "/create-agent")}
+                className="w-full py-2.5 bg-white text-blue-600 font-semibold rounded-xl hover:bg-blue-50 transition-colors flex items-center justify-center gap-2"
+              >
                 <span>Start Deployment</span>
                 <ArrowUpRight className="w-4 h-4" />
               </button>
@@ -129,20 +231,29 @@ export default function DashboardPage() {
             </h2>
             <div className="bg-gradient-to-br from-gray-900 to-gray-800 dark:from-blue-900/40 dark:to-indigo-900/40 p-4 rounded-3xl text-white flex flex-col gap-4 items-center justify-between shadow-lg">
               <div>
-                <p className="text-sm text-white/70 font-medium mb-1">
+                <p className="text-sm text-white/70 font-medium mb-1 text-center">
                   Testing Sandbox
                 </p>
-                <p className="text-xl font-bold">Active on WhatsApp</p>
+                <p className="text-xl font-bold text-center">
+                  {latestAgent ? latestAgent.agent_name : "No Agents Yet"}
+                </p>
               </div>
 
-              {/* Updated QR Code Integration */}
+              {/* Updated QR Code Integration - Using Real Data */}
               <div className="bg-white p-2 rounded-xl">
-                <AgentQR
-                  agentId="550e8400-e29b-41d4-a716-446655440000"
-                  agentName="Demo Agent" // Required prop
-                  triggerCode="START"
-                  className="!border-none !shadow-none !bg-transparent !p-0" // Override container styles
-                />
+                {latestAgent ? (
+                  <AgentQR
+                    agentId={latestAgent.id}
+                    agentName={latestAgent.agent_name}
+                    triggerCode={latestAgent.trigger_code}
+                    initialQrCode={latestAgent.qr_code_base64}
+                    className="!border-none !shadow-none !bg-transparent !p-0"
+                  />
+                ) : (
+                  <div className="h-48 w-48 flex items-center justify-center text-gray-400">
+                    No active agent
+                  </div>
+                )}
               </div>
             </div>
           </section>

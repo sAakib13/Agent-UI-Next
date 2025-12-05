@@ -5,9 +5,10 @@ import { QrCode, Loader2, RefreshCw, AlertCircle } from "lucide-react";
 
 interface AgentQRProps {
   agentId: string;
-  agentName: string; // Added required prop
+  agentName: string;
   triggerCode?: string;
   className?: string;
+  initialQrCode?: string | null; // Added: Accept stored QR code
 }
 
 export const AgentQR: React.FC<AgentQRProps> = ({
@@ -15,21 +16,20 @@ export const AgentQR: React.FC<AgentQRProps> = ({
   agentName,
   triggerCode,
   className,
+  initialQrCode,
 }) => {
-  const [qrUrl, setQrUrl] = useState<string | null>(null);
+  // Initialize state with the passed prop if available
+  const [qrUrl, setQrUrl] = useState<string | null>(initialQrCode || null);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
 
   const fetchQR = async () => {
-    // Basic validation to prevent calling with invalid mock IDs like "1" or "agent-001"
-    // UUID regex check (simple version)
     const isUUID =
       /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i.test(
         agentId
       );
 
     if (!isUUID) {
-      // Don't attempt fetch if ID isn't a valid UUID (avoids 422 error loop)
       return;
     }
 
@@ -46,7 +46,12 @@ export const AgentQR: React.FC<AgentQRProps> = ({
       if (data.success && data.qrCodeUrl) {
         setQrUrl(data.qrCodeUrl);
       } else {
-        setError(data.details || "Failed to load");
+        // Fix: Safely handle if 'details' is an object (e.g. { detail: "Error" })
+        let errorMessage = data.details || "Failed to load";
+        if (typeof errorMessage === "object") {
+          errorMessage = errorMessage.detail || JSON.stringify(errorMessage);
+        }
+        setError(String(errorMessage));
       }
     } catch (err) {
       console.error(err);
@@ -57,8 +62,16 @@ export const AgentQR: React.FC<AgentQRProps> = ({
   };
 
   useEffect(() => {
-    if (agentId && agentName) fetchQR();
-  }, [agentId, agentName]);
+    // If we have an initial QR code, ensure it's set and don't fetch
+    if (initialQrCode) {
+      setQrUrl(initialQrCode);
+      return;
+    }
+
+    // Only fetch if we don't have a URL yet
+    if (agentId && agentName && !qrUrl) fetchQR();
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [agentId, agentName, initialQrCode]);
 
   return (
     <div

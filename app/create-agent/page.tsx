@@ -21,6 +21,7 @@ import {
   AlertCircle,
   Wand2, // Auto-fill icon
 } from "lucide-react";
+import { tr } from "zod/locales";
 
 // --- Types & Config ---
 
@@ -510,6 +511,7 @@ export default function CreateAgentPage() {
         agentName: "GlowBot",
         language: "English",
         tone: "Empowering",
+        triggerCode: "GLOW",
         greeting_message:
           "Hi beautiful! ✨ I’m GlowBot — here to help you find the perfect skincare routine. What’s your glow goal today?",
         persona:
@@ -530,6 +532,7 @@ export default function CreateAgentPage() {
         shortDescription:
           "A fitness coaching company specializing in personalized workout plans and nutrition guidance for all levels.",
         agentName: "Coach Peak",
+        triggerCode: "PEAK",
         language: "English",
         tone: "Motivational",
         greeting_message:
@@ -552,6 +555,7 @@ export default function CreateAgentPage() {
         shortDescription:
           "A personalized travel planning agency that specializes in curated itineraries and unforgettable vacations.",
         agentName: "VoyageMate",
+        triggerCode: "VOYAGE",
         language: "English",
         tone: "Adventurous",
         greeting_message:
