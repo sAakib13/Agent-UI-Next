@@ -54,10 +54,10 @@ export async function POST(req: Request) {
     outbound.append("agent_id", String(agentId));
     outbound.append("organization_id", String(organizationId));
 
-    const uploadRes = await fetch(`${SYM_API_BASE}/api/vi/uploads`, {
+    const uploadRes = await fetch(`${SYM_API_BASE}/api/v1/uploads`, {
       method: "POST",
       headers: {
-        Authorization: `Bearer ${SYM_UPLOAD_TOKEN}`,
+        "api-key": SYM_UPLOAD_TOKEN,
       },
       body: outbound,
     });

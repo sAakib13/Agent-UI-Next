@@ -506,74 +506,75 @@ export default function CreateAgentPage() {
   const handleAutoFill = () => {
     const presets = [
       {
-        businessName: "GlowWave Cosmetics",
+        businessName: "Glossier",
         industry: "Beauty & Skincare",
-        businessURL: "https://glowwavebeauty.com",
+        businessURL: "https://glossier.com",
         shortDescription:
-          "A modern skincare brand offering dermatologist-approved, cruelty-free beauty essentials for glowing skin.",
-        agentName: "GlowBot",
+          "A modern beauty and skincare brand offering minimalistic, skin-first products loved by millions worldwide. :contentReference[oaicite:0]{index=0}",
+        agentName: "GlossyBot",
+        triggerCode: "GLOSS",
         language: "English",
-        tone: "Empowering",
-        triggerCode: "GLOW",
+        tone: "Chic & Friendly",
         greeting_message:
-          "Hi beautiful! ✨ I’m GlowBot — here to help you find the perfect skincare routine. What’s your glow goal today?",
+          "Hey gorgeous! 💖 I’m GlossyBot — ready to help you find your next beauty must-have. What are you feeling like today?",
         persona:
-          "You are an upbeat, supportive beauty expert who loves recommending products based on skin type and lifestyle.",
-        task: "Assist customers with product recommendations, explain ingredients, and guide them through checkout.",
+          "You are a stylish, helpful beauty adviser who values simplicity, self-expression, and natural glow.",
+        task: "Help customers choose skincare and makeup products, explain formulas & shade options, and guide them to checkout.",
         model: "",
         temperature: 0.7,
         urls: [
-          "https://glowwavebeauty.com/products",
-          "https://glowwavebeauty.com/routines",
-          "https://glowwavebeauty.com/ingredients",
+          "https://glossier.com/shop",
+          "https://glossier.com/pages/skincare",
+          "https://glossier.com/pages/help",
         ],
       },
       {
-        businessName: "Peak Performance Fitness",
-        industry: "Health & Wellness",
-        businessURL: "https://peakperformfit.com",
+        businessName: "Allbirds",
+        industry: "Footwear & Apparel",
+        businessURL: "https://allbirds.com",
         shortDescription:
-          "A fitness coaching company specializing in personalized workout plans and nutrition guidance for all levels.",
-        agentName: "Coach Peak",
-        triggerCode: "PEAK",
+          "A sustainable footwear and apparel brand known for eco-friendly, super-comfortable shoes made with natural materials. :contentReference[oaicite:1]{index=1}",
+        agentName: "FeatherFoot",
+        triggerCode: "BIRDS",
         language: "English",
-        tone: "Motivational",
+        tone: "Casual & Earthy",
         greeting_message:
-          "Welcome athlete! 💪 I’m Coach Peak — ready to help you crush your fitness goals. What are we working on today?",
+          "Hey friend! 🌿 I’m FeatherFoot — here to help you step comfortably and sustainably. Which Allbirds pair are you thinking about today?",
         persona:
-          "You are a high-energy fitness coach who motivates users and provides educated health advice with encouragement.",
-        task: "Create workout suggestions, provide gym membership info, and answer nutrition FAQs.",
+          "You are a laid-back eco-conscious stylist who recommends footwear and apparel that balance comfort, style, and planet-friendly materials.",
+        task: "Suggest shoes or clothing based on lifestyle and preferences, explain sustainability benefits, and assist with sizing and orders.",
         model: "",
-        temperature: 0.6,
+        temperature: 0.65,
         urls: [
-          "https://peakperformfit.com/workouts",
-          "https://peakperformfit.com/nutrition",
-          "https://peakperformfit.com/membership",
+          "https://allbirds.com/collections/mens",
+          "https://allbirds.com/collections/womens",
+          "https://allbirds.com/pages/sustainability",
         ],
       },
       {
-        businessName: "Voyager Travel Co.",
-        industry: "Travel & Hospitality",
-        businessURL: "https://voyagertravelco.com",
+        businessName: "Patagonia",
+        industry: "Outdoor Apparel & Gear",
+        businessURL: "https://www.patagonia.com",
         shortDescription:
-          "A personalized travel planning agency that specializes in curated itineraries and unforgettable vacations.",
-        agentName: "VoyageMate",
-        triggerCode: "VOYAGE",
+          "A global leader in sustainable outdoor clothing and gear, committed to environmental activism and high-performance apparel for adventurers. ",
+        agentName: "TrailGuide",
+        triggerCode: "PATAG",
         language: "English",
-        tone: "Adventurous",
+        tone: "Adventurous & Conscious",
         greeting_message:
-          "Hello traveler! 🌍 I’m VoyageMate — ready to plan your next adventure. Where would you like to explore?",
+          "Hello adventurer! 🏔️ I’m TrailGuide — ready to help you gear up for your next outdoor journey. What adventure are you planning?",
         persona:
-          "You are a friendly travel planner with deep destination knowledge. You inspire users with fun facts and trip tips.",
-        task: "Suggest destinations, provide pricing estimates, and help book travel packages worldwide.",
+          "You are a knowledgeable, nature-loving gear expert who cares about performance, durability, and environmental responsibility.",
+        task: "Recommend outdoor clothing/gear based on activity (hiking, climbing, travel), explain materials & care, and assist with orders or sizing.",
         model: "",
-        temperature: 0.75,
+        temperature: 0.7,
         urls: [
-          "https://voyagertravelco.com/destinations",
-          "https://voyagertravelco.com/packages",
-          "https://voyagertravelco.com/contact",
+          "https://www.patagonia.com/shop/mens",
+          "https://www.patagonia.com/shop/womens",
+          "https://www.patagonia.com/pages/activism",
         ],
-      },
+      }
+
     ];
 
     const randomPreset = presets[Math.floor(Math.random() * presets.length)];
