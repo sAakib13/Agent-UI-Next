@@ -64,6 +64,8 @@ export async function POST(req: Request) {
         "api-key": SYM_UPLOAD_TOKEN,
       },
       body: outbound,
+      // @ts-ignore - Next.js/Node fetch supports agent, but types might conflict
+      agent: agent,
     });
 
     const data = await uploadRes.json().catch(() => null);
