@@ -24,7 +24,6 @@ export async function GET(req: Request) {
       method: "GET",
       headers: {
         "api-key": apiKey,
-        Accept: "application/json",
       },
     });
 

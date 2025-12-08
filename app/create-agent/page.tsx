@@ -317,10 +317,11 @@ const FileDropZone: React.FC<{
     <div className="space-y-4">
       <div
         className={`group border-2 border-dashed border-gray-200 dark:border-gray-700 rounded-2xl p-10 text-center transition-all cursor-pointer bg-white dark:bg-gray-900/50 
-        ${disabled
+        ${
+          disabled
             ? "opacity-50 cursor-not-allowed"
             : "hover:border-blue-500 hover:bg-blue-50/30 dark:hover:bg-blue-900/10"
-          }`}
+        }`}
         onClick={() => !disabled && inputRef.current?.click()}
       >
         <input
@@ -408,12 +409,13 @@ const Stepper: React.FC<{ currentStep: number; deployed: boolean }> = ({
               className="flex flex-col items-center group cursor-default"
             >
               <div
-                className={`w-10 h-10 rounded-full flex items-center justify-center font-bold text-sm transition-all duration-300 ring-4 ring-white dark:ring-gray-950 z-10 ${isActive
-                  ? "bg-blue-600 text-white shadow-lg shadow-blue-600/30 scale-110"
-                  : isCompleted || deployed
+                className={`w-10 h-10 rounded-full flex items-center justify-center font-bold text-sm transition-all duration-300 ring-4 ring-white dark:ring-gray-950 z-10 ${
+                  isActive
+                    ? "bg-blue-600 text-white shadow-lg shadow-blue-600/30 scale-110"
+                    : isCompleted || deployed
                     ? "bg-green-500 text-white"
                     : "bg-white dark:bg-gray-900 border-2 border-gray-200 dark:border-gray-800 text-gray-400"
-                  }`}
+                }`}
               >
                 {isCompleted || deployed ? (
                   <Check className="w-5 h-5" />
@@ -422,10 +424,11 @@ const Stepper: React.FC<{ currentStep: number; deployed: boolean }> = ({
                 )}
               </div>
               <span
-                className={`absolute top-12 text-xs font-bold tracking-wide transition-colors duration-300 ${isActive
-                  ? "text-blue-600 dark:text-blue-400"
-                  : "text-gray-400"
-                  }`}
+                className={`absolute top-12 text-xs font-bold tracking-wide transition-colors duration-300 ${
+                  isActive
+                    ? "text-blue-600 dark:text-blue-400"
+                    : "text-gray-400"
+                }`}
               >
                 {step.label}
               </span>
@@ -505,145 +508,144 @@ export default function CreateAgentPage() {
   // --- Auto-Fill Logic ---
   const handleAutoFill = () => {
     const presets = [
-  {
-  businessName: "Udemy",
-  industry: "Education & Online Learning",
-  businessURL: "https://www.udemy.com",
-  shortDescription:
-    "A global online learning platform offering thousands of courses across tech, business, arts, and personal development. :contentReference[oaicite:0]{index=0}",
-  agentName: "LearnBot",
-  triggerCode: "UDEMY",
-  language: "English",
-  tone: "Supportive & Knowledgeable",
-  greeting_message:
-    "Hey learner! 🎓 I’m LearnBot — here to help you find the right course to grow your skills. What are you interested in studying today?",
-  persona:
-    "You are a friendly, patient mentor who helps students choose courses, answer doubts, and guide them through enrollment.",
-  task: "Recommend courses, answer questions about content and pricing, and assist with sign-ups.",
-  model: "",
-  temperature: 0.7,
-  urls: [
-    "https://www.udemy.com/courses",
-    "https://www.udemy.com/teaching",
-    "https://www.udemy.com/support",
-  ],
-},
-{
-  businessName: "Airbnb",
-  industry: "Travel & Hospitality",
-  businessURL: "https://www.airbnb.com",
-  shortDescription:
-    "A global travel marketplace connecting guests with unique accommodations and experiences around the world. :contentReference[oaicite:1]{index=1}",
-  agentName: "StayMate",
-  triggerCode: "AIRBNB",
-  language: "English",
-  tone: "Adventurous & Friendly",
-  greeting_message:
-    "Hi traveler! 🌍 I’m StayMate — ready to help you find your next stay or adventure. Where would you like to travel?",
-  persona:
-    "You are a friendly travel planner who suggests destinations, accommodation types, and local experiences tailored to preferences.",
-  task: "Help customers browse stays/experiences, suggest travel ideas, and guide booking process.",
-  model: "",
-  temperature: 0.75,
-  urls: [
-    "https://www.airbnb.com/s",
-    "https://www.airbnb.com/experiences",
-    "https://www.airbnb.com/help",
-  ],
-},
-{
-  businessName: "Starbucks",
-  industry: "Food & Beverage / Coffeehouse",
-  businessURL: "https://www.starbucks.com",
-  shortDescription:
-    "A world-famous coffeehouse chain offering a wide variety of drinks and snacks, beloved globally. :contentReference[oaicite:2]{index=2}",
-  agentName: "BrewBuddy",
-  triggerCode: "COFFEE",
-  language: "English",
-  tone: "Casual & Friendly",
-  greeting_message:
-    "Hey coffee lover! ☕ I’m BrewBuddy — want help picking a drink or snack? I’ve got you covered!",
-  persona:
-    "You are a laid-back coffeehouse assistant who helps customers pick drinks or snacks, suggest seasonal specials, and guide orders.",
-  task: "Recommend menu items, explain promotions, and assist users in finding nearby stores or ordering online.",
-  model: "",
-  temperature: 0.65,
-  urls: [
-    "https://www.starbucks.com/menu",
-    "https://www.starbucks.com/store-locator",
-    "https://www.starbucks.com/rewards",
-  ],
-},
-{
-  businessName: "Nike",
-  industry: "Footwear & Apparel / Sportswear",
-  businessURL: "https://www.nike.com",
-  shortDescription:
-    "A global leader in sportswear and athletic footwear — combining performance, style and innovation for athletes worldwide. :contentReference[oaicite:3]{index=3}",
-  agentName: "SportyBot",
-  triggerCode: "NIKE",
-  language: "English",
-  tone: "Motivational & Dynamic",
-  greeting_message:
-    "Ready to move? 🏃‍♂️ I’m SportyBot — let’s find the perfect gear for your sport or lifestyle. What are you training for?",
-  persona:
-    "You are an energetic sportswear specialist who recommends footwear/apparel based on activity, fit, and style.",
-  task: "Suggest shoes and apparel, advise sizing, and help complete purchases.",
-  model: "",
-  temperature: 0.7,
-  urls: [
-    "https://www.nike.com/w/mens-shoes-3n82yzy7ok",
-    "https://www.nike.com/w/womens-shoes-5e1x6zy7ok",
-    "https://www.nike.com/help",
-  ],
-},
-{
-  businessName: "IKEA",
-  industry: "Home & Living / Furniture & Decor",
-  businessURL: "https://www.ikea.com",
-  shortDescription:
-    "A globally recognized home-furnishing retailer offering affordable, stylish furniture and home goods. :contentReference[oaicite:4]{index=4}",
-  agentName: "HomeStyler",
-  triggerCode: "IKEAHOME",
-  language: "English",
-  tone: "Friendly & Practical",
-  greeting_message:
-    "Hey home lover! 🏡 I’m HomeStyler — ready to help you find furniture and decor that fits your space and taste. What room are we designing today?",
-  persona:
-    "You are a practical home-furnishing advisor who helps customers choose furniture, decor, and plan layouts.",
-  task: "Recommend home goods, suggest design ideas, and assist with checkout or store navigation.",
-  model: "",
-  temperature: 0.6,
-  urls: [
-    "https://www.ikea.com/us/en/cat/furniture-fu001",
-    "https://www.ikea.com/us/en/cat/decorations-fu002",
-    "https://www.ikea.com/us/en/customer-service",
-  ],
-},
-{
-  businessName: "Spotify",
-  industry: "Digital Media & Streaming",
-  businessURL: "https://www.spotify.com",
-  shortDescription:
-    "A leading music streaming service offering millions of songs, playlists, and podcasts worldwide. :contentReference[oaicite:5]{index=5}",
-  agentName: "TuneBot",
-  triggerCode: "SPOT",
-  language: "English",
-  tone: "Upbeat & Friendly",
-  greeting_message:
-    "Hello music lover! 🎶 I’m TuneBot — here to help you discover the perfect playlist or podcast. What mood are you in today?",
-  persona:
-    "You are a music-savvy assistant who recommends songs, podcasts or playlists based on mood, genre, or activity.",
-  task: "Suggest music or podcasts, help with account/premium support, and guide through subscriptions.",
-  model: "",
-  temperature: 0.7,
-  urls: [
-    "https://www.spotify.com",
-    "https://www.spotify.com/browse",
-    "https://www.spotify.com/help",
-  ],
-}
-
+      {
+        businessName: "Udemy",
+        industry: "Education & Online Learning",
+        businessURL: "https://www.udemy.com",
+        shortDescription:
+          "A global online learning platform offering thousands of courses across tech, business, arts, and personal development. :contentReference[oaicite:0]{index=0}",
+        agentName: "LearnBot",
+        triggerCode: "UDEMY",
+        language: "English",
+        tone: "Supportive & Knowledgeable",
+        greeting_message:
+          "Hey learner! 🎓 I’m LearnBot — here to help you find the right course to grow your skills. What are you interested in studying today?",
+        persona:
+          "You are a friendly, patient mentor who helps students choose courses, answer doubts, and guide them through enrollment.",
+        task: "Recommend courses, answer questions about content and pricing, and assist with sign-ups.",
+        model: "",
+        temperature: 0.7,
+        urls: [
+          "https://www.udemy.com/courses",
+          "https://www.udemy.com/teaching",
+          "https://www.udemy.com/support",
+        ],
+      },
+      {
+        businessName: "Airbnb",
+        industry: "Travel & Hospitality",
+        businessURL: "https://www.airbnb.com",
+        shortDescription:
+          "A global travel marketplace connecting guests with unique accommodations and experiences around the world. :contentReference[oaicite:1]{index=1}",
+        agentName: "StayMate",
+        triggerCode: "AIRBNB",
+        language: "English",
+        tone: "Adventurous & Friendly",
+        greeting_message:
+          "Hi traveler! 🌍 I’m StayMate — ready to help you find your next stay or adventure. Where would you like to travel?",
+        persona:
+          "You are a friendly travel planner who suggests destinations, accommodation types, and local experiences tailored to preferences.",
+        task: "Help customers browse stays/experiences, suggest travel ideas, and guide booking process.",
+        model: "",
+        temperature: 0.75,
+        urls: [
+          "https://www.airbnb.com/s",
+          "https://www.airbnb.com/experiences",
+          "https://www.airbnb.com/help",
+        ],
+      },
+      {
+        businessName: "Starbucks",
+        industry: "Food & Beverage / Coffeehouse",
+        businessURL: "https://www.starbucks.com",
+        shortDescription:
+          "A world-famous coffeehouse chain offering a wide variety of drinks and snacks, beloved globally. :contentReference[oaicite:2]{index=2}",
+        agentName: "BrewBuddy",
+        triggerCode: "COFFEE",
+        language: "English",
+        tone: "Casual & Friendly",
+        greeting_message:
+          "Hey coffee lover! ☕ I’m BrewBuddy — want help picking a drink or snack? I’ve got you covered!",
+        persona:
+          "You are a laid-back coffeehouse assistant who helps customers pick drinks or snacks, suggest seasonal specials, and guide orders.",
+        task: "Recommend menu items, explain promotions, and assist users in finding nearby stores or ordering online.",
+        model: "",
+        temperature: 0.65,
+        urls: [
+          "https://www.starbucks.com/menu",
+          "https://www.starbucks.com/store-locator",
+          "https://www.starbucks.com/rewards",
+        ],
+      },
+      {
+        businessName: "Nike",
+        industry: "Footwear & Apparel / Sportswear",
+        businessURL: "https://www.nike.com",
+        shortDescription:
+          "A global leader in sportswear and athletic footwear — combining performance, style and innovation for athletes worldwide. :contentReference[oaicite:3]{index=3}",
+        agentName: "SportyBot",
+        triggerCode: "NIKE",
+        language: "English",
+        tone: "Motivational & Dynamic",
+        greeting_message:
+          "Ready to move? 🏃‍♂️ I’m SportyBot — let’s find the perfect gear for your sport or lifestyle. What are you training for?",
+        persona:
+          "You are an energetic sportswear specialist who recommends footwear/apparel based on activity, fit, and style.",
+        task: "Suggest shoes and apparel, advise sizing, and help complete purchases.",
+        model: "",
+        temperature: 0.7,
+        urls: [
+          "https://www.nike.com/w/mens-shoes-3n82yzy7ok",
+          "https://www.nike.com/w/womens-shoes-5e1x6zy7ok",
+          "https://www.nike.com/help",
+        ],
+      },
+      {
+        businessName: "IKEA",
+        industry: "Home & Living / Furniture & Decor",
+        businessURL: "https://www.ikea.com",
+        shortDescription:
+          "A globally recognized home-furnishing retailer offering affordable, stylish furniture and home goods. :contentReference[oaicite:4]{index=4}",
+        agentName: "HomeStyler",
+        triggerCode: "IKEAHOME",
+        language: "English",
+        tone: "Friendly & Practical",
+        greeting_message:
+          "Hey home lover! 🏡 I’m HomeStyler — ready to help you find furniture and decor that fits your space and taste. What room are we designing today?",
+        persona:
+          "You are a practical home-furnishing advisor who helps customers choose furniture, decor, and plan layouts.",
+        task: "Recommend home goods, suggest design ideas, and assist with checkout or store navigation.",
+        model: "",
+        temperature: 0.6,
+        urls: [
+          "https://www.ikea.com/us/en/cat/furniture-fu001",
+          "https://www.ikea.com/us/en/cat/decorations-fu002",
+          "https://www.ikea.com/us/en/customer-service",
+        ],
+      },
+      {
+        businessName: "Spotify",
+        industry: "Digital Media & Streaming",
+        businessURL: "https://www.spotify.com",
+        shortDescription:
+          "A leading music streaming service offering millions of songs, playlists, and podcasts worldwide. :contentReference[oaicite:5]{index=5}",
+        agentName: "TuneBot",
+        triggerCode: "SPOT",
+        language: "English",
+        tone: "Upbeat & Friendly",
+        greeting_message:
+          "Hello music lover! 🎶 I’m TuneBot — here to help you discover the perfect playlist or podcast. What mood are you in today?",
+        persona:
+          "You are a music-savvy assistant who recommends songs, podcasts or playlists based on mood, genre, or activity.",
+        task: "Suggest music or podcasts, help with account/premium support, and guide through subscriptions.",
+        model: "",
+        temperature: 0.7,
+        urls: [
+          "https://www.spotify.com",
+          "https://www.spotify.com/browse",
+          "https://www.spotify.com/help",
+        ],
+      },
     ];
 
     const randomPreset = presets[Math.floor(Math.random() * presets.length)];
@@ -714,8 +716,21 @@ export default function CreateAgentPage() {
             body: form,
           });
 
-          const json = await res.json();
-          if (!res.ok || !json?.success) {
+          // Safely parse JSON responses; many servers return plain text on errors
+          let json: any = null;
+          const text = await res.text();
+          try {
+            json = text ? JSON.parse(text) : null;
+          } catch {
+            json = null;
+          }
+
+          if (!res.ok) {
+            const errMsg = json?.error || text || `Upload failed for ${file.name} (status ${res.status})`;
+            throw new Error(errMsg);
+          }
+
+          if (!json?.success) {
             throw new Error(json?.error || `Upload failed for ${file.name}`);
           }
 
@@ -747,8 +762,14 @@ export default function CreateAgentPage() {
         });
 
         if (qrResponse.ok) {
-          const qrData = await qrResponse.json();
-          if (qrData.success && qrData.qrCodeUrl) {
+          const text = await qrResponse.text();
+          let qrData: any = null;
+          try {
+            qrData = text ? JSON.parse(text) : null;
+          } catch {
+            qrData = null;
+          }
+          if (qrData?.success && qrData.qrCodeUrl) {
             qrCodeBase64 = qrData.qrCodeUrl;
           }
         }
@@ -821,10 +842,11 @@ export default function CreateAgentPage() {
         {resultMessage && (
           <div
             className={`px-6 py-3 w-fit rounded-xl font-medium shadow-lg transition-all ease-in flex items-center justify-center gap-2
-            ${resultMessage.type === "success"
+            ${
+              resultMessage.type === "success"
                 ? "bg-green-100 text-green-800 border border-green-200"
                 : "bg-red-100 text-red-800 border border-red-200"
-              }`}
+            }`}
           >
             {resultMessage.type === "success" ? (
               <Check className="w-4 h-4" />
@@ -927,7 +949,6 @@ export default function CreateAgentPage() {
                     onChange={(e) => handleInputChange("tone", e.target.value)}
                   />
                 </div>
-
 
                 <TextInput
                   label="Agent Initial Greeting"
@@ -1086,9 +1107,10 @@ export default function CreateAgentPage() {
               onClick={handleDeployAgent}
               disabled={deployed || isDeploying}
               className={`px-8 py-3 bg-linear-to-r from-blue-600 to-indigo-600 text-white rounded-xl font-semibold shadow-lg hover:shadow-xl transition-all flex items-center gap-2 
-                ${deployed
-                  ? "opacity-50 cursor-default"
-                  : "hover:from-blue-700 hover:to-indigo-700 hover:-translate-y-0.5"
+                ${
+                  deployed
+                    ? "opacity-50 cursor-default"
+                    : "hover:from-blue-700 hover:to-indigo-700 hover:-translate-y-0.5"
                 }`}
             >
               {isDeploying ? (
@@ -1101,8 +1123,8 @@ export default function CreateAgentPage() {
               {isDeploying
                 ? deployStep || "Deploying..."
                 : deployed
-                  ? "Deployed!"
-                  : "Deploy Agent"}
+                ? "Deployed!"
+                : "Deploy Agent"}
             </button>
           )}
         </div>

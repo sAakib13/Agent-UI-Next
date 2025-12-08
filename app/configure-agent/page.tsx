@@ -276,10 +276,18 @@ export default function AgentManagementPage() {
     try {
       const response = await fetch("/api/agents");
       if (!response.ok) {
-        throw new Error("Unable to reach the agents API endpoint.");
+        // Try to read text body for better error message
+        const txt = await response.text().catch(() => null);
+        throw new Error(txt || "Unable to reach the agents API endpoint.");
       }
 
-      const payload = await response.json();
+      let payload: any = null;
+      try {
+        payload = await response.json();
+      } catch (err) {
+        const txt = await response.text().catch(() => null);
+        throw new Error(txt || "Invalid JSON response from agents API");
+      }
       if (!payload?.success) {
         throw new Error(
           payload?.error || "Failed to fetch agents from PostgreSQL."
@@ -502,13 +510,20 @@ export default function AgentManagementPage() {
       });
 
       if (!response.ok) {
-        throw new Error("Server returned an error while saving the agent.");
+        const txt = await response.text().catch(() => null);
+        throw new Error(txt || "Server returned an error while saving the agent.");
       }
 
-      const data = await response.json();
+      let data: any = null;
+      try {
+        data = await response.json();
+      } catch {
+        const txt = await response.text().catch(() => null);
+        throw new Error(txt || "Invalid JSON response from save agent API");
+      }
 
       if (!data.success && data.error) {
-        throw new Error(data.error);
+        throw new Error(data.error || "Failed to save agent");
       }
 
       await fetchAgents(); // Refresh list

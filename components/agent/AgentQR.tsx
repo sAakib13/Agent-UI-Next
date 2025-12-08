@@ -41,13 +41,18 @@ export const AgentQR: React.FC<AgentQRProps> = ({
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({ agentId, agentName, triggerCode }),
       });
-      const data = await res.json();
+      const txt = await res.text();
+      let data: any = null;
+      try {
+        data = txt ? JSON.parse(txt) : null;
+      } catch {
+        data = null;
+      }
 
-      if (data.success && data.qrCodeUrl) {
+      if (data?.success && data.qrCodeUrl) {
         setQrUrl(data.qrCodeUrl);
       } else {
-        // Fix: Safely handle if 'details' is an object (e.g. { detail: "Error" })
-        let errorMessage = data.details || "Failed to load";
+        let errorMessage = data?.details || txt || "Failed to load";
         if (typeof errorMessage === "object") {
           errorMessage = errorMessage.detail || JSON.stringify(errorMessage);
         }
