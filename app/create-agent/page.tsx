@@ -103,17 +103,19 @@ const getErrorMessage = (error: unknown): string => {
 // --- Reusable DB Function ---
 
 const saveAgentConfigToDB = async (
-  config: AgentConfig
+  config: AgentConfig,
+  documentRefs: string[],
+  uploadedUrls: string[],
+  organizationId: string
 ): Promise<{ success: boolean; message: string }> => {
   try {
-    const documentRefs = config.documents.map((f) => f.name);
-
     const allowedActionsArray = Object.entries(config.possibleActions)
       .filter(([_, enabled]) => enabled)
       .map(([key]) => key);
 
     const payload = {
       organization: {
+        id: organizationId,
         name: config.businessName,
         website: config.businessURL,
         industry: config.industry,
@@ -122,6 +124,7 @@ const saveAgentConfigToDB = async (
       },
       agents: [
         {
+          id: config.id,
           name: config.agentName,
           language: config.language,
           tone: config.tone,
@@ -133,7 +136,10 @@ const saveAgentConfigToDB = async (
           greeting_message: config.greeting_message,
           status: config.status,
           document_refs: documentRefs,
-          source_urls: config.urls.filter((url) => url.trim() !== ""),
+          source_urls: [
+            ...config.urls.filter((url) => url.trim() !== ""),
+            ...uploadedUrls,
+          ],
           // Advanced fields
           model_config: {
             model: config.model,
@@ -620,6 +626,41 @@ export default function CreateAgentPage() {
     setIsDeploying(true);
     setResultMessage(null);
     let qrCodeBase64 = "";
+    const organizationId =
+      typeof crypto !== "undefined" ? crypto.randomUUID() : `org-${Date.now()}`;
+
+    const uploadDocuments = async () => {
+      if (!config.documents.length) return { refs: [], urls: [] };
+
+      const uploads = await Promise.all(
+        config.documents.map(async (file) => {
+          const form = new FormData();
+          form.append("file", file);
+          form.append("agent_id", config.id);
+          form.append("organization_id", organizationId);
+
+          const res = await fetch("/api/uploads", {
+            method: "POST",
+            body: form,
+          });
+
+          const json = await res.json();
+          if (!res.ok || !json?.success) {
+            throw new Error(json?.error || `Upload failed for ${file.name}`);
+          }
+
+          // Expect { data: { id, url } }
+          const uploadedId = json?.data?.id || json?.data?.url || file.name;
+          const uploadedUrl = json?.data?.url || "";
+          return { id: uploadedId as string, url: uploadedUrl as string };
+        })
+      );
+
+      return {
+        refs: uploads.map((u) => u.id),
+        urls: uploads.map((u) => u.url).filter(Boolean),
+      };
+    };
 
     try {
       // 1. Generate QR Code
@@ -645,12 +686,22 @@ export default function CreateAgentPage() {
         console.warn("QR Generation skipped due to error", qrErr);
       }
 
-      // 2. Save to Database
+      // 2. Upload documents (PDFs) to Symbiosis
+      setDeployStep("Uploading knowledge base PDFs...");
+      const { refs: documentRefs, urls: uploadedUrls } =
+        await uploadDocuments();
+
+      // 3. Save to Database
       setDeployStep("Saving to Database...");
-      const result = await saveAgentConfigToDB({
-        ...config,
-        qrCode: qrCodeBase64,
-      });
+      const result = await saveAgentConfigToDB(
+        {
+          ...config,
+          qrCode: qrCodeBase64,
+        },
+        documentRefs,
+        uploadedUrls,
+        organizationId
+      );
 
       if (result.success) {
         setResultMessage({ type: "success", text: result.message });

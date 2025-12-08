@@ -6,6 +6,7 @@ import { z } from "zod";
 // --- Validation Schemas ---
 
 const agentSchema = z.object({
+  id: z.string().uuid().optional(),
   name: z.string().min(1),
   language: z.string().min(1),
   tone: z.string().min(1),
@@ -15,9 +16,19 @@ const agentSchema = z.object({
   allowed_actions: z.array(z.string()).optional().default([]),
   qr_code_base64: z.string().optional().nullable(),
   greeting_message: z.string().optional().nullable(),
+  document_refs: z.array(z.string()).optional().default([]),
+  source_urls: z.array(z.string()).optional().default([]),
+  model_config: z
+    .object({
+      model: z.string().optional().nullable(),
+      route: z.string().optional().nullable(),
+    })
+    .optional()
+    .default({}),
 });
 
 const organizationSchema = z.object({
+  id: z.string().uuid().optional(),
   name: z.string().min(1),
   website: z.string().optional().nullable(),
   industry: z.string().optional(),
@@ -39,6 +50,7 @@ export async function GET(_request: Request) {
       SELECT 
         a.id, a.name AS agent_name, a.trigger_code, a.updated_at, a.language, a.tone,
         a.persona_prompt, a.task_prompt, a.allowed_actions AS actions, a.qr_code_base64, a.greeting_message,
+        a.document_refs, a.source_urls, a.model_config,
         o.name AS business_name, o.industry, o.short_description, o.website AS business_url
       FROM agents a
       JOIN organizations o ON a.organization_id = o.id
@@ -80,8 +92,19 @@ export async function POST(request: Request) {
     // 2. Begin transaction
     await db.query("BEGIN");
 
+    // 2a. Ensure optional columns exist
+    await db.query(
+      "ALTER TABLE agents ADD COLUMN IF NOT EXISTS document_refs JSONB DEFAULT '[]'::jsonb"
+    );
+    await db.query(
+      "ALTER TABLE agents ADD COLUMN IF NOT EXISTS source_urls JSONB DEFAULT '[]'::jsonb"
+    );
+    await db.query(
+      "ALTER TABLE agents ADD COLUMN IF NOT EXISTS model_config JSONB DEFAULT '{}'::jsonb"
+    );
+
     // 3. Insert Organization
-    const organizationId = uuidv4();
+    const organizationId = organization.id ?? uuidv4();
     const orgResult = await db.query(
       `INSERT INTO organizations (
          id, name, website, industry, short_description, is_active, created_at, updated_at
@@ -102,25 +125,30 @@ export async function POST(request: Request) {
     // 4. Insert Agents
     const insertedAgents = [];
     for (const agent of agents) {
+      const agentId = agent.id ?? uuidv4();
       // NOTE: We added greeting_message and qr_code_base64 to columns and added $9, $10 placeholders
       const result = await db.query(
         `INSERT INTO agents (
-           organization_id, name, language, tone, 
+           id, organization_id, name, language, tone, 
            persona_prompt, task_prompt, trigger_code, allowed_actions,
-           greeting_message, qr_code_base64
-         ) VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10)
+           greeting_message, qr_code_base64, document_refs, source_urls, model_config
+         ) VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12, $13, $14)
          RETURNING *`,
         [
-          organizationId, // $1
-          agent.name, // $2
-          agent.language, // $3
-          agent.tone, // $4
-          agent.persona_prompt, // $5
-          agent.task_prompt, // $6
-          agent.trigger_code, // $7
-          JSON.stringify(agent.allowed_actions), // $8
-          agent.greeting_message || null, // $9
-          agent.qr_code_base64 || null, // $10
+          agentId, // $1
+          organizationId, // $2
+          agent.name, // $3
+          agent.language, // $4
+          agent.tone, // $5
+          agent.persona_prompt, // $6
+          agent.task_prompt, // $7
+          agent.trigger_code, // $8
+          JSON.stringify(agent.allowed_actions), // $9
+          agent.greeting_message || null, // $10
+          agent.qr_code_base64 || null, // $11
+          JSON.stringify(agent.document_refs || []), // $12
+          JSON.stringify(agent.source_urls || []), // $13
+          JSON.stringify(agent.model_config || {}), // $14
         ]
       );
       insertedAgents.push(result.rows[0]);
