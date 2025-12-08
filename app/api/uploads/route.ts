@@ -1,5 +1,5 @@
 import { NextResponse } from "next/server";
-
+import https from "https";
 const SYM_API_BASE =
   process.env.SYM_API_BASE || "https://agentapi.symbiosis.solutions";
 const SYM_UPLOAD_TOKEN = process.env.SYMBIOSIS_API_KEY || "";
@@ -53,6 +53,10 @@ export async function POST(req: Request) {
     outbound.append("file", file);
     outbound.append("agent_id", String(agentId));
     outbound.append("organization_id", String(organizationId));
+
+    const agent = new https.Agent({
+      rejectUnauthorized: false,
+    });
 
     const uploadRes = await fetch(`${SYM_API_BASE}/api/v1/uploads`, {
       method: "POST",
@@ -124,7 +128,11 @@ export async function GET(req: Request) {
 
     if (!proxied.ok) {
       return NextResponse.json(
-        { success: false, error: data?.error || `Request failed`, details: data },
+        {
+          success: false,
+          error: data?.error || `Request failed`,
+          details: data,
+        },
         { status: proxied.status }
       );
     }
@@ -138,4 +146,3 @@ export async function GET(req: Request) {
     );
   }
 }
-
