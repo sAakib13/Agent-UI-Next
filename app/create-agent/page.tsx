@@ -505,75 +505,144 @@ export default function CreateAgentPage() {
   // --- Auto-Fill Logic ---
   const handleAutoFill = () => {
     const presets = [
-      {
-        businessName: "Glossier",
-        industry: "Beauty & Skincare",
-        businessURL: "https://glossier.com",
-        shortDescription:
-          "A modern beauty and skincare brand offering minimalistic, skin-first products loved by millions worldwide. :contentReference[oaicite:0]{index=0}",
-        agentName: "GlossyBot",
-        triggerCode: "GLOSS",
-        language: "English",
-        tone: "Chic & Friendly",
-        greeting_message:
-          "Hey gorgeous! 💖 I’m GlossyBot — ready to help you find your next beauty must-have. What are you feeling like today?",
-        persona:
-          "You are a stylish, helpful beauty adviser who values simplicity, self-expression, and natural glow.",
-        task: "Help customers choose skincare and makeup products, explain formulas & shade options, and guide them to checkout.",
-        model: "",
-        temperature: 0.7,
-        urls: [
-          "https://glossier.com/shop",
-          "https://glossier.com/pages/skincare",
-          "https://glossier.com/pages/help",
-        ],
-      },
-      {
-        businessName: "Allbirds",
-        industry: "Footwear & Apparel",
-        businessURL: "https://allbirds.com",
-        shortDescription:
-          "A sustainable footwear and apparel brand known for eco-friendly, super-comfortable shoes made with natural materials. :contentReference[oaicite:1]{index=1}",
-        agentName: "FeatherFoot",
-        triggerCode: "BIRDS",
-        language: "English",
-        tone: "Casual & Earthy",
-        greeting_message:
-          "Hey friend! 🌿 I’m FeatherFoot — here to help you step comfortably and sustainably. Which Allbirds pair are you thinking about today?",
-        persona:
-          "You are a laid-back eco-conscious stylist who recommends footwear and apparel that balance comfort, style, and planet-friendly materials.",
-        task: "Suggest shoes or clothing based on lifestyle and preferences, explain sustainability benefits, and assist with sizing and orders.",
-        model: "",
-        temperature: 0.65,
-        urls: [
-          "https://allbirds.com/collections/mens",
-          "https://allbirds.com/collections/womens",
-          "https://allbirds.com/pages/sustainability",
-        ],
-      },
-      {
-        businessName: "Patagonia",
-        industry: "Outdoor Apparel & Gear",
-        businessURL: "https://www.patagonia.com",
-        shortDescription:
-          "A global leader in sustainable outdoor clothing and gear, committed to environmental activism and high-performance apparel for adventurers. ",
-        agentName: "TrailGuide",
-        triggerCode: "PATAG",
-        language: "English",
-        tone: "Adventurous & Conscious",
-        greeting_message:
-          "Hello adventurer! 🏔️ I’m TrailGuide — ready to help you gear up for your next outdoor journey. What adventure are you planning?",
-        persona:
-          "You are a knowledgeable, nature-loving gear expert who cares about performance, durability, and environmental responsibility.",
-        task: "Recommend outdoor clothing/gear based on activity (hiking, climbing, travel), explain materials & care, and assist with orders or sizing.",
-        model: "",
-        temperature: 0.7,
-        urls: [
-          "https://www.patagonia.com/shop/mens",
-          "https://www.patagonia.com/shop/womens",
-          "https://www.patagonia.com/pages/activism",
-        ],
-      }
+  {
+  businessName: "Udemy",
+  industry: "Education & Online Learning",
+  businessURL: "https://www.udemy.com",
+  shortDescription:
+    "A global online learning platform offering thousands of courses across tech, business, arts, and personal development. :contentReference[oaicite:0]{index=0}",
+  agentName: "LearnBot",
+  triggerCode: "UDEMY",
+  language: "English",
+  tone: "Supportive & Knowledgeable",
+  greeting_message:
+    "Hey learner! 🎓 I’m LearnBot — here to help you find the right course to grow your skills. What are you interested in studying today?",
+  persona:
+    "You are a friendly, patient mentor who helps students choose courses, answer doubts, and guide them through enrollment.",
+  task: "Recommend courses, answer questions about content and pricing, and assist with sign-ups.",
+  model: "",
+  temperature: 0.7,
+  urls: [
+    "https://www.udemy.com/courses",
+    "https://www.udemy.com/teaching",
+    "https://www.udemy.com/support",
+  ],
+},
+{
+  businessName: "Airbnb",
+  industry: "Travel & Hospitality",
+  businessURL: "https://www.airbnb.com",
+  shortDescription:
+    "A global travel marketplace connecting guests with unique accommodations and experiences around the world. :contentReference[oaicite:1]{index=1}",
+  agentName: "StayMate",
+  triggerCode: "AIRBNB",
+  language: "English",
+  tone: "Adventurous & Friendly",
+  greeting_message:
+    "Hi traveler! 🌍 I’m StayMate — ready to help you find your next stay or adventure. Where would you like to travel?",
+  persona:
+    "You are a friendly travel planner who suggests destinations, accommodation types, and local experiences tailored to preferences.",
+  task: "Help customers browse stays/experiences, suggest travel ideas, and guide booking process.",
+  model: "",
+  temperature: 0.75,
+  urls: [
+    "https://www.airbnb.com/s",
+    "https://www.airbnb.com/experiences",
+    "https://www.airbnb.com/help",
+  ],
+},
+{
+  businessName: "Starbucks",
+  industry: "Food & Beverage / Coffeehouse",
+  businessURL: "https://www.starbucks.com",
+  shortDescription:
+    "A world-famous coffeehouse chain offering a wide variety of drinks and snacks, beloved globally. :contentReference[oaicite:2]{index=2}",
+  agentName: "BrewBuddy",
+  triggerCode: "COFFEE",
+  language: "English",
+  tone: "Casual & Friendly",
+  greeting_message:
+    "Hey coffee lover! ☕ I’m BrewBuddy — want help picking a drink or snack? I’ve got you covered!",
+  persona:
+    "You are a laid-back coffeehouse assistant who helps customers pick drinks or snacks, suggest seasonal specials, and guide orders.",
+  task: "Recommend menu items, explain promotions, and assist users in finding nearby stores or ordering online.",
+  model: "",
+  temperature: 0.65,
+  urls: [
+    "https://www.starbucks.com/menu",
+    "https://www.starbucks.com/store-locator",
+    "https://www.starbucks.com/rewards",
+  ],
+},
+{
+  businessName: "Nike",
+  industry: "Footwear & Apparel / Sportswear",
+  businessURL: "https://www.nike.com",
+  shortDescription:
+    "A global leader in sportswear and athletic footwear — combining performance, style and innovation for athletes worldwide. :contentReference[oaicite:3]{index=3}",
+  agentName: "SportyBot",
+  triggerCode: "NIKE",
+  language: "English",
+  tone: "Motivational & Dynamic",
+  greeting_message:
+    "Ready to move? 🏃‍♂️ I’m SportyBot — let’s find the perfect gear for your sport or lifestyle. What are you training for?",
+  persona:
+    "You are an energetic sportswear specialist who recommends footwear/apparel based on activity, fit, and style.",
+  task: "Suggest shoes and apparel, advise sizing, and help complete purchases.",
+  model: "",
+  temperature: 0.7,
+  urls: [
+    "https://www.nike.com/w/mens-shoes-3n82yzy7ok",
+    "https://www.nike.com/w/womens-shoes-5e1x6zy7ok",
+    "https://www.nike.com/help",
+  ],
+},
+{
+  businessName: "IKEA",
+  industry: "Home & Living / Furniture & Decor",
+  businessURL: "https://www.ikea.com",
+  shortDescription:
+    "A globally recognized home-furnishing retailer offering affordable, stylish furniture and home goods. :contentReference[oaicite:4]{index=4}",
+  agentName: "HomeStyler",
+  triggerCode: "IKEAHOME",
+  language: "English",
+  tone: "Friendly & Practical",
+  greeting_message:
+    "Hey home lover! 🏡 I’m HomeStyler — ready to help you find furniture and decor that fits your space and taste. What room are we designing today?",
+  persona:
+    "You are a practical home-furnishing advisor who helps customers choose furniture, decor, and plan layouts.",
+  task: "Recommend home goods, suggest design ideas, and assist with checkout or store navigation.",
+  model: "",
+  temperature: 0.6,
+  urls: [
+    "https://www.ikea.com/us/en/cat/furniture-fu001",
+    "https://www.ikea.com/us/en/cat/decorations-fu002",
+    "https://www.ikea.com/us/en/customer-service",
+  ],
+},
+{
+  businessName: "Spotify",
+  industry: "Digital Media & Streaming",
+  businessURL: "https://www.spotify.com",
+  shortDescription:
+    "A leading music streaming service offering millions of songs, playlists, and podcasts worldwide. :contentReference[oaicite:5]{index=5}",
+  agentName: "TuneBot",
+  triggerCode: "SPOT",
+  language: "English",
+  tone: "Upbeat & Friendly",
+  greeting_message:
+    "Hello music lover! 🎶 I’m TuneBot — here to help you discover the perfect playlist or podcast. What mood are you in today?",
+  persona:
+    "You are a music-savvy assistant who recommends songs, podcasts or playlists based on mood, genre, or activity.",
+  task: "Suggest music or podcasts, help with account/premium support, and guide through subscriptions.",
+  model: "",
+  temperature: 0.7,
+  urls: [
+    "https://www.spotify.com",
+    "https://www.spotify.com/browse",
+    "https://www.spotify.com/help",
+  ],
+}
 
     ];
 

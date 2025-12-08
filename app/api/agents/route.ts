@@ -10,6 +10,7 @@ const agentSchema = z.object({
   name: z.string().min(1),
   language: z.string().min(1),
   tone: z.string().min(1),
+  status: z.string().optional().default("Training"),
   persona_prompt: z.string().optional().default(""),
   task_prompt: z.string().optional().default(""),
   trigger_code: z.string().optional().default(""),
@@ -49,7 +50,7 @@ export async function GET(_request: Request) {
     const result = await db.query(`
       SELECT 
         a.id, a.name AS agent_name, a.trigger_code, a.updated_at, a.language, a.tone,
-        a.persona_prompt, a.task_prompt, a.allowed_actions AS actions, a.qr_code_base64, a.greeting_message,
+        a.status, a.persona_prompt, a.task_prompt, a.allowed_actions AS actions, a.qr_code_base64, a.greeting_message,
         a.document_refs, a.source_urls, a.model_config,
         o.name AS business_name, o.industry, o.short_description, o.website AS business_url
       FROM agents a
@@ -129,10 +130,10 @@ export async function POST(request: Request) {
       // NOTE: We added greeting_message and qr_code_base64 to columns and added $9, $10 placeholders
       const result = await db.query(
         `INSERT INTO agents (
-           id, organization_id, name, language, tone, 
+           id, organization_id, name, language, tone, status,
            persona_prompt, task_prompt, trigger_code, allowed_actions,
            greeting_message, qr_code_base64, document_refs, source_urls, model_config
-         ) VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12, $13, $14)
+         ) VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12, $13, $14, $15)
          RETURNING *`,
         [
           agentId, // $1
@@ -140,15 +141,16 @@ export async function POST(request: Request) {
           agent.name, // $3
           agent.language, // $4
           agent.tone, // $5
-          agent.persona_prompt, // $6
-          agent.task_prompt, // $7
-          agent.trigger_code, // $8
-          JSON.stringify(agent.allowed_actions), // $9
-          agent.greeting_message || null, // $10
-          agent.qr_code_base64 || null, // $11
-          JSON.stringify(agent.document_refs || []), // $12
-          JSON.stringify(agent.source_urls || []), // $13
-          JSON.stringify(agent.model_config || {}), // $14
+          agent.status || "Training", // $6
+          agent.persona_prompt, // $7
+          agent.task_prompt, // $8
+          agent.trigger_code, // $9
+          JSON.stringify(agent.allowed_actions), // $10
+          agent.greeting_message || null, // $11
+          agent.qr_code_base64 || null, // $12
+          JSON.stringify(agent.document_refs || []), // $13
+          JSON.stringify(agent.source_urls || []), // $14
+          JSON.stringify(agent.model_config || {}), // $15
         ]
       );
       insertedAgents.push(result.rows[0]);

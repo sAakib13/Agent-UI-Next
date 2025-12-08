@@ -65,6 +65,7 @@ type AgentConfig = {
   urls: string[];
   documents: File[];
   possibleActions: { updateContactTable: boolean; delegateToHuman: boolean };
+  uploadedDocs?: { id: string; url?: string; name?: string; created_at?: string }[];
 };
 
 const parseJSONField = <T,>(value: unknown, fallback: T): T => {
@@ -266,6 +267,7 @@ export default function AgentManagementPage() {
   const [agents, setAgents] = useState<AgentConfig[]>([]);
   const [isLoadingAgents, setIsLoadingAgents] = useState(true);
   const [loadError, setLoadError] = useState<string | null>(null);
+  const [isLoadingUploads, setIsLoadingUploads] = useState(false);
 
   // Fetch logic mapping DB snake_case to frontend camelCase
   const fetchAgents = useCallback(async () => {
@@ -287,10 +289,18 @@ export default function AgentManagementPage() {
       // eslint-disable-next-line @typescript-eslint/no-explicit-any
       const mapped: AgentConfig[] = (payload.data ?? []).map((row: any) => {
         const urls = parseJSONField<string[]>(row?.urls, []);
-        const actions = parseJSONField<Record<string, boolean>>(
-          row?.actions,
-          {}
-        );
+
+        // Support new schema: `allowed_actions` is an array of strings.
+        // Fallback to legacy `actions` JSON object for backwards compatibility.
+        let actionsMap: Record<string, boolean> = {};
+        if (Array.isArray(row?.allowed_actions)) {
+          actionsMap = (row.allowed_actions as string[]).reduce(
+            (acc, key) => ({ ...acc, [key]: true }),
+            {}
+          );
+        } else {
+          actionsMap = parseJSONField<Record<string, boolean>>(row?.actions, {});
+        }
 
         return {
           id: row?.id || crypto.randomUUID(),
@@ -300,7 +310,7 @@ export default function AgentManagementPage() {
           task_prompt: row.task,
           triggerCode: row?.trigger_code || "",
           greeting_message: row.greeting_message,
-          status: normalizeStatus(row?.status),
+          // status: normalizeStatus(row?.status),
           lastActive: formatLastActive(row?.updated_at),
 
           // Mapped Business Fields
@@ -320,8 +330,8 @@ export default function AgentManagementPage() {
           urls: Array.isArray(urls) ? urls : [],
           documents: [], // Files are client-side only for now in this demo
           possibleActions: {
-            updateContactTable: Boolean(actions.updateContactTable),
-            delegateToHuman: Boolean(actions.delegateToHuman),
+            updateContactTable: Boolean(actionsMap.updateContactTable),
+            delegateToHuman: Boolean(actionsMap.delegateToHuman),
           },
         };
       });
@@ -343,9 +353,59 @@ export default function AgentManagementPage() {
     fetchAgents();
   }, [fetchAgents]);
 
-  const handleEditAgent = (agent: AgentConfig) => {
-    setCurrentAgent(agent);
-    setView("EDIT");
+  const handleEditAgent = async (agent: AgentConfig) => {
+    // Try to fetch existing uploads for this agent and attach to state.
+    // Use saved API key in localStorage or prompt the user once.
+    setCurrentAgent(null);
+    setIsLoadingUploads(true);
+
+    // Do not block navigation if uploads fetch fails; still open editor.
+    try {
+      let apiKey = "";
+      try {
+        apiKey = window.localStorage.getItem("sym_api_key") || "";
+      } catch {}
+
+      if (!apiKey) {
+        // Prompt user for key (simple fallback). Save for future use.
+        const entered = window.prompt("Enter uploads API key (api-key header) — will be saved locally:");
+        if (entered) {
+          apiKey = entered.trim();
+          try {
+            window.localStorage.setItem("sym_api_key", apiKey);
+          } catch {}
+        }
+      }
+
+      if (apiKey) {
+        const res = await fetch(`/api/v1/uploads/${encodeURIComponent(agent.id)}`, {
+          method: "GET",
+          headers: { "api-key": apiKey },
+        });
+        const json = await res.json().catch(() => null);
+        const copy: AgentConfig = { ...agent };
+        if (res.ok && json?.success) {
+          const list = Array.isArray(json.data) ? json.data : (json.data?.uploads || []);
+          copy.uploadedDocs = (list as any[]).map((d) => ({
+            id: d.id || d.ref || d.name || "",
+            url: d.url || d.download_url || d.link || undefined,
+            name: d.name || d.filename || d.title || "",
+            created_at: d.created_at || d.createdAt || undefined,
+          }));
+        } else {
+          copy.uploadedDocs = [];
+        }
+        setCurrentAgent(copy);
+      } else {
+        setCurrentAgent(agent);
+      }
+    } catch (err) {
+      console.error("Error fetching agent uploads:", err);
+      setCurrentAgent(agent);
+    } finally {
+      setIsLoadingUploads(false);
+      setView("EDIT");
+    }
   };
 
   const handleBackToList = () => {
@@ -431,7 +491,10 @@ export default function AgentManagementPage() {
           task_prompt: currentAgent.task,
           language: currentAgent.language,
           tone: currentAgent.tone,
-          allowed_actions: currentAgent.possibleActions,
+          // Convert frontend boolean action map into array of allowed action keys
+          allowed_actions: Object.entries(currentAgent.possibleActions)
+            .filter(([, v]) => Boolean(v))
+            .map(([k]) => k),
           urls: currentAgent.urls,
           // Note: Business fields might be read-only for agent update
           // depending on your API logic
@@ -803,6 +866,32 @@ export default function AgentManagementPage() {
                 onFilesAdded={handleFilesAdded}
                 onFileRemoved={handleFileRemoved}
               />
+              <div className="mt-6">
+                <h3 className="text-sm font-bold text-gray-900 dark:text-white mb-3">Uploaded Documents</h3>
+                {isLoadingUploads ? (
+                  <div className="text-sm text-gray-500">Loading uploads...</div>
+                ) : currentAgent.uploadedDocs && currentAgent.uploadedDocs.length > 0 ? (
+                  <div className="space-y-2">
+                    {currentAgent.uploadedDocs.map((doc) => (
+                      <div key={doc.id || doc.name} className="flex items-center justify-between bg-white dark:bg-gray-800 p-3 rounded-xl border border-gray-100 dark:border-gray-700">
+                        <div className="flex-1 truncate">
+                          <a href={doc.url || '#'} target="_blank" rel="noreferrer" className="text-sm font-medium text-blue-600 dark:text-blue-400 truncate">
+                            {doc.name || doc.id}
+                          </a>
+                          {doc.created_at && (
+                            <div className="text-xs text-gray-400">{new Date(doc.created_at).toLocaleString()}</div>
+                          )}
+                        </div>
+                        <div className="ml-3">
+                          <a href={doc.url || '#'} target="_blank" rel="noreferrer" className="text-xs text-gray-500 hover:text-blue-600">Open</a>
+                        </div>
+                      </div>
+                    ))}
+                  </div>
+                ) : (
+                  <div className="text-sm text-gray-500">No uploaded documents found for this agent.</div>
+                )}
+              </div>
               <div className="space-y-4 pt-8">
                 <h3 className="text-sm font-bold text-gray-900 dark:text-white">
                   Connected URLs
