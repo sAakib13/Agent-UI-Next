@@ -22,6 +22,7 @@ import {
   Wand2, // Auto-fill icon
 } from "lucide-react";
 import { tr } from "zod/locales";
+import { AgentPopup } from "@/components/agent/AgentPopup";
 
 // --- Types & Config ---
 
@@ -55,6 +56,8 @@ type AgentConfig = {
   documents: File[];
   qrCode?: string;
 };
+
+
 
 // Initial state without ID (ID is generated on mount/state init)
 const initialConfigBase: Omit<AgentConfig, "id"> = {
@@ -317,11 +320,10 @@ const FileDropZone: React.FC<{
     <div className="space-y-4">
       <div
         className={`group border-2 border-dashed border-gray-200 dark:border-gray-700 rounded-2xl p-10 text-center transition-all cursor-pointer bg-white dark:bg-gray-900/50 
-        ${
-          disabled
+        ${disabled
             ? "opacity-50 cursor-not-allowed"
             : "hover:border-blue-500 hover:bg-blue-50/30 dark:hover:bg-blue-900/10"
-        }`}
+          }`}
         onClick={() => !disabled && inputRef.current?.click()}
       >
         <input
@@ -409,13 +411,12 @@ const Stepper: React.FC<{ currentStep: number; deployed: boolean }> = ({
               className="flex flex-col items-center group cursor-default"
             >
               <div
-                className={`w-10 h-10 rounded-full flex items-center justify-center font-bold text-sm transition-all duration-300 ring-4 ring-white dark:ring-gray-950 z-10 ${
-                  isActive
-                    ? "bg-blue-600 text-white shadow-lg shadow-blue-600/30 scale-110"
-                    : isCompleted || deployed
+                className={`w-10 h-10 rounded-full flex items-center justify-center font-bold text-sm transition-all duration-300 ring-4 ring-white dark:ring-gray-950 z-10 ${isActive
+                  ? "bg-blue-600 text-white shadow-lg shadow-blue-600/30 scale-110"
+                  : isCompleted || deployed
                     ? "bg-green-500 text-white"
                     : "bg-white dark:bg-gray-900 border-2 border-gray-200 dark:border-gray-800 text-gray-400"
-                }`}
+                  }`}
               >
                 {isCompleted || deployed ? (
                   <Check className="w-5 h-5" />
@@ -424,11 +425,10 @@ const Stepper: React.FC<{ currentStep: number; deployed: boolean }> = ({
                 )}
               </div>
               <span
-                className={`absolute top-12 text-xs font-bold tracking-wide transition-colors duration-300 ${
-                  isActive
-                    ? "text-blue-600 dark:text-blue-400"
-                    : "text-gray-400"
-                }`}
+                className={`absolute top-12 text-xs font-bold tracking-wide transition-colors duration-300 ${isActive
+                  ? "text-blue-600 dark:text-blue-400"
+                  : "text-gray-400"
+                  }`}
               >
                 {step.label}
               </span>
@@ -454,11 +454,13 @@ export default function CreateAgentPage() {
 
   const [isDeploying, setIsDeploying] = useState(false);
   const [deployStep, setDeployStep] = useState("");
+
   const [resultMessage, setResultMessage] = useState<{
     type: "success" | "error";
     text: string;
   } | null>(null);
   const [deployed, setDeployed] = useState(false);
+  const [showPopup, setShowPopup] = useState(false);
   const [expanded, setExpanded] = useState(false);
 
   // Type-safe change handlers
@@ -717,6 +719,7 @@ export default function CreateAgentPage() {
           });
 
           // Safely parse JSON responses; many servers return plain text on errors
+          // eslint-disable-next-line @typescript-eslint/no-explicit-any
           let json: any = null;
           const text = await res.text();
           try {
@@ -763,6 +766,7 @@ export default function CreateAgentPage() {
 
         if (qrResponse.ok) {
           const text = await qrResponse.text();
+          // eslint-disable-next-line @typescript-eslint/no-explicit-any
           let qrData: any = null;
           try {
             qrData = text ? JSON.parse(text) : null;
@@ -797,6 +801,7 @@ export default function CreateAgentPage() {
       if (result.success) {
         setResultMessage({ type: "success", text: result.message });
         setDeployed(true);
+        setShowPopup(true);
         // Optional: Redirect
         // setTimeout(() => router.push("/dashboard"), 2000);
       } else {
@@ -811,6 +816,10 @@ export default function CreateAgentPage() {
     }
   };
 
+  const handleContinue = () => {
+    setShowPopup(false)
+    setTimeout(() => router.push("/dashboard"), 1000);
+  }
   return (
     <div className="max-w-4xl mx-auto pb-32 pt-6">
       <header className="text-center mb-12">
@@ -842,11 +851,10 @@ export default function CreateAgentPage() {
         {resultMessage && (
           <div
             className={`px-6 py-3 w-fit rounded-xl font-medium shadow-lg transition-all ease-in flex items-center justify-center gap-2
-            ${
-              resultMessage.type === "success"
+            ${resultMessage.type === "success"
                 ? "bg-green-100 text-green-800 border border-green-200"
                 : "bg-red-100 text-red-800 border border-red-200"
-            }`}
+              }`}
           >
             {resultMessage.type === "success" ? (
               <Check className="w-4 h-4" />
@@ -1080,6 +1088,8 @@ export default function CreateAgentPage() {
         )}
       </form>
 
+
+
       {/* Floating Footer */}
       <div className="fixed bottom-8 w-full left-40 right-0 flex justify-center z-50 pointer-events-none px-4 items-center">
         <div className="bg-white/90 dark:bg-gray-900/90 backdrop-blur-2xl border border-gray-200/50 dark:border-gray-700/50 p-2 rounded-2xl shadow-2xl shadow-blue-900/20 pointer-events-auto flex items-center gap-2">
@@ -1107,10 +1117,9 @@ export default function CreateAgentPage() {
               onClick={handleDeployAgent}
               disabled={deployed || isDeploying}
               className={`px-8 py-3 bg-linear-to-r from-blue-600 to-indigo-600 text-white rounded-xl font-semibold shadow-lg hover:shadow-xl transition-all flex items-center gap-2 
-                ${
-                  deployed
-                    ? "opacity-50 cursor-default"
-                    : "hover:from-blue-700 hover:to-indigo-700 hover:-translate-y-0.5"
+                ${deployed
+                  ? "opacity-50 cursor-default"
+                  : "hover:from-blue-700 hover:to-indigo-700 hover:-translate-y-0.5"
                 }`}
             >
               {isDeploying ? (
@@ -1123,12 +1132,42 @@ export default function CreateAgentPage() {
               {isDeploying
                 ? deployStep || "Deploying..."
                 : deployed
-                ? "Deployed!"
-                : "Deploy Agent"}
+                  ? "Deployed!"
+                  : "Deploy Agent"}
             </button>
           )}
         </div>
       </div>
+
+
+      {showPopup && (
+        <AgentPopup showPopup={showPopup} onClose={() => setShowPopup(false)} />
+        // <div className="fixed inset-0 bg-black/40 flex items-center justify-center z-50">
+        //   <div className="relative bg-white rounded-2xl p-8 shadow-xl w-[400px] text-center">
+        //     {/* Close X button */}
+        //     <button
+        //       onClick={() => setShowPopup(false)}
+        //       className="absolute top-3 right-3 text-gray-400 hover:text-gray-600 font-bold text-lg"
+        //     >
+        //       x
+        //     </button>
+
+        //     <h2 className="text-xl font-bold mb-4">Agent Deployed 🚀</h2>
+        //     <p className="text-gray-600 mb-6">
+        //       Your agent is live and running.
+        //     </p>
+
+        //     <button
+        //       className="px-6 py-3 bg-blue-600 text-white rounded-xl"
+        //       onClick={handleContinue}
+        //     >
+        //       Continue
+        //     </button>
+        //   </div>
+
+        // </div>
+      )}
+
     </div>
   );
 }
