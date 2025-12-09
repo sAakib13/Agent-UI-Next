@@ -31,6 +31,7 @@ interface AgentData {
 
 export default function DashboardPage() {
   const [agents, setAgents] = useState<AgentData[]>([]);
+  const [selectedAgent, setSelectedAgent] = useState<AgentData | null>(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
 
@@ -44,6 +45,13 @@ export default function DashboardPage() {
 
         if (json.success && Array.isArray(json.data)) {
           setAgents(json.data);
+          // Set initially selected agent to the latest by updated_at
+          const sorted = [...json.data].sort(
+            (a, b) =>
+              new Date(b.updated_at).getTime() -
+              new Date(a.updated_at).getTime()
+          );
+          setSelectedAgent(sorted[0] ?? null);
         }
       } catch (err) {
         console.error(err);
@@ -63,10 +71,23 @@ export default function DashboardPage() {
 
   // 3. Get the "Latest" Agent
   // We sort by updated_at descending, so the first item is the newest
-  const latestAgent = agents.sort(
+  const latestAgent = [...agents].sort(
     (a, b) =>
       new Date(b.updated_at).getTime() - new Date(a.updated_at).getTime()
   )[0];
+
+  const fetchAgentById = async (id: string) => {
+    try {
+      const res = await fetch(`/api/agents/${id}`);
+      if (!res.ok) throw new Error("Failed to fetch agent");
+      const json = await res.json();
+      if (json.success && json.data) {
+        setSelectedAgent(json.data as AgentData);
+      }
+    } catch (err) {
+      console.error("Error fetching agent by id", err);
+    }
+  };
 
   // Hardcoded mocks for metrics not yet in DB (e.g., message counts)
   const mockMetrics = {
@@ -181,7 +202,8 @@ export default function DashboardPage() {
               {agents.slice(0, 3).map((agent) => (
                 <div
                   key={agent.id}
-                  className="flex justify-between items-center p-3 bg-gray-50 dark:bg-gray-800/50 rounded-xl"
+                  onClick={() => fetchAgentById(agent.id)}
+                  className="flex justify-between items-center p-3 bg-gray-50 dark:bg-gray-800/50 rounded-xl hover:bg-gray-100 dark:hover:bg-gray-800 cursor-pointer"
                 >
                   <div>
                     <p className="font-medium text-gray-900 dark:text-white">
@@ -232,21 +254,34 @@ export default function DashboardPage() {
             <div className="bg-gradient-to-br from-gray-900 to-gray-800 dark:from-blue-900/40 dark:to-indigo-900/40 p-4 rounded-3xl text-white flex flex-col gap-4 items-center justify-between shadow-lg">
               <div>
                 <p className="text-sm text-white/70 font-medium mb-1 text-center">
-                  Testing Sandbox
+                  {selectedAgent?.greeting_message
+                    ? selectedAgent.greeting_message
+                    : "Testing Sandbox"}
                 </p>
                 <p className="text-xl font-bold text-center">
-                  {latestAgent ? latestAgent.agent_name : "No Agents Yet"}
+                  {selectedAgent ? (
+                    <>
+                      {selectedAgent.agent_name}
+                      {selectedAgent.tone && (
+                        <span className="ml-2 text-sm font-normal opacity-70 block">
+                          {selectedAgent.tone}
+                        </span>
+                      )}
+                    </>
+                  ) : (
+                    "No Agents Yet"
+                  )}
                 </p>
               </div>
 
               {/* Updated QR Code Integration - Using Real Data */}
               <div className="bg-white p-2 rounded-xl">
-                {latestAgent ? (
+                {selectedAgent ? (
                   <AgentQR
-                    agentId={latestAgent.id}
-                    agentName={latestAgent.agent_name}
-                    triggerCode={latestAgent.trigger_code}
-                    initialQrCode={latestAgent.qr_code_base64}
+                    agentId={selectedAgent.id}
+                    agentName={selectedAgent.agent_name}
+                    triggerCode={selectedAgent.trigger_code}
+                    initialQrCode={selectedAgent.qr_code_base64}
                     className="!border-none !shadow-none !bg-transparent !p-0"
                   />
                 ) : (
