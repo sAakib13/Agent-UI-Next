@@ -99,6 +99,9 @@ const industries = [
   "Education",
   "Real Estate",
   "Hospitality",
+  "Automotive",
+  "Entertainment",
+  "Others",
 ];
 const languages = ["English", "Spanish", "French", "German", "Portuguese"];
 const tones = ["Formal", "Casual", "Friendly", "Professional", "Empathetic"];
