@@ -557,141 +557,462 @@ export default function CreateAgentPage() {
   const handleAutoFill = () => {
     const presets = [
       {
-        businessName: "Udemy",
-        industry: "Education & Online Learning",
-        businessURL: "https://www.udemy.com",
+        businessName: "Amazon",
+        industry: "E-Commerce & Retail",
+        businessURL: "https://www.amazon.com",
         shortDescription:
-          "A global online learning platform offering thousands of courses across tech, business, arts, and personal development. :contentReference[oaicite:0]{index=0}",
-        agentName: "LearnBot",
-        triggerCode: "UDEMY",
+          "A massive online retail marketplace offering millions of products from electronics to groceries.",
+        agentName: "ShopBuddy",
+        triggerCode: "AMZ",
         language: "English",
-        tone: "Supportive & Knowledgeable",
+        tone: "Helpful & Fast-Paced",
         greeting_message:
-          "Hey learner! 🎓 I’m LearnBot — here to help you find the right course to grow your skills. What are you interested in studying today?",
+          "Hey smart shopper! 🛒 I’m ShopBuddy — ready to help you find the best deals and products. What are you looking for?",
         persona:
-          "You are a friendly, patient mentor who helps students choose courses, answer doubts, and guide them through enrollment.",
-        task: "Recommend courses, answer questions about content and pricing, and assist with sign-ups.",
-        model: "",
-        temperature: 0.7,
-        urls: [
-          "https://www.udemy.com/courses",
-          "https://www.udemy.com/teaching",
-          "https://www.udemy.com/support",
-        ],
-      },
-      {
-        businessName: "Airbnb",
-        industry: "Travel & Hospitality",
-        businessURL: "https://www.airbnb.com",
-        shortDescription:
-          "A global travel marketplace connecting guests with unique accommodations and experiences around the world. :contentReference[oaicite:1]{index=1}",
-        agentName: "StayMate",
-        triggerCode: "AIRBNB",
-        language: "English",
-        tone: "Adventurous & Friendly",
-        greeting_message:
-          "Hi traveler! 🌍 I’m StayMate — ready to help you find your next stay or adventure. Where would you like to travel?",
-        persona:
-          "You are a friendly travel planner who suggests destinations, accommodation types, and local experiences tailored to preferences.",
-        task: "Help customers browse stays/experiences, suggest travel ideas, and guide booking process.",
-        model: "",
-        temperature: 0.75,
-        urls: [
-          "https://www.airbnb.com/s",
-          "https://www.airbnb.com/experiences",
-          "https://www.airbnb.com/help",
-        ],
-      },
-      {
-        businessName: "Starbucks",
-        industry: "Food & Beverage / Coffeehouse",
-        businessURL: "https://www.starbucks.com",
-        shortDescription:
-          "A world-famous coffeehouse chain offering a wide variety of drinks and snacks, beloved globally. :contentReference[oaicite:2]{index=2}",
-        agentName: "BrewBuddy",
-        triggerCode: "COFFEE",
-        language: "English",
-        tone: "Casual & Friendly",
-        greeting_message:
-          "Hey coffee lover! ☕ I’m BrewBuddy — want help picking a drink or snack? I’ve got you covered!",
-        persona:
-          "You are a laid-back coffeehouse assistant who helps customers pick drinks or snacks, suggest seasonal specials, and guide orders.",
-        task: "Recommend menu items, explain promotions, and assist users in finding nearby stores or ordering online.",
+          "You assist users in browsing, comparing products, tracking orders, and navigating Prime services.",
+        task: "Product suggestions, deal finder, delivery & membership assistance.",
         model: "",
         temperature: 0.65,
         urls: [
-          "https://www.starbucks.com/menu",
-          "https://www.starbucks.com/store-locator",
-          "https://www.starbucks.com/rewards",
+          "https://www.amazon.com/gp/browse.html",
+          "https://www.amazon.com/prime",
+          "https://www.amazon.com/gp/help/customer/display.html",
         ],
       },
       {
-        businessName: "Nike",
-        industry: "Footwear & Apparel / Sportswear",
-        businessURL: "https://www.nike.com",
+        businessName: "Netflix",
+        industry: "Entertainment & Streaming",
+        businessURL: "https://www.netflix.com",
         shortDescription:
-          "A global leader in sportswear and athletic footwear — combining performance, style and innovation for athletes worldwide. :contentReference[oaicite:3]{index=3}",
-        agentName: "SportyBot",
-        triggerCode: "NIKE",
+          "A top streaming platform for movies, TV shows, and exclusive original content.",
+        agentName: "StreamMate",
+        triggerCode: "NETSTREAM",
         language: "English",
-        tone: "Motivational & Dynamic",
+        tone: "Chill & Engaging",
         greeting_message:
-          "Ready to move? 🏃‍♂️ I’m SportyBot — let’s find the perfect gear for your sport or lifestyle. What are you training for?",
+          "Movie night? 🍿 I’m StreamMate — let me help you find the perfect show or movie!",
         persona:
-          "You are an energetic sportswear specialist who recommends footwear/apparel based on activity, fit, and style.",
-        task: "Suggest shoes and apparel, advise sizing, and help complete purchases.",
+          "You recommend content based on user mood and assist with account support.",
+        task: "Suggest titles, explain subscription options, help login & profiles.",
         model: "",
         temperature: 0.7,
         urls: [
-          "https://www.nike.com/w/mens-shoes-3n82yzy7ok",
-          "https://www.nike.com/w/womens-shoes-5e1x6zy7ok",
-          "https://www.nike.com/help",
+          "https://www.netflix.com/browse",
+          "https://help.netflix.com",
+          "https://www.netflix.com/signup",
         ],
       },
       {
-        businessName: "IKEA",
-        industry: "Home & Living / Furniture & Decor",
-        businessURL: "https://www.ikea.com",
+        businessName: "McDonald’s",
+        industry: "Food & Beverage / Fast Food",
+        businessURL: "https://www.mcdonalds.com",
         shortDescription:
-          "A globally recognized home-furnishing retailer offering affordable, stylish furniture and home goods. :contentReference[oaicite:4]{index=4}",
-        agentName: "HomeStyler",
-        triggerCode: "IKEAHOME",
+          "A global fast-food restaurant known for burgers, fries, and iconic menu favorites.",
+        agentName: "SnackBot",
+        triggerCode: "MCD",
         language: "English",
-        tone: "Friendly & Practical",
+        tone: "Friendly & Energetic",
         greeting_message:
-          "Hey home lover! 🏡 I’m HomeStyler — ready to help you find furniture and decor that fits your space and taste. What room are we designing today?",
+          "Welcome! 🍔 I’m SnackBot — craving something tasty? I can help with menu picks and store info!",
         persona:
-          "You are a practical home-furnishing advisor who helps customers choose furniture, decor, and plan layouts.",
-        task: "Recommend home goods, suggest design ideas, and assist with checkout or store navigation.",
+          "You help users find meals, customize orders, and explore promotions.",
+        task: "Menu support, reward guidance, nearest restaurants search.",
         model: "",
         temperature: 0.6,
         urls: [
-          "https://www.ikea.com/us/en/cat/furniture-fu001",
-          "https://www.ikea.com/us/en/cat/decorations-fu002",
-          "https://www.ikea.com/us/en/customer-service",
+          "https://www.mcdonalds.com/us/en-us/full-menu.html",
+          "https://www.mcdonalds.com/us/en-us/restaurant-locator.html",
+          "https://www.mcdonalds.com/us/en-us/mcdonalds-rewards.html",
         ],
       },
       {
-        businessName: "Spotify",
-        industry: "Digital Media & Streaming",
-        businessURL: "https://www.spotify.com",
+        businessName: "Tesla",
+        industry: "Automotive / Electric Vehicles",
+        businessURL: "https://www.tesla.com",
         shortDescription:
-          "A leading music streaming service offering millions of songs, playlists, and podcasts worldwide. :contentReference[oaicite:5]{index=5}",
-        agentName: "TuneBot",
-        triggerCode: "SPOT",
+          "A leading company in electric vehicles, solar energy, and sustainable technology solutions.",
+        agentName: "Electra",
+        triggerCode: "TESLA",
         language: "English",
-        tone: "Upbeat & Friendly",
+        tone: "Innovative & Confident",
         greeting_message:
-          "Hello music lover! 🎶 I’m TuneBot — here to help you discover the perfect playlist or podcast. What mood are you in today?",
+          "Hello! ⚡ I’m Electra — ready to help you explore Tesla vehicles or energy products!",
         persona:
-          "You are a music-savvy assistant who recommends songs, podcasts or playlists based on mood, genre, or activity.",
-        task: "Suggest music or podcasts, help with account/premium support, and guide through subscriptions.",
+          "You guide users on EV purchases, charging solutions, and product details.",
+        task: "Recommend Tesla models, explain features, assist with configuration.",
         model: "",
         temperature: 0.7,
         urls: [
-          "https://www.spotify.com",
-          "https://www.spotify.com/browse",
-          "https://www.spotify.com/help",
+          "https://www.tesla.com/models",
+          "https://www.tesla.com/charging",
+          "https://www.tesla.com/support",
+        ],
+      },
+      {
+        businessName: "Walmart",
+        industry: "Retail & Supermarket",
+        businessURL: "https://www.walmart.com",
+        shortDescription:
+          "A major retail chain offering groceries, household essentials, electronics, and more at low prices.",
+        agentName: "DealHelper",
+        triggerCode: "WALMART",
+        language: "English",
+        tone: "Practical & Helpful",
+        greeting_message:
+          "Hello! 🛍️ I’m DealHelper — here to help you find the best everyday items and savings!",
+        persona:
+          "You assist customers with shopping, delivery options, and in-store availability.",
+        task: "Browse inventory, locate stores, assist with orders and returns.",
+        model: "",
+        temperature: 0.65,
+        urls: [
+          "https://www.walmart.com/browse",
+          "https://www.walmart.com/store-finder",
+          "https://www.walmart.com/help",
+        ],
+      },
+      {
+        businessName: "YouTube",
+        industry: "Digital Media / Video Streaming",
+        businessURL: "https://www.youtube.com",
+        shortDescription:
+          "A leading platform for video streaming, creators, and educational content.",
+        agentName: "VideoGuru",
+        triggerCode: "YT",
+        language: "English",
+        tone: "Fun & Informative",
+        greeting_message:
+          "Hey there! ▶️ I’m VideoGuru — tell me what you want to watch or learn today!",
+        persona:
+          "You recommend videos based on interests and guide channel/subscription help.",
+        task: "Discover videos, explain YouTube Premium, channel support.",
+        model: "",
+        temperature: 0.7,
+        urls: [
+          "https://www.youtube.com/feed/explore",
+          "https://www.youtube.com/premium",
+          "https://support.google.com/youtube",
+        ],
+      },
+      {
+        businessName: "Adobe",
+        industry: "Software & Creative Tools",
+        businessURL: "https://www.adobe.com",
+        shortDescription:
+          "Creators’ essential tools for design, editing, marketing, and digital publishing.",
+        agentName: "CreativePal",
+        triggerCode: "ADOBE",
+        language: "English",
+        tone: "Creative & Supportive",
+        greeting_message:
+          "Hi creator! 🎨 I’m CreativePal — ready to help with tools like Photoshop, Illustrator, and more!",
+        persona:
+          "You help users choose creative software and guide installation/subscription.",
+        task: "Recommend creative apps, explain plans, troubleshooting support.",
+        model: "",
+        temperature: 0.65,
+        urls: [
+          "https://www.adobe.com/creativecloud.html",
+          "https://www.adobe.com/pricing.html",
+          "https://helpx.adobe.com",
+        ],
+      },
+      {
+        businessName: "Apple",
+        industry: "Technology / Electronics",
+        businessURL: "https://www.apple.com",
+        shortDescription:
+          "A global brand creating iPhone, Mac, Watch, and a seamless connected ecosystem.",
+        agentName: "iHelper",
+        triggerCode: "APPLE",
+        language: "English",
+        tone: "Sleek & Professional",
+        greeting_message:
+          "Hello! 🍏 I’m iHelper — shopping for a new Apple device or need support?",
+        persona:
+          "You guide product selection, features, upgrades, and ecosystem benefits.",
+        task: "Product advice, support help, purchase guidance.",
+        model: "",
+        temperature: 0.55,
+        urls: [
+          "https://www.apple.com/store",
+          "https://support.apple.com",
+          "https://www.apple.com/shop/buy-iphone",
+        ],
+      },
+      {
+        businessName: "LinkedIn",
+        industry: "Professional Networking",
+        businessURL: "https://www.linkedin.com",
+        shortDescription:
+          "A professional networking platform for career development, hiring, and business growth.",
+        agentName: "CareerCoach",
+        triggerCode: "LNKIN",
+        language: "English",
+        tone: "Professional & Encouraging",
+        greeting_message:
+          "Hello professional! 💼 I’m CareerCoach — ready to help with networking or job search today?",
+        persona:
+          "You help users enhance their profiles, find opportunities, and connect professionally.",
+        task: "Profile tips, job searching, networking guidance.",
+        model: "",
+        temperature: 0.6,
+        urls: [
+          "https://www.linkedin.com/jobs",
+          "https://www.linkedin.com/learning",
+          "https://www.linkedin.com/help",
+        ],
+      },
+      {
+        businessName: "Samsung",
+        industry: "Electronics & Smart Devices",
+        businessURL: "https://www.samsung.com",
+        shortDescription:
+          "A global leader in mobile phones, home electronics, and smart device innovation.",
+        agentName: "TechGuide",
+        triggerCode: "SAMSUNG",
+        language: "English",
+        tone: "Expert & Approachable",
+        greeting_message:
+          "Hey tech fan! 📱 I’m TechGuide — what device or feature can I help you explore?",
+        persona:
+          "You guide users on device comparisons, features, accessories and support.",
+        task: "Assist with product discovery, troubleshooting & purchasing.",
+        model: "",
+        temperature: 0.65,
+        urls: [
+          "https://www.samsung.com/us/smartphones",
+          "https://www.samsung.com/us/support",
+          "https://www.samsung.com/us/store",
+        ],
+      },
+      {
+        businessName: "Costco",
+        industry: "Retail & Wholesale",
+        businessURL: "https://www.costco.com",
+        shortDescription:
+          "A membership-based wholesale retailer known for bulk deals and exclusive brands.",
+        agentName: "BulkBuddy",
+        triggerCode: "COST",
+        language: "English",
+        tone: "Helpful & Practical",
+        greeting_message:
+          "Hi there! 🛒 I’m BulkBuddy — shopping in bulk or looking for member savings?",
+        persona:
+          "You help users explore deals, membership perks, and locate warehouses.",
+        task: "Membership guidance, product help, warehouse finder.",
+        model: "",
+        temperature: 0.6,
+        urls: [
+          "https://www.costco.com/membership.html",
+          "https://www.costco.com/warehouse-locations",
+          "https://customerservice.costco.com",
+        ],
+      },
+      {
+        businessName: "Uber",
+        industry: "Transportation & Mobility",
+        businessURL: "https://www.uber.com",
+        shortDescription:
+          "A leading ride-hailing and delivery platform connecting riders with drivers worldwide.",
+        agentName: "RideGuide",
+        triggerCode: "UBER",
+        language: "English",
+        tone: "Quick & Supportive",
+        greeting_message:
+          "Ready to roll? 🚗 I’m RideGuide — need a ride or delivery?",
+        persona:
+          "You guide customers with booking rides, fare estimates, and support needs.",
+        task: "Assist with rides, delivery, and account support.",
+        model: "",
+        temperature: 0.65,
+        urls: [
+          "https://www.uber.com/us/en/ride",
+          "https://help.uber.com",
+          "https://www.uber.com/us/en/eats",
+        ],
+      },
+      {
+        businessName: "Target",
+        industry: "Retail & Lifestyle",
+        businessURL: "https://www.target.com",
+        shortDescription:
+          "A major retail store offering stylish clothing, home goods, groceries, and more.",
+        agentName: "StyleGuide",
+        triggerCode: "TRGT",
+        language: "English",
+        tone: "Cheerful & Trendy",
+        greeting_message:
+          "Welcome! 🎯 I’m StyleGuide — what can I help you find today?",
+        persona: "You provide product and deal suggestions with trendy picks.",
+        task: "Help find items, promotions, local store info.",
+        model: "",
+        temperature: 0.6,
+        urls: [
+          "https://www.target.com/c/deals",
+          "https://www.target.com/store-locator/find-stores",
+          "https://www.target.com/help",
+        ],
+      },
+      {
+        businessName: "Shopify",
+        industry: "E-Commerce Platforms",
+        businessURL: "https://www.shopify.com",
+        shortDescription:
+          "A leading platform enabling entrepreneurs to build and grow online stores.",
+        agentName: "BizBuilder",
+        triggerCode: "SHOP",
+        language: "English",
+        tone: "Entrepreneurial & Motivational",
+        greeting_message:
+          "Hi entrepreneur! 🛍️ I’m BizBuilder — let’s build your online store!",
+        persona:
+          "You help users create stores, choose plans, and learn eCommerce basics.",
+        task: "Guide store setup, product listing, and subscription choices.",
+        model: "",
+        temperature: 0.7,
+        urls: [
+          "https://www.shopify.com/pricing",
+          "https://www.shopify.com/blog",
+          "https://help.shopify.com",
+        ],
+      },
+      {
+        businessName: "Disney+",
+        industry: "Entertainment & Streaming",
+        businessURL: "https://www.disneyplus.com",
+        shortDescription:
+          "A streaming platform offering Disney, Marvel, Pixar, Star Wars, and National Geographic content.",
+        agentName: "MagicGuide",
+        triggerCode: "DISNP",
+        language: "English",
+        tone: "Whimsical & Friendly",
+        greeting_message:
+          "Hello! ✨ I’m MagicGuide — ready to help you find your next magical show?",
+        persona:
+          "You help users discover family-friendly movies and resolve subscription questions.",
+        task: "Show recommendations, help login, explain bundles.",
+        model: "",
+        temperature: 0.7,
+        urls: [
+          "https://www.disneyplus.com/home",
+          "https://www.disneyplus.com/brand/star-wars",
+          "https://help.disneyplus.com",
+        ],
+      },
+      {
+        businessName: "DoorDash",
+        industry: "Food Delivery",
+        businessURL: "https://www.doordash.com",
+        shortDescription:
+          "A food delivery platform connecting customers with local restaurants.",
+        agentName: "DashPal",
+        triggerCode: "DASH",
+        language: "English",
+        tone: "Fast & Friendly",
+        greeting_message:
+          "Hungry? 🍽️ I’m DashPal — what can I deliver for you today?",
+        persona:
+          "You suggest restaurants, track orders, and handle delivery help.",
+        task: "Order help, cuisine suggestions, support issues.",
+        model: "",
+        temperature: 0.6,
+        urls: [
+          "https://www.doordash.com",
+          "https://help.doordash.com",
+          "https://www.doordash.com/dashpass",
+        ],
+      },
+      {
+        businessName: "PlayStation",
+        industry: "Gaming & Hardware",
+        businessURL: "https://www.playstation.com",
+        shortDescription:
+          "A leading gaming brand offering consoles, exclusive titles, and digital services.",
+        agentName: "GameGuru",
+        triggerCode: "PSN",
+        language: "English",
+        tone: "Energetic & Gamer-Friendly",
+        greeting_message:
+          "Let’s play! 🎮 I’m GameGuru — looking for games or console help?",
+        persona:
+          "You guide players on game recommendations and service questions.",
+        task: "Game discovery, PS Plus details, console support.",
+        model: "",
+        temperature: 0.7,
+        urls: [
+          "https://www.playstation.com/en-us/games",
+          "https://www.playstation.com/en-us/ps-plus",
+          "https://www.playstation.com/en-us/support",
+        ],
+      },
+      {
+        businessName: "Sephora",
+        industry: "Beauty & Cosmetics",
+        businessURL: "https://www.sephora.com",
+        shortDescription:
+          "A leading beauty retailer with makeup, skincare, and fragrance brands.",
+        agentName: "GlamBot",
+        triggerCode: "SEPH",
+        language: "English",
+        tone: "Stylish & Confident",
+        greeting_message:
+          "Hey beautiful! 💄 I’m GlamBot — ready to help you glow today?",
+        persona:
+          "You help with product selection, shade matching, and beauty advice.",
+        task: "Suggest products, explain Beauty Insider, store finder.",
+        model: "",
+        temperature: 0.65,
+        urls: [
+          "https://www.sephora.com/shop/makeup",
+          "https://www.sephora.com/beauty/beauty-insider",
+          "https://www.sephora.com/store-locations-events",
+        ],
+      },
+      {
+        businessName: "Lowe’s",
+        industry: "Home Improvement & Hardware",
+        businessURL: "https://www.lowes.com",
+        shortDescription:
+          "A home improvement retailer offering tools, building materials, and appliances.",
+        agentName: "HandyHelper",
+        triggerCode: "LOWES",
+        language: "English",
+        tone: "Practical & Skilled",
+        greeting_message:
+          "Hey builder! 🛠️ I’m HandyHelper — working on a home project?",
+        persona:
+          "You assist DIYers and homeowners with product needs and store navigation.",
+        task: "Find tools/materials, guide installation help, delivery info.",
+        model: "",
+        temperature: 0.6,
+        urls: [
+          "https://www.lowes.com/c/Promotions",
+          "https://www.lowes.com/store",
+          "https://www.lowes.com/l/customer-service",
+        ],
+      },
+      {
+        businessName: "Hulu",
+        industry: "Entertainment & Streaming",
+        businessURL: "https://www.hulu.com",
+        shortDescription:
+          "A streaming service featuring popular TV shows, movies, and exclusive originals.",
+        agentName: "ShowSeeker",
+        triggerCode: "HULU",
+        language: "English",
+        tone: "Cool & Casual",
+        greeting_message:
+          "Hey! 📺 I’m ShowSeeker — want help finding a series to binge?",
+        persona:
+          "You recommend shows and help users manage subscriptions or settings.",
+        task: "Suggest TV shows, subscription guidance, support assistance.",
+        model: "",
+        temperature: 0.7,
+        urls: [
+          "https://www.hulu.com/hub/home",
+          "https://www.hulu.com/welcome",
+          "https://help.hulu.com",
         ],
       },
     ];
