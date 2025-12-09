@@ -281,6 +281,7 @@ export default function AgentManagementPage() {
         throw new Error(txt || "Unable to reach the agents API endpoint.");
       }
 
+      // eslint-disable-next-line @typescript-eslint/no-explicit-any
       let payload: any = null;
       try {
         payload = await response.json();
@@ -372,7 +373,7 @@ export default function AgentManagementPage() {
       let apiKey = "";
       try {
         apiKey = window.localStorage.getItem("sym_api_key") || "";
-      } catch {}
+      } catch { }
 
       if (!apiKey) {
         // Prompt user for key (simple fallback). Save for future use.
@@ -381,7 +382,7 @@ export default function AgentManagementPage() {
           apiKey = entered.trim();
           try {
             window.localStorage.setItem("sym_api_key", apiKey);
-          } catch {}
+          } catch { }
         }
       }
 
@@ -394,6 +395,7 @@ export default function AgentManagementPage() {
         const copy: AgentConfig = { ...agent };
         if (res.ok && json?.success) {
           const list = Array.isArray(json.data) ? json.data : (json.data?.uploads || []);
+          // eslint-disable-next-line @typescript-eslint/no-explicit-any
           copy.uploadedDocs = (list as any[]).map((d) => ({
             id: d.id || d.ref || d.name || "",
             url: d.url || d.download_url || d.link || undefined,
@@ -514,6 +516,7 @@ export default function AgentManagementPage() {
         throw new Error(txt || "Server returned an error while saving the agent.");
       }
 
+      // eslint-disable-next-line @typescript-eslint/no-explicit-any
       let data: any = null;
       try {
         data = await response.json();
