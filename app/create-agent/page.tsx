@@ -54,12 +54,23 @@ type AgentConfig = {
   urls: string[];
   documents: File[];
   qrCode?: string;
+
+  features: {
+    locationService: boolean;
+    searchTool: boolean;
+    knowledgeBase: boolean;
+  };
 };
 
 // Initial state without ID (ID is generated on mount/state init)
 const initialConfigBase: Omit<AgentConfig, "id"> = {
   status: "Training",
   possibleActions: { updateContactTable: false, delegateToHuman: false },
+  features: {
+    locationService: false,
+    searchTool: false,
+    knowledgeBase: true, // default to true if you like
+  },
   businessName: "",
   industry: "",
   shortDescription: "",
@@ -109,7 +120,10 @@ const saveAgentConfigToDB = async (
   organizationId: string
 ): Promise<{ success: boolean; message: string }> => {
   try {
-    const allowedActionsArray = Object.entries(config.possibleActions)
+    const allowedActionsArray = [
+      ...Object.entries(config.possibleActions),
+      ...Object.entries(config.features),
+    ]
       .filter(([_, enabled]) => enabled)
       .map(([key]) => key);
 
@@ -233,6 +247,40 @@ const TextInput: React.FC<InputProps> = ({
         {...props}
       />
     )}
+  </div>
+);
+
+// Add this near your other components (TextInput, SelectInput, etc.)
+const Checkbox: React.FC<{
+  label: string;
+  checked: boolean;
+  onChange: (checked: boolean) => void;
+  disabled?: boolean;
+  icon?: React.ReactNode;
+}> = ({ label, checked, onChange, disabled, icon }) => (
+  <div
+    onClick={() => !disabled && onChange(!checked)}
+    className={`flex items-center p-4 border rounded-2xl cursor-pointer transition-all ${
+      checked
+        ? "bg-blue-50 border-blue-500 dark:bg-blue-900/20 dark:border-blue-500"
+        : "bg-white dark:bg-gray-800/50 border-gray-200 dark:border-gray-700 hover:border-gray-300"
+    } ${disabled ? "opacity-50 cursor-not-allowed" : ""}`}
+  >
+    <div
+      className={`w-5 h-5 rounded border flex items-center justify-center mr-3 transition-colors ${
+        checked
+          ? "bg-blue-600 border-blue-600"
+          : "bg-white dark:bg-gray-700 border-gray-300 dark:border-gray-600"
+      }`}
+    >
+      {checked && <Check className="w-3 h-3 text-white" />}
+    </div>
+    <div className="flex items-center gap-2">
+      {icon && <span className="text-gray-500">{icon}</span>}
+      <span className="text-sm font-semibold text-gray-700 dark:text-gray-300 select-none">
+        {label}
+      </span>
+    </div>
   </div>
 );
 
@@ -726,7 +774,10 @@ export default function CreateAgentPage() {
           }
 
           if (!res.ok) {
-            const errMsg = json?.error || text || `Upload failed for ${file.name} (status ${res.status})`;
+            const errMsg =
+              json?.error ||
+              text ||
+              `Upload failed for ${file.name} (status ${res.status})`;
             throw new Error(errMsg);
           }
 
@@ -948,6 +999,68 @@ export default function CreateAgentPage() {
                     disabled={deployed}
                     onChange={(e) => handleInputChange("tone", e.target.value)}
                   />
+                </div>
+
+                <div className="space-y-2">
+                  <label className="text-sm font-semibold text-gray-700 dark:text-gray-300 ml-1">
+                    Agent Features
+                  </label>
+                  <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+                    <Checkbox
+                      label="Location Service"
+                      checked={Boolean(config.features?.locationService)}
+                      disabled={deployed}
+                      onChange={(checked) =>
+                        setConfig((prev) => ({
+                          ...prev,
+                          features: {
+                            ...(prev.features ?? {
+                              locationService: false,
+                              searchTool: false,
+                              knowledgeBase: false,
+                            }),
+                            locationService: checked,
+                          },
+                        }))
+                      }
+                    />
+                    <Checkbox
+                      label="Search Tool"
+                      checked={Boolean(config.features?.searchTool)}
+                      disabled={deployed}
+                      onChange={(checked) =>
+                        setConfig((prev) => ({
+                          ...prev,
+                          features: {
+                            ...(prev.features ?? {
+                              locationService: false,
+                              searchTool: false,
+                              knowledgeBase: false,
+                            }),
+                            searchTool: checked,
+                          },
+                        }))
+                      }
+                    />
+                    <Checkbox
+                      label="Knowledge Base"
+                      checked={Boolean(config.features?.knowledgeBase)}
+                      disabled={deployed}
+                      onChange={(checked) =>
+                        setConfig((prev) => ({
+                          ...prev,
+                          features: {
+                            ...(prev.features ?? {
+                              locationService: false,
+                              searchTool: false,
+                              knowledgeBase: false,
+                            }),
+                            knowledgeBase: checked,
+                          },
+                        }))
+                      }
+                    />
+                  </div>
                 </div>
 
                 <TextInput
