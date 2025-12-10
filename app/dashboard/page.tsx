@@ -199,7 +199,7 @@ export default function DashboardPage() {
               Recent Agents
             </h3>
             <div className="space-y-3">
-              {agents.slice(0, 3).map((agent) => (
+              {agents.slice(0, 10).map((agent) => (
                 <div
                   key={agent.id}
                   onClick={() => fetchAgentById(agent.id)}
