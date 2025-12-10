@@ -80,14 +80,14 @@ export const AgentQR: React.FC<AgentQRProps> = ({
 
   return (
     <div
-      className={`flex flex-col items-center justify-center p-4 bg-white dark:bg-gray-800 rounded-2xl border border-gray-200 dark:border-gray-700 shadow-sm ${className}`}
+      className={`flex flex-col items-center justify-center p-12 mt-6 bg-white dark:bg-gray-800 rounded-2xl border border-gray-200 dark:border-gray-700 shadow-sm ${className}`}
     >
       {loading ? (
-        <div className="h-48 w-48 flex items-center justify-center text-blue-600">
+        <div className="h-60 w-48 flex items-center justify-center text-blue-600">
           <Loader2 className="w-8 h-8 animate-spin" />
         </div>
       ) : error ? (
-        <div className="h-48 w-48 flex flex-col items-center justify-center text-gray-400">
+        <div className="h-60 w-48 flex flex-col items-center justify-center text-gray-400">
           <AlertCircle className="w-10 h-10 mb-2 opacity-50 text-red-400" />
           <span className="text-xs text-center mb-2 px-2 text-red-400">
             {error}
