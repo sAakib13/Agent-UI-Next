@@ -126,12 +126,23 @@ const saveAgentConfigToDB = async (
   organizationId: string
 ): Promise<{ success: boolean; message: string }> => {
   try {
-    const allowedActionsArray = [
-      ...Object.entries(config.possibleActions),
-      ...Object.entries(config.features),
-    ]
+    // Map possibleActions + features to allowed_actions (all as snake_case)
+    const possibleActionsArray = Object.entries(config.possibleActions)
       .filter(([_, enabled]) => enabled)
       .map(([key]) => key);
+
+    // Map features to snake_case format
+    const featureMap: Record<string, string> = {
+      locationService: "nearby_search_tool",
+      searchTool: "web_search_tool",
+      knowledgeBase: "knowledge_search_tool",
+    };
+    const featuresArray = Object.entries(config.features)
+      .filter(([_, enabled]) => enabled)
+      .map(([key]) => featureMap[key as keyof typeof featureMap] || key);
+
+    // Combine both into allowed_actions
+    const allowedActionsArray = [...possibleActionsArray, ...featuresArray];
 
     const payload = {
       organization: {

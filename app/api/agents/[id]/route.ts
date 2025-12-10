@@ -11,7 +11,6 @@ export async function GET(request: Request, context: { params: any }) {
         a.id, a.name AS agent_name, a.trigger_code, a.updated_at, a.language, a.tone,
         a.status, a.persona_prompt, a.task_prompt, a.allowed_actions AS actions, a.qr_code_base64, a.greeting_message,
         a.document_refs, a.source_urls, a.model_config,
-        a.features,
         o.name AS business_name, o.industry, o.short_description, o.website AS business_url
       FROM agents a
       JOIN organizations o ON a.organization_id = o.id

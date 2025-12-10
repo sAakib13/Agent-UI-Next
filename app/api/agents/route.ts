@@ -15,7 +15,6 @@ const agentSchema = z.object({
   task_prompt: z.string().optional().default(""),
   trigger_code: z.string().optional().default(""),
   allowed_actions: z.array(z.string()).optional().default([]),
-  features: z.array(z.string()).optional().default([]),
   qr_code_base64: z.string().optional().nullable(),
   greeting_message: z.string().optional().nullable(),
   document_refs: z.array(z.string()).optional().default([]),
@@ -52,7 +51,6 @@ export async function GET(_request: Request) {
       SELECT 
         a.id, a.name AS agent_name, a.trigger_code, a.updated_at, a.language, a.tone,
         a.status, a.persona_prompt, a.task_prompt, a.allowed_actions AS actions, a.qr_code_base64, a.greeting_message,
-          a.features,
         a.document_refs, a.source_urls, a.model_config,
         o.name AS business_name, o.industry, o.short_description, o.website AS business_url
       FROM agents a
@@ -100,9 +98,6 @@ export async function POST(request: Request) {
       "ALTER TABLE agents ADD COLUMN IF NOT EXISTS allowed_actions JSONB DEFAULT '[]'::jsonb"
     );
     await db.query(
-      "ALTER TABLE agents ADD COLUMN IF NOT EXISTS features JSONB DEFAULT '[]'::jsonb"
-    );
-    await db.query(
       "ALTER TABLE agents ADD COLUMN IF NOT EXISTS document_refs JSONB DEFAULT '[]'::jsonb"
     );
     await db.query(
@@ -135,13 +130,13 @@ export async function POST(request: Request) {
     const insertedAgents = [];
     for (const agent of agents) {
       const agentId = agent.id ?? uuidv4();
-      // NOTE: We added greeting_message and qr_code_base64 to columns and added $9, $10 placeholders
+      // NOTE: allowed_actions now includes both possibleActions and features (all combined)
       const result = await db.query(
         `INSERT INTO agents (
            id, organization_id, name, language, tone, status,
-           persona_prompt, task_prompt, trigger_code, allowed_actions, features,
+           persona_prompt, task_prompt, trigger_code, allowed_actions,
            greeting_message, qr_code_base64, document_refs, source_urls, model_config
-         ) VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12, $13, $14, $15, $16)
+         ) VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12, $13, $14, $15)
          RETURNING *`,
         [
           agentId, // $1
@@ -154,12 +149,11 @@ export async function POST(request: Request) {
           agent.task_prompt, // $8
           agent.trigger_code, // $9
           JSON.stringify(agent.allowed_actions), // $10
-          JSON.stringify(agent.features || []), // $11
-          agent.greeting_message || null, // $12
-          agent.qr_code_base64 || null, // $13
-          JSON.stringify(agent.document_refs || []), // $14
-          JSON.stringify(agent.source_urls || []), // $15
-          JSON.stringify(agent.model_config || {}), // $16
+          agent.greeting_message || null, // $11
+          agent.qr_code_base64 || null, // $12
+          JSON.stringify(agent.document_refs || []), // $13
+          JSON.stringify(agent.source_urls || []), // $14
+          JSON.stringify(agent.model_config || {}), // $15
         ]
       );
       insertedAgents.push(result.rows[0]);
