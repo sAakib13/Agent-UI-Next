@@ -94,7 +94,7 @@ const docSections: DocSection[] = [
         <div className="bg-blue-50 dark:bg-blue-900/10 border border-blue-100 dark:border-blue-800 p-4 rounded-xl">
           <h5 className="font-bold text-blue-800 dark:text-blue-400 text-sm mb-1">Why this works?</h5>
           <p className="text-xs text-blue-700 dark:text-blue-300">
-            AI tools usually have to "guess" your schema or read multiple files to understand relationships. By providing this "Master Prompt", you forcefully align the AI's understanding with your actual database structure (`agentstudio.agents`) and API patterns (`/api/agents`) instantly.
+            AI tools usually have to &quot;guess&quot; your schema or read multiple files to understand relationships. By providing this &quot;Master Prompt&quot;, you forcefully align the AI&apos;s understanding with your actual database structure (`agentstudio.agents`) and API patterns (`/api/agents`) instantly.
           </p>
         </div>
       </div>
@@ -208,7 +208,7 @@ const docSections: DocSection[] = [
         <div>
           <h4 className="text-lg font-semibold text-gray-900 dark:text-white mb-2">External Integrations (Telerivet)</h4>
           <p className="text-gray-600 dark:text-gray-300 text-sm mb-3">
-            The <strong>Client Dashboard</strong> visualizes data directly from Telerivet's REST API.
+            The <strong>Client Dashboard</strong> visualizes data directly from Telerivet&apos;s REST API.
           </p>
           <ul className="space-y-2 text-sm">
             <li className="flex items-start gap-2">
@@ -278,13 +278,13 @@ export default function DocsPage() {
   const currentDoc = docSections.find(s => s.id === activeSection) || docSections[0];
 
   return (
-    <div className="relative min-h-screen overflow-hidden bg-gradient-to-br from-slate-50 via-white to-slate-100 text-slate-900 dark:from-slate-950 dark:via-slate-950 dark:to-slate-900 dark:text-slate-100">
+    <div className="relative min-h-screen overflow-hidden bg-linear-to-br from-slate-50 via-white to-slate-100 text-slate-900 dark:from-slate-950 dark:via-slate-950 dark:to-slate-900 dark:text-slate-100">
       <div className="pointer-events-none absolute -top-40 -right-32 h-96 w-96 rounded-full bg-blue-500/30 blur-[160px] opacity-70 dark:bg-blue-700/20" />
       <div className="pointer-events-none absolute top-1/3 -left-44 h-80 w-80 rounded-full bg-violet-400/30 blur-[180px] dark:bg-violet-700/20" />
-      <div className="pointer-events-none absolute inset-0 bg-[radial-gradient(circle_at_top,_rgba(15,23,42,0.05),_transparent_45%)] dark:bg-[radial-gradient(circle_at_top,_rgba(56,189,248,0.08),_transparent_40%)]" />
+      <div className="pointer-events-none absolute inset-0 bg-[radial-gradient(circle_at_top,rgba(15,23,42,0.05),transparent_45%)] dark:bg-[radial-gradient(circle_at_top,rgba(56,189,248,0.08),transparent_40%)]" />
 
       <div className="relative z-10 max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-12 space-y-10">
-        <section className="rounded-[32px] border border-white/60 bg-white/70 px-6 py-10 shadow-2xl backdrop-blur-xl dark:border-white/10 dark:bg-white/5">
+        <section className="rounded-4xl border border-white/60 bg-white/70 px-6 py-10 shadow-2xl backdrop-blur-xl dark:border-white/10 dark:bg-white/5">
           <div className="flex flex-col gap-8 md:flex-row md:items-center md:justify-between">
             <div className="space-y-5">
               <span className="inline-flex items-center gap-2 rounded-full border border-slate-200/80 px-3 py-1 text-xs font-semibold uppercase tracking-[0.25em] text-slate-500 dark:border-white/10 dark:text-slate-300">
@@ -322,7 +322,7 @@ export default function DocsPage() {
                 <p className="mt-2 text-3xl font-bold">{docSections.length}</p>
                 <p className="text-xs text-slate-500 dark:text-slate-400">core topics linked to product areas</p>
               </div>
-              <div className="rounded-2xl border border-white/50 bg-gradient-to-br from-blue-600 to-indigo-600 p-4 text-white shadow-lg dark:border-white/10">
+              <div className="rounded-2xl border border-white/50 bg-linear-to-br from-blue-600 to-indigo-600 p-4 text-white shadow-lg dark:border-white/10">
                 <p className="text-sm text-white/80">AI Context Prompt</p>
                 <p className="mt-2 text-3xl font-bold">1</p>
                 <p className="text-xs text-white/80">copyable master prompt for Cursor</p>
@@ -336,7 +336,7 @@ export default function DocsPage() {
           <aside className="w-full shrink-0 space-y-6 md:w-80">
             {/* Search Widget */}
             <div className="relative group">
-              <div className="absolute inset-0 rounded-3xl bg-gradient-to-r from-blue-500/30 via-indigo-500/30 to-blue-500/30 opacity-70 blur-2xl transition duration-500 group-hover:opacity-100 dark:from-blue-600/40 dark:via-indigo-600/40" />
+              <div className="absolute inset-0 rounded-3xl bg-linear-to-r from-blue-500/30 via-indigo-500/30 to-blue-500/30 opacity-70 blur-2xl transition duration-500 group-hover:opacity-100 dark:from-blue-600/40 dark:via-indigo-600/40" />
               <div className="relative flex items-center gap-3 rounded-3xl border border-white/60 bg-white/80 px-4 py-4 shadow-xl backdrop-blur-2xl dark:border-white/10 dark:bg-slate-900/70">
                 <Search className="h-5 w-5 text-slate-400 dark:text-slate-500" />
                 <input
@@ -378,7 +378,7 @@ export default function DocsPage() {
                   key={section.id}
                   onClick={() => setActiveSection(section.id)}
                   className={`group w-full rounded-2xl border p-4 text-left transition-all duration-200 ${activeSection === section.id
-                    ? "border-blue-500 bg-gradient-to-r from-blue-600 to-indigo-600 text-white shadow-lg shadow-blue-600/30"
+                    ? "border-blue-500 bg-linear-to-r from-blue-600 to-indigo-600 text-white shadow-lg shadow-blue-600/30"
                     : "border-white/40 bg-white/70 text-slate-600 hover:border-blue-200 hover:text-slate-900 dark:border-white/10 dark:bg-slate-900/40 dark:text-slate-400 dark:hover:border-blue-500 dark:hover:text-white"
                     }`}
                 >
@@ -399,7 +399,7 @@ export default function DocsPage() {
 
               {filteredSections.length === 0 && (
                 <div className="text-center rounded-2xl border border-dashed border-slate-200/80 p-8 text-sm text-slate-500 dark:border-white/10 dark:text-slate-400">
-                  <p>No docs found for "{searchQuery}"</p>
+                  <p>No docs found for &quot;{searchQuery}&quot;</p>
                   <button onClick={() => setSearchQuery("")} className="mt-2 text-blue-500 hover:underline dark:text-blue-300">
                     Clear search
                   </button>
@@ -408,7 +408,7 @@ export default function DocsPage() {
             </nav>
 
             {/* Quick Stats Widget */}
-            <div className="rounded-3xl border border-white/40 bg-gradient-to-br from-slate-900 via-slate-900 to-indigo-900 p-5 text-white shadow-2xl dark:border-white/5 dark:from-indigo-950 dark:via-slate-950 dark:to-slate-900">
+            <div className="rounded-3xl border border-white/40 bg-linear-to-br from-slate-900 via-slate-900 to-indigo-900 p-5 text-white shadow-2xl dark:border-white/5 dark:from-indigo-950 dark:via-slate-950 dark:to-slate-900">
               <div className="flex items-center gap-2 mb-3 text-white/70">
                 <Book className="h-4 w-4" />
                 <span className="text-xs font-bold uppercase tracking-wider">Knowledge graph</span>
@@ -422,7 +422,7 @@ export default function DocsPage() {
           </aside>
 
           {/* Main Content Area */}
-          <main className="relative flex-1 overflow-hidden rounded-[32px] border border-white/60 bg-white/80 p-8 shadow-2xl backdrop-blur-2xl dark:border-white/10 dark:bg-slate-900/70 md:p-12">
+          <main className="relative flex-1 overflow-hidden rounded-4xl border border-white/60 bg-white/80 p-8 shadow-2xl backdrop-blur-2xl dark:border-white/10 dark:bg-slate-900/70 md:p-12">
             <div className="pointer-events-none absolute -top-24 right-0 h-48 w-48 rounded-full bg-blue-500/20 blur-3xl" />
             <div className="pointer-events-none absolute bottom-0 left-10 h-32 w-32 rounded-full bg-indigo-500/15 blur-3xl" />
 
