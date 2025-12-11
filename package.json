@@ -14,7 +14,7 @@
     "axios": "^1.13.2",
     "clsx": "^2.1.1",
     "dotenv": "^17.2.3",
-    "framer-motion": "^12.23.25",
+    "framer-motion": "^12.23.26",
     "lucide-react": "^0.555.0",
     "next": "16.0.7",
     "node-pg-migrate": "^8.0.3",
