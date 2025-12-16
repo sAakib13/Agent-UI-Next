@@ -23,6 +23,8 @@ import {
 } from "lucide-react";
 import { tr } from "zod/locales";
 import { AgentPopup } from "@/components/agent/AgentPopup";
+import { INDUSTRY_PRESETS, IndustryPreset } from "../_config/industryPresets";
+import { set } from "zod";
 
 // --- Types & Config ---
 
@@ -92,16 +94,14 @@ const initialConfigBase: Omit<AgentConfig, "id"> = {
 };
 
 const industries = [
-  "Technology",
+  "Consultancy",
   "E-commerce",
-  "Finance",
-  "Healthcare",
+  "Insurance/Banks",
+  "Clincs",
   "Education",
-  "Real Estate",
+  "Travel Agency",
   "Hospitality",
-  "Automotive",
-  "Entertainment",
-  "Others",
+  "Others"
 ];
 const languages = ["English", "Spanish", "French", "German", "Portuguese"];
 const tones = ["Formal", "Casual", "Friendly", "Professional", "Empathetic"];
@@ -277,18 +277,16 @@ const Checkbox: React.FC<{
 }> = ({ label, checked, onChange, disabled, icon }) => (
   <div
     onClick={() => !disabled && onChange(!checked)}
-    className={`flex items-center p-4 border rounded-2xl cursor-pointer transition-all ${
-      checked
-        ? "bg-blue-50 border-blue-500 dark:bg-blue-900/20 dark:border-blue-500"
-        : "bg-white dark:bg-gray-800/50 border-gray-200 dark:border-gray-700 hover:border-gray-300"
-    } ${disabled ? "opacity-50 cursor-not-allowed" : ""}`}
+    className={`flex items-center p-4 border rounded-2xl cursor-pointer transition-all ${checked
+      ? "bg-blue-50 border-blue-500 dark:bg-blue-900/20 dark:border-blue-500"
+      : "bg-white dark:bg-gray-800/50 border-gray-200 dark:border-gray-700 hover:border-gray-300"
+      } ${disabled ? "opacity-50 cursor-not-allowed" : ""}`}
   >
     <div
-      className={`w-5 h-5 rounded border flex items-center justify-center mr-3 transition-colors ${
-        checked
-          ? "bg-blue-600 border-blue-600"
-          : "bg-white dark:bg-gray-700 border-gray-300 dark:border-gray-600"
-      }`}
+      className={`w-5 h-5 rounded border flex items-center justify-center mr-3 transition-colors ${checked
+        ? "bg-blue-600 border-blue-600"
+        : "bg-white dark:bg-gray-700 border-gray-300 dark:border-gray-600"
+        }`}
     >
       {checked && <Check className="w-3 h-3 text-white" />}
     </div>
@@ -524,12 +522,17 @@ export default function CreateAgentPage() {
   const [deployed, setDeployed] = useState(false);
   const [showPopup, setShowPopup] = useState(false);
   const [expanded, setExpanded] = useState(false);
+  const [isIndustryAutoFillMode, setIsIndustryAutoFillMode] = useState(false);
 
   // Type-safe change handlers
   const handleInputChange = (
     field: keyof AgentConfig,
     value: string | number | boolean
   ) => {
+    // If user changes Industry, turn off the auto-fill toggle so they can re-enable it if needed
+    if (field === "industry") {
+      setIsIndustryAutoFillMode(false);
+    }
     setConfig((prev) => ({ ...prev, [field]: value }));
   };
 
@@ -569,468 +572,320 @@ export default function CreateAgentPage() {
       setConfig((prev) => ({ ...prev, triggerCode: value }));
   };
 
+  // --- NEW: Handle Industry Auto-fill Logic ---
+  const handleIndustryAutoFill = (checked: boolean) => {
+    setIsIndustryAutoFillMode(checked);
+    if (checked) {
+      if (!config.industry || !(config.industry in INDUSTRY_PRESETS)) {
+        setResultMessage({
+          type: "error",
+          text: "Please select a valid industry to auto-fill the configuration.",
+        });
+        setIsIndustryAutoFillMode(false);
+        return;
+      } else {
+        const preset: IndustryPreset = INDUSTRY_PRESETS[config.industry];
+        if (preset) {
+          const businessName = config.businessName || "our business bot";
+
+          // Inject the name into the greeting
+          const dynamicGreeting = preset.initialGreeting.replace("[Business Name]", businessName);
+          // --- NEW LOGIC END ---
+
+          // 4. Update State
+          setIsIndustryAutoFillMode(true);
+          setConfig((prev) => ({
+            ...prev,
+            greeting_message: dynamicGreeting, // Use the new dynamic string
+            persona: preset.persona,
+            task: preset.task,
+          }));
+          setResultMessage({
+            type: "success",
+            text: `Configuration auto-filled for ${config.industry} industry.`,
+          });
+          setTimeout(() => setResultMessage(null), 2000);
+        }
+      }
+    }
+  }
+
   // --- Auto-Fill Logic ---
   const handleAutoFill = () => {
     const presets = [
+      // --- Consultancy ---
       {
-        businessName: "Amazon",
-        industry: "E-Commerce & Retail",
-        businessURL: "https://www.amazon.com",
-        shortDescription:
-          "A massive online retail marketplace offering millions of products from electronics to groceries.",
-        agentName: "ShopBuddy",
-        triggerCode: "AMZ",
+        businessName: "Apex Strategy Group",
+        industry: "Consultancy",
+        businessURL: "https://www.apexstrategy.example.com",
+        shortDescription: "A premier management consulting firm helping businesses optimize performance and growth.",
+        agentName: "ConsultMate",
+        triggerCode: "APEX",
         language: "English",
-        tone: "Helpful & Fast-Paced",
-        greeting_message:
-          "Hey smart shopper! 🛒 I’m ShopBuddy — ready to help you find the best deals and products. What are you looking for?",
-        persona:
-          "You assist users in browsing, comparing products, tracking orders, and navigating Prime services.",
-        task: "Product suggestions, deal finder, delivery & membership assistance.",
+        tone: "Professional",
+        greeting_message: "Hello! I'm ConsultMate. How can I assist with your business strategy today?",
+        persona: "You are a senior business analyst providing professional, concise, and strategic advice.",
+        task: "Schedule consultations, provide brief industry insights, and collect client requirements.",
         model: "",
-        temperature: 0.65,
+        route: "WhatsApp",
         urls: [
-          "https://www.amazon.com/gp/browse.html",
-          "https://www.amazon.com/prime",
-          "https://www.amazon.com/gp/help/customer/display.html",
+          "https://www.mckinsey.com/capabilities",
+          "https://www.bcg.com/industries",
         ],
+        features: { locationService: false, searchTool: true, knowledgeBase: true },
+        possibleActions: { updateContactTable: true, delegateToHuman: true }
       },
       {
-        businessName: "Netflix",
-        industry: "Entertainment & Streaming",
-        businessURL: "https://www.netflix.com",
-        shortDescription:
-          "A top streaming platform for movies, TV shows, and exclusive original content.",
-        agentName: "StreamMate",
-        triggerCode: "NETSTREAM",
+        businessName: "TechVision Solutions",
+        industry: "Consultancy",
+        businessURL: "https://www.techvision.example.com",
+        shortDescription: "IT consultancy specializing in cloud migration and digital transformation.",
+        agentName: "TechAdvisor",
+        triggerCode: "TECH",
         language: "English",
-        tone: "Chill & Engaging",
-        greeting_message:
-          "Movie night? 🍿 I’m StreamMate — let me help you find the perfect show or movie!",
-        persona:
-          "You recommend content based on user mood and assist with account support.",
-        task: "Suggest titles, explain subscription options, help login & profiles.",
+        tone: "Professional",
+        greeting_message: "Welcome to TechVision. Need help transforming your digital infrastructure?",
+        persona: "You are a technical consultant knowledgeable in cloud architecture and software solutions.",
+        task: "Qualify leads for IT services and answer technical capability questions.",
         model: "",
-        temperature: 0.7,
+        route: "WhatsApp",
+        urls: ["https://aws.amazon.com/solutions/"],
+        features: { locationService: false, searchTool: true, knowledgeBase: true },
+        possibleActions: { updateContactTable: true, delegateToHuman: true }
+      },
+
+      // --- E-commerce ---
+      {
+        businessName: "Urban Threads",
+        industry: "E-commerce",
+        businessURL: "https://www.urbanthreads.example.com",
+        shortDescription: "Trendy streetwear and accessories for the modern generation.",
+        agentName: "StyleBot",
+        triggerCode: "STYLE",
+        language: "English",
+        tone: "Casual",
+        greeting_message: "Yo! 🧢 Welcome to Urban Threads. Looking for the latest drop?",
+        persona: "You are a hype-beast fashion assistant, trendy, cool, and helpful.",
+        task: "Suggest outfits, track orders, and handle returns.",
+        model: "",
+        route: "WhatsApp",
         urls: [
-          "https://www.netflix.com/browse",
-          "https://help.netflix.com",
-          "https://www.netflix.com/signup",
+          "https://www.nike.com/men",
+          "https://www.asos.com/men/",
         ],
+        features: { locationService: false, searchTool: false, knowledgeBase: true },
+        possibleActions: { updateContactTable: true, delegateToHuman: false }
       },
       {
-        businessName: "McDonald’s",
-        industry: "Food & Beverage / Fast Food",
-        businessURL: "https://www.mcdonalds.com",
-        shortDescription:
-          "A global fast-food restaurant known for burgers, fries, and iconic menu favorites.",
-        agentName: "SnackBot",
-        triggerCode: "MCD",
+        businessName: "Gadget Galaxy",
+        industry: "E-commerce",
+        businessURL: "https://www.gadgetgalaxy.example.com",
+        shortDescription: "Your one-stop shop for the latest electronics, phones, and smart home tech.",
+        agentName: "Gizmo",
+        triggerCode: "TECHIE",
         language: "English",
-        tone: "Friendly & Energetic",
-        greeting_message:
-          "Welcome! 🍔 I’m SnackBot — craving something tasty? I can help with menu picks and store info!",
-        persona:
-          "You help users find meals, customize orders, and explore promotions.",
-        task: "Menu support, reward guidance, nearest restaurants search.",
+        tone: "Friendly",
+        greeting_message: "Beep boop! 🤖 I'm Gizmo. Need help finding the perfect gadget?",
+        persona: "You are a tech-savvy assistant who loves specs and features.",
+        task: "Compare products, check stock availability, and explain technical specs.",
         model: "",
-        temperature: 0.6,
-        urls: [
-          "https://www.mcdonalds.com/us/en-us/full-menu.html",
-          "https://www.mcdonalds.com/us/en-us/restaurant-locator.html",
-          "https://www.mcdonalds.com/us/en-us/mcdonalds-rewards.html",
-        ],
+        route: "Messenger",
+        urls: ["https://www.apple.com/iphone/", "https://www.samsung.com/us/"],
+        features: { locationService: false, searchTool: true, knowledgeBase: true },
+        possibleActions: { updateContactTable: true, delegateToHuman: true }
+      },
+
+      // --- Insurance/Banks ---
+      {
+        businessName: "Sentinel Insurance",
+        industry: "Insurance/Banks",
+        businessURL: "https://www.sentinel.example.com",
+        shortDescription: "Reliable home, auto, and life insurance for peace of mind.",
+        agentName: "Guardian",
+        triggerCode: "SAFE",
+        language: "English",
+        tone: "Empathetic",
+        greeting_message: "Hello. I'm Guardian, here to help protect what matters most to you.",
+        persona: "You are a caring and trustworthy insurance agent focused on safety and security.",
+        task: "Guide users through claims processes, explain policy details, and provide quotes.",
+        model: "",
+        route: "WhatsApp",
+        urls: ["https://www.geico.com/claims/", "https://www.statefarm.com/insurance"],
+        features: { locationService: true, searchTool: false, knowledgeBase: true },
+        possibleActions: { updateContactTable: true, delegateToHuman: true }
       },
       {
-        businessName: "Tesla",
-        industry: "Automotive / Electric Vehicles",
-        businessURL: "https://www.tesla.com",
-        shortDescription:
-          "A leading company in electric vehicles, solar energy, and sustainable technology solutions.",
-        agentName: "Electra",
-        triggerCode: "TESLA",
+        businessName: "Future Trust Bank",
+        industry: "Insurance/Banks",
+        businessURL: "https://www.futuretrust.example.com",
+        shortDescription: "Modern banking solutions for personal and business finance.",
+        agentName: "BankerBot",
+        triggerCode: "BANK",
         language: "English",
-        tone: "Innovative & Confident",
-        greeting_message:
-          "Hello! ⚡ I’m Electra — ready to help you explore Tesla vehicles or energy products!",
-        persona:
-          "You guide users on EV purchases, charging solutions, and product details.",
-        task: "Recommend Tesla models, explain features, assist with configuration.",
+        tone: "Formal",
+        greeting_message: "Welcome to Future Trust Bank. How may I assist with your finances today?",
+        persona: "You are a secure, formal banking assistant strictly adhering to privacy.",
+        task: "Assist with account opening info, branch location, and general banking FAQs.",
         model: "",
-        temperature: 0.7,
-        urls: [
-          "https://www.tesla.com/models",
-          "https://www.tesla.com/charging",
-          "https://www.tesla.com/support",
-        ],
+        route: "WhatsApp",
+        urls: ["https://www.chase.com/personal/banking"],
+        features: { locationService: true, searchTool: false, knowledgeBase: true },
+        possibleActions: { updateContactTable: false, delegateToHuman: true }
+      },
+
+      // --- Clincs (using user typo "Clincs") ---
+      {
+        businessName: "City Care Clinic",
+        industry: "Clincs",
+        businessURL: "https://www.citycare.example.com",
+        shortDescription: "Walk-in clinic providing general health and urgent care services.",
+        agentName: "NurseJoy",
+        triggerCode: "CARE",
+        language: "English",
+        tone: "Empathetic",
+        greeting_message: "Hi there! I'm NurseJoy. Do you need to book an appointment or ask about services?",
+        persona: "You are a warm, triage-nurse persona who is calm and reassuring.",
+        task: "Schedule appointments, list services, and provide opening hours.",
+        model: "",
+        route: "WhatsApp",
+        urls: ["https://www.mayoclinic.org/patient-visitor-guide"],
+        features: { locationService: true, searchTool: false, knowledgeBase: true },
+        possibleActions: { updateContactTable: true, delegateToHuman: true }
       },
       {
-        businessName: "Walmart",
-        industry: "Retail & Supermarket",
-        businessURL: "https://www.walmart.com",
-        shortDescription:
-          "A major retail chain offering groceries, household essentials, electronics, and more at low prices.",
-        agentName: "DealHelper",
-        triggerCode: "WALMART",
+        businessName: "Bright Smile Dental",
+        industry: "Clincs",
+        businessURL: "https://www.brightsmile.example.com",
+        shortDescription: "Cosmetic and family dentistry specializing in smiles.",
+        agentName: "ToothFairy",
+        triggerCode: "SMILE",
         language: "English",
-        tone: "Practical & Helpful",
-        greeting_message:
-          "Hello! 🛍️ I’m DealHelper — here to help you find the best everyday items and savings!",
-        persona:
-          "You assist customers with shopping, delivery options, and in-store availability.",
-        task: "Browse inventory, locate stores, assist with orders and returns.",
+        tone: "Friendly",
+        greeting_message: "Keep smiling! 😁 I'm here to help with your dental appointments.",
+        persona: "You are a cheerful receptionist for a dental office.",
+        task: "Book cleanings, explain procedures (like whitening), and handle cancellations.",
         model: "",
-        temperature: 0.65,
-        urls: [
-          "https://www.walmart.com/browse",
-          "https://www.walmart.com/store-finder",
-          "https://www.walmart.com/help",
-        ],
+        route: "Viber",
+        urls: ["https://www.colgate.com/en-us/oral-health"],
+        features: { locationService: true, searchTool: false, knowledgeBase: true },
+        possibleActions: { updateContactTable: true, delegateToHuman: false }
+      },
+
+      // --- Education ---
+      {
+        businessName: "Global Lang Academy",
+        industry: "Education",
+        businessURL: "https://www.globallang.example.com",
+        shortDescription: "Online language learning platform for professionals.",
+        agentName: "TutorTom",
+        triggerCode: "LEARN",
+        language: "English",
+        tone: "Professional",
+        greeting_message: "Bonjour! Hola! Hello! I'm TutorTom. Ready to learn a new language?",
+        persona: "You are an encouraging teacher who helps students find the right course.",
+        task: "Recommend courses, explain pricing, and troubleshoot login issues.",
+        model: "",
+        route: "WhatsApp",
+        urls: ["https://www.duolingo.com/", "https://www.babel.com"],
+        features: { locationService: false, searchTool: true, knowledgeBase: true },
+        possibleActions: { updateContactTable: true, delegateToHuman: false }
       },
       {
-        businessName: "YouTube",
-        industry: "Digital Media / Video Streaming",
-        businessURL: "https://www.youtube.com",
-        shortDescription:
-          "A leading platform for video streaming, creators, and educational content.",
-        agentName: "VideoGuru",
-        triggerCode: "YT",
+        businessName: "Ivy Prep Institute",
+        industry: "Education",
+        businessURL: "https://www.ivyprep.example.com",
+        shortDescription: "SAT/ACT preparation and college admissions counseling.",
+        agentName: "PrepMaster",
+        triggerCode: "PREP",
         language: "English",
-        tone: "Fun & Informative",
-        greeting_message:
-          "Hey there! ▶️ I’m VideoGuru — tell me what you want to watch or learn today!",
-        persona:
-          "You recommend videos based on interests and guide channel/subscription help.",
-        task: "Discover videos, explain YouTube Premium, channel support.",
+        tone: "Formal",
+        greeting_message: "Welcome to Ivy Prep. Let's secure your academic future.",
+        persona: "You are a knowledgeable academic counselor.",
+        task: "Explain curriculum, schedule tutoring sessions, and provide study tips.",
         model: "",
-        temperature: 0.7,
-        urls: [
-          "https://www.youtube.com/feed/explore",
-          "https://www.youtube.com/premium",
-          "https://support.google.com/youtube",
-        ],
+        route: "WhatsApp",
+        urls: ["https://www.collegeboard.org/"],
+        features: { locationService: false, searchTool: false, knowledgeBase: true },
+        possibleActions: { updateContactTable: true, delegateToHuman: true }
+      },
+
+      // --- Travel Agency ---
+      {
+        businessName: "Wanderlust Travels",
+        industry: "Travel Agency",
+        businessURL: "https://www.wanderlust.example.com",
+        shortDescription: "Boutique travel agency creating custom holiday packages.",
+        agentName: "GlobeTrotter",
+        triggerCode: "TRIP",
+        language: "English",
+        tone: "Friendly",
+        greeting_message: "Adventure awaits! ✈️ I'm GlobeTrotter. Where do you want to go?",
+        persona: "You are an enthusiastic travel agent who loves discovering new places.",
+        task: "Suggest destinations, book flights/hotels, and check visa requirements.",
+        model: "",
+        route: "WhatsApp",
+        urls: ["https://www.lonelyplanet.com/", "https://www.expedia.com/"],
+        features: { locationService: false, searchTool: true, knowledgeBase: true },
+        possibleActions: { updateContactTable: true, delegateToHuman: true }
+      },
+
+      // --- Hospitality ---
+      {
+        businessName: "Grand Horizon Hotel",
+        industry: "Hospitality",
+        businessURL: "https://www.grandhorizon.example.com",
+        shortDescription: "Luxury 5-star accommodation with spa and fine dining.",
+        agentName: "Concierge",
+        triggerCode: "STAY",
+        language: "English",
+        tone: "Formal",
+        greeting_message: "Welcome to Grand Horizon. How may I serve you today?",
+        persona: "You are a polite, high-end hotel concierge.",
+        task: "Room service orders, spa bookings, and local recommendations.",
+        model: "",
+        route: "WhatsApp",
+        urls: ["https://www.marriott.com/default.mi"],
+        features: { locationService: true, searchTool: false, knowledgeBase: true },
+        possibleActions: { updateContactTable: false, delegateToHuman: true }
       },
       {
-        businessName: "Adobe",
-        industry: "Software & Creative Tools",
-        businessURL: "https://www.adobe.com",
-        shortDescription:
-          "Creators’ essential tools for design, editing, marketing, and digital publishing.",
-        agentName: "CreativePal",
-        triggerCode: "ADOBE",
+        businessName: "Burger Bistro",
+        industry: "Hospitality",
+        businessURL: "https://www.burgerbistro.example.com",
+        shortDescription: "Gourmet burger joint serving locally sourced ingredients.",
+        agentName: "ChefMate",
+        triggerCode: "YUM",
         language: "English",
-        tone: "Creative & Supportive",
-        greeting_message:
-          "Hi creator! 🎨 I’m CreativePal — ready to help with tools like Photoshop, Illustrator, and more!",
-        persona:
-          "You help users choose creative software and guide installation/subscription.",
-        task: "Recommend creative apps, explain plans, troubleshooting support.",
+        tone: "Casual",
+        greeting_message: "Hungry? 🍔 I'm ChefMate. Ready to take your order!",
+        persona: "You are a friendly waiter helping with the menu.",
+        task: "Take takeout orders, explain ingredients, and book tables.",
         model: "",
-        temperature: 0.65,
-        urls: [
-          "https://www.adobe.com/creativecloud.html",
-          "https://www.adobe.com/pricing.html",
-          "https://helpx.adobe.com",
-        ],
+        route: "Messenger",
+        urls: ["https://www.ubereats.com/"],
+        features: { locationService: true, searchTool: false, knowledgeBase: true },
+        possibleActions: { updateContactTable: true, delegateToHuman: false }
       },
+
+      // --- Others ---
       {
-        businessName: "Apple",
-        industry: "Technology / Electronics",
-        businessURL: "https://www.apple.com",
-        shortDescription:
-          "A global brand creating iPhone, Mac, Watch, and a seamless connected ecosystem.",
-        agentName: "iHelper",
-        triggerCode: "APPLE",
+        businessName: "Solaris Energy",
+        industry: "Others",
+        businessURL: "https://www.solaris.example.com",
+        shortDescription: "Renewable solar energy solutions for residential homes.",
+        agentName: "Sunny",
+        triggerCode: "SOLAR",
         language: "English",
-        tone: "Sleek & Professional",
-        greeting_message:
-          "Hello! 🍏 I’m iHelper — shopping for a new Apple device or need support?",
-        persona:
-          "You guide product selection, features, upgrades, and ecosystem benefits.",
-        task: "Product advice, support help, purchase guidance.",
+        tone: "Professional",
+        greeting_message: "Let's go green! ☀️ I'm Sunny. Interested in solar panels?",
+        persona: "You are an eco-friendly consultant.",
+        task: "Calculate potential savings, explain installation, and schedule surveys.",
         model: "",
-        temperature: 0.55,
-        urls: [
-          "https://www.apple.com/store",
-          "https://support.apple.com",
-          "https://www.apple.com/shop/buy-iphone",
-        ],
-      },
-      {
-        businessName: "LinkedIn",
-        industry: "Professional Networking",
-        businessURL: "https://www.linkedin.com",
-        shortDescription:
-          "A professional networking platform for career development, hiring, and business growth.",
-        agentName: "CareerCoach",
-        triggerCode: "LNKIN",
-        language: "English",
-        tone: "Professional & Encouraging",
-        greeting_message:
-          "Hello professional! 💼 I’m CareerCoach — ready to help with networking or job search today?",
-        persona:
-          "You help users enhance their profiles, find opportunities, and connect professionally.",
-        task: "Profile tips, job searching, networking guidance.",
-        model: "",
-        temperature: 0.6,
-        urls: [
-          "https://www.linkedin.com/jobs",
-          "https://www.linkedin.com/learning",
-          "https://www.linkedin.com/help",
-        ],
-      },
-      {
-        businessName: "Samsung",
-        industry: "Electronics & Smart Devices",
-        businessURL: "https://www.samsung.com",
-        shortDescription:
-          "A global leader in mobile phones, home electronics, and smart device innovation.",
-        agentName: "TechGuide",
-        triggerCode: "SAMSUNG",
-        language: "English",
-        tone: "Expert & Approachable",
-        greeting_message:
-          "Hey tech fan! 📱 I’m TechGuide — what device or feature can I help you explore?",
-        persona:
-          "You guide users on device comparisons, features, accessories and support.",
-        task: "Assist with product discovery, troubleshooting & purchasing.",
-        model: "",
-        temperature: 0.65,
-        urls: [
-          "https://www.samsung.com/us/smartphones",
-          "https://www.samsung.com/us/support",
-          "https://www.samsung.com/us/store",
-        ],
-      },
-      {
-        businessName: "Costco",
-        industry: "Retail & Wholesale",
-        businessURL: "https://www.costco.com",
-        shortDescription:
-          "A membership-based wholesale retailer known for bulk deals and exclusive brands.",
-        agentName: "BulkBuddy",
-        triggerCode: "COST",
-        language: "English",
-        tone: "Helpful & Practical",
-        greeting_message:
-          "Hi there! 🛒 I’m BulkBuddy — shopping in bulk or looking for member savings?",
-        persona:
-          "You help users explore deals, membership perks, and locate warehouses.",
-        task: "Membership guidance, product help, warehouse finder.",
-        model: "",
-        temperature: 0.6,
-        urls: [
-          "https://www.costco.com/membership.html",
-          "https://www.costco.com/warehouse-locations",
-          "https://customerservice.costco.com",
-        ],
-      },
-      {
-        businessName: "Uber",
-        industry: "Transportation & Mobility",
-        businessURL: "https://www.uber.com",
-        shortDescription:
-          "A leading ride-hailing and delivery platform connecting riders with drivers worldwide.",
-        agentName: "RideGuide",
-        triggerCode: "UBER",
-        language: "English",
-        tone: "Quick & Supportive",
-        greeting_message:
-          "Ready to roll? 🚗 I’m RideGuide — need a ride or delivery?",
-        persona:
-          "You guide customers with booking rides, fare estimates, and support needs.",
-        task: "Assist with rides, delivery, and account support.",
-        model: "",
-        temperature: 0.65,
-        urls: [
-          "https://www.uber.com/us/en/ride",
-          "https://help.uber.com",
-          "https://www.uber.com/us/en/eats",
-        ],
-      },
-      {
-        businessName: "Target",
-        industry: "Retail & Lifestyle",
-        businessURL: "https://www.target.com",
-        shortDescription:
-          "A major retail store offering stylish clothing, home goods, groceries, and more.",
-        agentName: "StyleGuide",
-        triggerCode: "TRGT",
-        language: "English",
-        tone: "Cheerful & Trendy",
-        greeting_message:
-          "Welcome! 🎯 I’m StyleGuide — what can I help you find today?",
-        persona: "You provide product and deal suggestions with trendy picks.",
-        task: "Help find items, promotions, local store info.",
-        model: "",
-        temperature: 0.6,
-        urls: [
-          "https://www.target.com/c/deals",
-          "https://www.target.com/store-locator/find-stores",
-          "https://www.target.com/help",
-        ],
-      },
-      {
-        businessName: "Shopify",
-        industry: "E-Commerce Platforms",
-        businessURL: "https://www.shopify.com",
-        shortDescription:
-          "A leading platform enabling entrepreneurs to build and grow online stores.",
-        agentName: "BizBuilder",
-        triggerCode: "SHOP",
-        language: "English",
-        tone: "Entrepreneurial & Motivational",
-        greeting_message:
-          "Hi entrepreneur! 🛍️ I’m BizBuilder — let’s build your online store!",
-        persona:
-          "You help users create stores, choose plans, and learn eCommerce basics.",
-        task: "Guide store setup, product listing, and subscription choices.",
-        model: "",
-        temperature: 0.7,
-        urls: [
-          "https://www.shopify.com/pricing",
-          "https://www.shopify.com/blog",
-          "https://help.shopify.com",
-        ],
-      },
-      {
-        businessName: "Disney+",
-        industry: "Entertainment & Streaming",
-        businessURL: "https://www.disneyplus.com",
-        shortDescription:
-          "A streaming platform offering Disney, Marvel, Pixar, Star Wars, and National Geographic content.",
-        agentName: "MagicGuide",
-        triggerCode: "DISNP",
-        language: "English",
-        tone: "Whimsical & Friendly",
-        greeting_message:
-          "Hello! ✨ I’m MagicGuide — ready to help you find your next magical show?",
-        persona:
-          "You help users discover family-friendly movies and resolve subscription questions.",
-        task: "Show recommendations, help login, explain bundles.",
-        model: "",
-        temperature: 0.7,
-        urls: [
-          "https://www.disneyplus.com/home",
-          "https://www.disneyplus.com/brand/star-wars",
-          "https://help.disneyplus.com",
-        ],
-      },
-      {
-        businessName: "DoorDash",
-        industry: "Food Delivery",
-        businessURL: "https://www.doordash.com",
-        shortDescription:
-          "A food delivery platform connecting customers with local restaurants.",
-        agentName: "DashPal",
-        triggerCode: "DASH",
-        language: "English",
-        tone: "Fast & Friendly",
-        greeting_message:
-          "Hungry? 🍽️ I’m DashPal — what can I deliver for you today?",
-        persona:
-          "You suggest restaurants, track orders, and handle delivery help.",
-        task: "Order help, cuisine suggestions, support issues.",
-        model: "",
-        temperature: 0.6,
-        urls: [
-          "https://www.doordash.com",
-          "https://help.doordash.com",
-          "https://www.doordash.com/dashpass",
-        ],
-      },
-      {
-        businessName: "PlayStation",
-        industry: "Gaming & Hardware",
-        businessURL: "https://www.playstation.com",
-        shortDescription:
-          "A leading gaming brand offering consoles, exclusive titles, and digital services.",
-        agentName: "GameGuru",
-        triggerCode: "PSN",
-        language: "English",
-        tone: "Energetic & Gamer-Friendly",
-        greeting_message:
-          "Let’s play! 🎮 I’m GameGuru — looking for games or console help?",
-        persona:
-          "You guide players on game recommendations and service questions.",
-        task: "Game discovery, PS Plus details, console support.",
-        model: "",
-        temperature: 0.7,
-        urls: [
-          "https://www.playstation.com/en-us/games",
-          "https://www.playstation.com/en-us/ps-plus",
-          "https://www.playstation.com/en-us/support",
-        ],
-      },
-      {
-        businessName: "Sephora",
-        industry: "Beauty & Cosmetics",
-        businessURL: "https://www.sephora.com",
-        shortDescription:
-          "A leading beauty retailer with makeup, skincare, and fragrance brands.",
-        agentName: "GlamBot",
-        triggerCode: "SEPH",
-        language: "English",
-        tone: "Stylish & Confident",
-        greeting_message:
-          "Hey beautiful! 💄 I’m GlamBot — ready to help you glow today?",
-        persona:
-          "You help with product selection, shade matching, and beauty advice.",
-        task: "Suggest products, explain Beauty Insider, store finder.",
-        model: "",
-        temperature: 0.65,
-        urls: [
-          "https://www.sephora.com/shop/makeup",
-          "https://www.sephora.com/beauty/beauty-insider",
-          "https://www.sephora.com/store-locations-events",
-        ],
-      },
-      {
-        businessName: "Lowe’s",
-        industry: "Home Improvement & Hardware",
-        businessURL: "https://www.lowes.com",
-        shortDescription:
-          "A home improvement retailer offering tools, building materials, and appliances.",
-        agentName: "HandyHelper",
-        triggerCode: "LOWES",
-        language: "English",
-        tone: "Practical & Skilled",
-        greeting_message:
-          "Hey builder! 🛠️ I’m HandyHelper — working on a home project?",
-        persona:
-          "You assist DIYers and homeowners with product needs and store navigation.",
-        task: "Find tools/materials, guide installation help, delivery info.",
-        model: "",
-        temperature: 0.6,
-        urls: [
-          "https://www.lowes.com/c/Promotions",
-          "https://www.lowes.com/store",
-          "https://www.lowes.com/l/customer-service",
-        ],
-      },
-      {
-        businessName: "Hulu",
-        industry: "Entertainment & Streaming",
-        businessURL: "https://www.hulu.com",
-        shortDescription:
-          "A streaming service featuring popular TV shows, movies, and exclusive originals.",
-        agentName: "ShowSeeker",
-        triggerCode: "HULU",
-        language: "English",
-        tone: "Cool & Casual",
-        greeting_message:
-          "Hey! 📺 I’m ShowSeeker — want help finding a series to binge?",
-        persona:
-          "You recommend shows and help users manage subscriptions or settings.",
-        task: "Suggest TV shows, subscription guidance, support assistance.",
-        model: "",
-        temperature: 0.7,
-        urls: [
-          "https://www.hulu.com/hub/home",
-          "https://www.hulu.com/welcome",
-          "https://help.hulu.com",
-        ],
-      },
+        route: "WhatsApp",
+        urls: ["https://www.energy.gov/eere/solar/homeowners-guide-going-solar"],
+        features: { locationService: true, searchTool: true, knowledgeBase: true },
+        possibleActions: { updateContactTable: true, delegateToHuman: true }
+      }
     ];
 
     const randomPreset = presets[Math.floor(Math.random() * presets.length)];
@@ -1403,6 +1258,40 @@ export default function CreateAgentPage() {
                         }))
                       }
                     />
+                  </div>
+                </div>
+
+                <div
+                  onClick={() => handleIndustryAutoFill(!isIndustryAutoFillMode)}
+                  className={`flex items-start p-4 border rounded-2xl cursor-pointer transition-all mt-4
+                      ${isIndustryAutoFillMode
+                      ? "bg-blue-50 border-blue-500 dark:bg-blue-900/20 dark:border-blue-500"
+                      : "bg-white dark:bg-gray-800/50 border-gray-200 dark:border-gray-700 hover:border-gray-300"
+                    }`}
+                >
+                  {/* The Checkbox Square */}
+                  <div
+                    className={`w-5 h-5 rounded border flex items-center justify-center mr-3 mt-0.5 transition-colors shrink-0 
+                        ${isIndustryAutoFillMode
+                        ? "bg-blue-600 border-blue-600"
+                        : "bg-white dark:bg-gray-700 border-gray-300 dark:border-gray-600"
+                      }`}
+                  >
+                    {isIndustryAutoFillMode && <Check className="w-3 h-3 text-white" />}
+                  </div>
+
+                  {/* The Text Content */}
+                  <div className="flex-1">
+                    <div className="flex items-center gap-2 mb-1">
+
+                      <span className="text-sm font-semibold text-gray-700 dark:text-gray-300 select-none">
+                        Auto-fill Agent Fields
+                      </span>
+                    </div>
+                    <p className="text-xs text-gray-500 dark:text-gray-400 select-none">
+                      Automatically populate Greeting, Persona, and Task based on
+                      <span className="font-semibold text-blue-600 dark:text-blue-400"> {config.industry || "Industry"}</span>.
+                    </p>
                   </div>
                 </div>
 
