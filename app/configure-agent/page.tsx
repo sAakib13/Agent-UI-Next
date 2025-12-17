@@ -1,3 +1,5 @@
+/* eslint-disable @typescript-eslint/no-unused-vars */
+/* eslint-disable @typescript-eslint/no-explicit-any */
 "use client";
 
 import React, { useCallback, useEffect, useState } from "react";
@@ -28,13 +30,14 @@ import { redirect } from "next/navigation";
 // --- Types & Helpers ---
 
 const industries = [
-  "Technology",
+  "Consultancy",
   "E-commerce",
-  "Finance",
-  "Healthcare",
+  "Insurance/Banks",
+  "Clincs",
   "Education",
-  "Real Estate",
+  "Travel Agency",
   "Hospitality",
+  "Others"
 ];
 const languages = ["English", "Spanish", "French", "German", "Portuguese"];
 const tones = ["Formal", "Casual", "Friendly", "Professional", "Empathetic"];
@@ -92,11 +95,11 @@ const formatLastActive = (timestamp?: string | null) => {
   return Number.isNaN(parsed.getTime())
     ? "Unknown"
     : parsed.toLocaleString(undefined, {
-        hour: "2-digit",
-        minute: "2-digit",
-        month: "short",
-        day: "numeric",
-      });
+      hour: "2-digit",
+      minute: "2-digit",
+      month: "short",
+      day: "numeric",
+    });
 };
 
 // ... [Keep your Reusable Components (TextInput, SelectInput, etc.) exactly as they were] ...
@@ -136,9 +139,8 @@ const SelectInput: React.FC<any> = ({ label, value, options, onChange }) => (
       <select
         value={value ?? ""}
         onChange={onChange}
-        className={`appearance-none w-full bg-white dark:bg-gray-800/50 border border-gray-200 dark:border-gray-700 rounded-2xl pl-5 pr-10 py-4 focus:ring-4 focus:ring-blue-500/10 focus:border-blue-500 transition-all outline-none cursor-pointer shadow-sm hover:border-gray-300 dark:hover:border-gray-600 ${
-          value === "" ? "text-gray-400" : "text-gray-900 dark:text-white"
-        }`}
+        className={`appearance-none w-full bg-white dark:bg-gray-800/50 border border-gray-200 dark:border-gray-700 rounded-2xl pl-5 pr-10 py-4 focus:ring-4 focus:ring-blue-500/10 focus:border-blue-500 transition-all outline-none cursor-pointer shadow-sm hover:border-gray-300 dark:hover:border-gray-600 ${value === "" ? "text-gray-400" : "text-gray-900 dark:text-white"
+          }`}
       >
         <option value="" disabled>
           Select an option
@@ -213,7 +215,7 @@ export default function AgentManagementPage() {
       if (!payload?.success)
         throw new Error(payload?.error || "Failed to fetch agents.");
 
-      // eslint-disable-next-line @typescript-eslint/no-explicit-any
+
       const mapped: AgentConfig[] = (payload.data ?? []).map((row: any) => {
         // Handle parsing of JSONB columns coming from DB
         const urls = parseJSONField<string[]>(row?.source_urls, []); // Changed from row.urls to row.source_urls based on schema
@@ -464,11 +466,10 @@ export default function AgentManagementPage() {
               >
                 <div className="flex justify-between items-start mb-6">
                   <div
-                    className={`w-14 h-14 rounded-2xl flex items-center justify-center ${
-                      agent.status === "Active"
-                        ? "bg-green-50 text-green-600"
-                        : "bg-gray-50 text-gray-400"
-                    }`}
+                    className={`w-14 h-14 rounded-2xl flex items-center justify-center ${agent.status === "Active"
+                      ? "bg-green-50 text-green-600"
+                      : "bg-gray-50 text-gray-400"
+                      }`}
                   >
                     <Zap className="w-7 h-7" />
                   </div>

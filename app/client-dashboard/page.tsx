@@ -1,13 +1,15 @@
+/* eslint-disable @typescript-eslint/no-explicit-any */
+/* eslint-disable @typescript-eslint/no-unused-vars */
 'use client';
 
 import React from 'react';
-import { 
-  AreaChart, Area, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer, 
-  BarChart, Bar, Cell, PieChart, Pie, Legend 
+import {
+  AreaChart, Area, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer,
+  BarChart, Bar, Cell, PieChart, Pie, Legend
 } from 'recharts';
-import { 
-  MessageSquare, Clock, ThumbsUp, AlertTriangle, 
-  ArrowUpRight, ArrowDownRight, Zap, Activity, Users 
+import {
+  MessageSquare, Clock, ThumbsUp, AlertTriangle,
+  ArrowUpRight, ArrowDownRight, Zap, Activity, Users
 } from 'lucide-react';
 
 // --- Mock Data for a Single Agent (e.g., "Sales Outreach Bot") ---
@@ -18,7 +20,7 @@ const agentSpecificData = {
   status: "Active",
   uptime: "99.9%",
   lastTraining: "2 hours ago",
-  
+
   // Daily traffic for this specific agent
   trafficData: [
     { time: '00:00', visitors: 12 },
@@ -88,11 +90,10 @@ const LiveActivityFeed = () => (
             </div>
           </div>
           <div className="text-right">
-            <span className={`text-xs font-medium px-2 py-0.5 rounded-full ${
-              item.status === 'Handoff' ? 'bg-red-50 text-red-600 dark:bg-red-900/20' : 
-              item.status === 'Completed' ? 'bg-green-50 text-green-600 dark:bg-green-900/20' : 
-              'bg-blue-50 text-blue-600 dark:bg-blue-900/20'
-            }`}>
+            <span className={`text-xs font-medium px-2 py-0.5 rounded-full ${item.status === 'Handoff' ? 'bg-red-50 text-red-600 dark:bg-red-900/20' :
+                item.status === 'Completed' ? 'bg-green-50 text-green-600 dark:bg-green-900/20' :
+                  'bg-blue-50 text-blue-600 dark:bg-blue-900/20'
+              }`}>
               {item.status}
             </span>
             <p className="text-[10px] text-gray-400 mt-1">{item.time}</p>
@@ -106,7 +107,7 @@ const LiveActivityFeed = () => (
 export default function ClientDashboardPage() {
   return (
     <div className="max-w-7xl mx-auto space-y-8 pb-12">
-      
+
       {/* Context Header: Specific to ONE Agent */}
       <header className="flex flex-col md:flex-row md:items-center justify-between gap-6 pb-6 border-b border-gray-100 dark:border-gray-800">
         <div>
@@ -134,39 +135,39 @@ export default function ClientDashboardPage() {
 
       {/* Agent Specific KPI Grid */}
       <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
-        <StatCard 
-          title="Total Conversations" 
-          value="1,240" 
-          change="12%" 
-          trend="up" 
-          icon={MessageSquare} 
+        <StatCard
+          title="Total Conversations"
+          value="1,240"
+          change="12%"
+          trend="up"
+          icon={MessageSquare}
         />
-        <StatCard 
-          title="Avg. Handling Time" 
-          value="45s" 
-          change="8%" 
+        <StatCard
+          title="Avg. Handling Time"
+          value="45s"
+          change="8%"
           trend="down" // Down is good for time
-          icon={Clock} 
+          icon={Clock}
         />
-        <StatCard 
-          title="CSAT Score" 
-          value="4.8/5" 
-          change="0.2" 
-          trend="up" 
-          icon={ThumbsUp} 
+        <StatCard
+          title="CSAT Score"
+          value="4.8/5"
+          change="0.2"
+          trend="up"
+          icon={ThumbsUp}
         />
-        <StatCard 
-          title="Human Handoffs" 
-          value="4.2%" 
-          change="1.5%" 
+        <StatCard
+          title="Human Handoffs"
+          value="4.2%"
+          change="1.5%"
           trend="up" // Up might be bad depending on context, usually color coded red if bad
-          icon={AlertTriangle} 
+          icon={AlertTriangle}
         />
       </div>
 
       {/* Main Analytics Area */}
       <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
-        
+
         {/* Traffic Chart (Col Span 2) */}
         <div className="lg:col-span-2 bg-white dark:bg-gray-900 border border-gray-100 dark:border-gray-800 rounded-3xl p-8 shadow-sm">
           <div className="flex items-center justify-between mb-8">
@@ -185,14 +186,14 @@ export default function ClientDashboardPage() {
               <AreaChart data={agentSpecificData.trafficData} margin={{ top: 10, right: 10, left: -20, bottom: 0 }}>
                 <defs>
                   <linearGradient id="colorTraffic" x1="0" y1="0" x2="0" y2="1">
-                    <stop offset="5%" stopColor="#3b82f6" stopOpacity={0.3}/>
-                    <stop offset="95%" stopColor="#3b82f6" stopOpacity={0}/>
+                    <stop offset="5%" stopColor="#3b82f6" stopOpacity={0.3} />
+                    <stop offset="95%" stopColor="#3b82f6" stopOpacity={0} />
                   </linearGradient>
                 </defs>
                 <CartesianGrid strokeDasharray="3 3" vertical={false} stroke="#e5e7eb" className="dark:opacity-10" />
-                <XAxis dataKey="time" axisLine={false} tickLine={false} tick={{fontSize: 12, fill: '#9ca3af'}} dy={10} />
-                <YAxis axisLine={false} tickLine={false} tick={{fontSize: 12, fill: '#9ca3af'}} />
-                <Tooltip 
+                <XAxis dataKey="time" axisLine={false} tickLine={false} tick={{ fontSize: 12, fill: '#9ca3af' }} dy={10} />
+                <YAxis axisLine={false} tickLine={false} tick={{ fontSize: 12, fill: '#9ca3af' }} />
+                <Tooltip
                   contentStyle={{ backgroundColor: '#1f2937', border: 'none', borderRadius: '12px', color: '#fff', boxShadow: '0 10px 15px -3px rgba(0, 0, 0, 0.1)' }}
                   itemStyle={{ color: '#fff' }}
                 />
@@ -208,7 +209,7 @@ export default function ClientDashboardPage() {
 
       {/* Secondary Metrics */}
       <div className="grid grid-cols-1 md:grid-cols-2 gap-8">
-        
+
         {/* Topic Distribution */}
         <div className="bg-white dark:bg-gray-900 border border-gray-100 dark:border-gray-800 rounded-3xl p-8 shadow-sm">
           <h3 className="text-lg font-bold text-gray-900 dark:text-white mb-2">Conversation Topics</h3>
@@ -236,7 +237,7 @@ export default function ClientDashboardPage() {
         </div>
 
         {/* Knowledge Base Health */}
-        <div className="bg-gradient-to-br from-blue-600 to-indigo-700 rounded-3xl p-8 text-white shadow-lg relative overflow-hidden">
+        <div className="bg-linear-to-br from-blue-600 to-indigo-700 rounded-3xl p-8 text-white shadow-lg relative overflow-hidden">
           <div className="absolute top-0 right-0 w-64 h-64 bg-white opacity-5 rounded-full -translate-y-1/2 translate-x-1/4 blur-3xl"></div>
           <div className="relative z-10">
             <div className="flex items-center gap-3 mb-6">
@@ -248,7 +249,7 @@ export default function ClientDashboardPage() {
                 <p className="text-blue-100 text-sm">Based on recent queries</p>
               </div>
             </div>
-            
+
             <div className="space-y-5">
               <div>
                 <div className="flex justify-between text-sm mb-2 font-medium">

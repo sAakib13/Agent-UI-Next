@@ -85,7 +85,7 @@ const Navbar = () => (
       <div className="hidden md:flex items-center space-x-8 text-sm font-medium text-gray-600 dark:text-gray-300">
         <Link href="#demo" className="hover:text-blue-600 dark:hover:text-blue-400 transition-colors">Demo</Link>
         <Link href="#capabilities" className="hover:text-blue-600 dark:hover:text-blue-400 transition-colors">Capabilities</Link>
-        <Link href="#integration" className="hover:text-blue-600 dark:hover:text-blue-400 transition-colors">Integrations</Link>
+        <Link href="/blogs" className="hover:text-blue-600 dark:hover:text-blue-400 transition-colors">Blogs</Link>
       </div>
 
       {/* Actions */}
@@ -923,7 +923,7 @@ const Footer = () => (
           <ul className="space-y-3 text-sm text-gray-500 dark:text-gray-400">
             <li><Link href="#" className="hover:text-blue-600 transition-colors">Agents</Link></li>
             <li><Link href="#" className="hover:text-blue-600 transition-colors">Playground</Link></li>
-            <li><Link href="#" className="hover:text-blue-600 transition-colors">Integrations</Link></li>
+            <li><Link href="#" className="hover:text-blue-600 transition-colors">Blogs</Link></li>
             <li><Link href="#" className="hover:text-blue-600 transition-colors">Analytics</Link></li>
           </ul>
         </div>
