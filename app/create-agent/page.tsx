@@ -19,12 +19,15 @@ import {
   Loader2,
   Settings2,
   AlertCircle,
+  Trash2,
+  HelpCircle,
   Wand2, // Auto-fill icon
 } from "lucide-react";
 import { tr } from "zod/locales";
 import { AgentPopup } from "@/components/agent/AgentPopup";
 import { INDUSTRY_PRESETS, IndustryPreset } from "../_config/industryPresets";
 import { set } from "zod";
+import { required } from "zod/mini";
 
 // --- Types & Config ---
 
@@ -224,6 +227,8 @@ interface InputProps {
   min?: number;
   max?: number;
   step?: number;
+  required?: boolean;
+  tooltip?: string;
 }
 
 const TextInput: React.FC<InputProps> = ({
@@ -235,11 +240,26 @@ const TextInput: React.FC<InputProps> = ({
   isTextArea,
   hint,
   type = "text",
+  required,
+  tooltip,
   ...props
 }) => (
   <div className="space-y-2">
     <label className="text-sm font-semibold text-gray-700 dark:text-gray-300 ml-1 flex justify-between items-center">
-      {label}{" "}
+      <span>{label}{" "}
+        {required && <span className="text-red-500 ml-1">*</span>}
+      </span>
+      {tooltip && (
+        <div className="group relative ml-1">
+          <HelpCircle className="w-4 h-4 text-gray-400 hover:text-blue-500 cursor-help transition-colors" />
+          {/* Tooltip Popup */}
+          <div className="absolute bottom-full left-1/2 transform -translate-x-1/2 mb-2 hidden group-hover:block w-48 p-2 bg-gray-900 text-white text-xs rounded-lg shadow-lg z-50 pointer-events-none animate-in fade-in zoom-in-95 duration-200">
+            {tooltip}
+            {/* Tiny arrow pointing down */}
+            <div className="absolute top-full left-1/2 transform -translate-x-1/2 -mt-1 border-4 border-transparent border-t-gray-900" />
+          </div>
+        </div>
+      )}
       {hint && (
         <span className="text-xs font-normal text-gray-400 ml-2">{hint}</span>
       )}
@@ -251,6 +271,7 @@ const TextInput: React.FC<InputProps> = ({
         onChange={onChange}
         placeholder={placeholder}
         disabled={disabled}
+        required={required}
         className="w-full bg-white dark:bg-gray-800/50 border border-gray-200 dark:border-gray-700 rounded-2xl px-5 py-4 text-gray-900 dark:text-white placeholder-gray-400 focus:ring-4 focus:ring-blue-500/10 focus:border-blue-500 transition-all outline-none resize-none shadow-sm"
       />
     ) : (
@@ -260,6 +281,7 @@ const TextInput: React.FC<InputProps> = ({
         onChange={onChange}
         placeholder={placeholder}
         disabled={disabled}
+        required={required}
         className="w-full bg-white dark:bg-gray-800/50 border border-gray-200 dark:border-gray-700 rounded-2xl px-5 py-4 text-gray-900 dark:text-white placeholder-gray-400 focus:ring-4 focus:ring-blue-500/10 focus:border-blue-500 transition-all outline-none shadow-sm"
         {...props}
       />
@@ -273,8 +295,9 @@ const Checkbox: React.FC<{
   checked: boolean;
   onChange: (checked: boolean) => void;
   disabled?: boolean;
+  tooltip?: string;
   icon?: React.ReactNode;
-}> = ({ label, checked, onChange, disabled, icon }) => (
+}> = ({ label, checked, onChange, disabled, tooltip, icon }) => (
   <div
     onClick={() => !disabled && onChange(!checked)}
     className={`flex items-center p-4 border rounded-2xl cursor-pointer transition-all ${checked
@@ -295,6 +318,7 @@ const Checkbox: React.FC<{
       <span className="text-sm font-semibold text-gray-700 dark:text-gray-300 select-none">
         {label}
       </span>
+
     </div>
   </div>
 );
@@ -304,17 +328,36 @@ const SelectInput: React.FC<{
   value: string | null;
   options: string[];
   disabled?: boolean;
+  required?: boolean;
+  tooltip?: string;
   onChange: (e: React.ChangeEvent<HTMLSelectElement>) => void;
-}> = ({ label, value, options, disabled, onChange }) => (
+}> = ({ label, value, options, disabled, required, tooltip, onChange }) => (
   <div className="space-y-2">
-    <label className="text-sm font-semibold text-gray-700 dark:text-gray-300 ml-1">
-      {label}
+    {/* ADD 'flex items-center' here to keep the label, asterisk, and tooltip in one row */}
+    <label className="text-sm font-semibold text-gray-700 dark:text-gray-300 ml-1 flex items-center justify-between gap-1">
+      <span>
+        {label}
+        {required && <span className="text-red-500 ml-1">*</span>}
+      </span>
+
+      {/* Tooltip */}
+      {tooltip && (
+        <div className="group relative ml-1">
+          <HelpCircle className="w-4 h-4 text-gray-400 hover:text-blue-500 cursor-help transition-colors" />
+          <div className="absolute bottom-full left-1/2 transform -translate-x-1/2 mb-2 hidden group-hover:block w-48 p-2 bg-gray-900 text-white text-xs rounded-lg shadow-lg z-50 pointer-events-none animate-in fade-in zoom-in-95 duration-200 font-normal">
+            {tooltip}
+            <div className="absolute top-full left-1/2 transform -translate-x-1/2 -mt-1 border-4 border-transparent border-t-gray-900" />
+          </div>
+        </div>
+      )}
     </label>
+
     <div className="relative">
       <select
         value={value ?? ""}
         onChange={onChange}
         disabled={disabled}
+        required={required}
         className={`appearance-none w-full bg-white dark:bg-gray-800/50 border border-gray-200 dark:border-gray-700 rounded-2xl pl-5 pr-10 py-4 
     focus:ring-4 focus:ring-blue-500/10 focus:border-blue-500 transition-all outline-none cursor-pointer shadow-sm hover:border-gray-300 dark:hover:border-gray-600
     ${value === "" ? "text-gray-400" : "text-gray-900 dark:text-white"}`}
@@ -338,11 +381,25 @@ const RichTextEditorMock: React.FC<{
   placeholder: string;
   value: string;
   disabled?: boolean;
+  required?: boolean;
+  tooltip?: string;
   onChange: (e: React.ChangeEvent<HTMLTextAreaElement>) => void;
-}> = ({ label, placeholder, value, disabled, onChange }) => (
+}> = ({ label, placeholder, value, disabled, required, tooltip, onChange }) => (
   <div className="space-y-2">
-    <label className="text-sm font-semibold text-gray-700 dark:text-gray-300 ml-1">
-      {label}
+    <label className="text-sm font-semibold text-gray-700 dark:text-gray-300 ml-1 flex items-center justify-between gap-1">
+      <span>{label}{" "}
+        {required && <span className="text-red-500 ml-1">*</span>}</span>
+      <span>{tooltip && (
+        <div className="group relative ml-1">
+          <HelpCircle className="w-4 h-4 text-gray-400 hover:text-blue-500 cursor-help transition-colors" />
+          {/* Tooltip Popup */}
+          <div className="absolute bottom-full left-1/2 transform -translate-x-1/2 mb-2 hidden group-hover:block w-48 p-2 bg-gray-900 text-white text-xs rounded-lg shadow-lg z-50 pointer-events-none animate-in fade-in zoom-in-95 duration-200">
+            {tooltip}
+            {/* Tiny arrow pointing down */}
+            <div className="absolute top-full left-1/2 transform -translate-x-1/2 -mt-1 border-4 border-transparent border-t-gray-900" />
+          </div>
+        </div>
+      )}</span>
     </label>
     <div className="border border-gray-200 dark:border-gray-700 rounded-2xl overflow-hidden bg-white dark:bg-gray-800/50 focus-within:ring-4 focus-within:ring-blue-500/10 focus-within:border-blue-500 transition-all shadow-sm">
       <div className="flex space-x-1 p-2 border-b border-gray-200 dark:border-gray-700 bg-gray-50/50 dark:bg-gray-800/50">
@@ -362,6 +419,7 @@ const RichTextEditorMock: React.FC<{
         value={value}
         onChange={onChange}
         disabled={disabled}
+        required={required}
         placeholder={placeholder}
         className="w-full p-5 bg-transparent text-gray-900 dark:text-white placeholder-gray-400 outline-none resize-none"
       />
@@ -374,7 +432,8 @@ const FileDropZone: React.FC<{
   onFilesAdded: (f: File[]) => void;
   onFileRemoved: (i: number) => void;
   disabled?: boolean;
-}> = ({ files, onFilesAdded, onFileRemoved, disabled }) => {
+  required?: boolean;
+}> = ({ files, onFilesAdded, onFileRemoved, disabled, required }) => {
   const inputRef = React.useRef<HTMLInputElement>(null);
   return (
     <div className="space-y-4">
@@ -393,6 +452,7 @@ const FileDropZone: React.FC<{
           accept=".pdf,.doc,.docx"
           className="hidden"
           disabled={disabled}
+          required={required}
           onChange={(e) => {
             if (e.target.files) {
               onFilesAdded(Array.from(e.target.files));
@@ -541,6 +601,10 @@ export default function CreateAgentPage() {
     newUrls[index] = value;
     setConfig((prev) => ({ ...prev, urls: newUrls }));
   };
+  const handleUrlRemove = (index: number) => {
+    const newUrls = config.urls.filter((_, i) => i !== index);
+    setConfig((prev) => ({ ...prev, urls: newUrls }));
+  }
 
   const handleAddUrl = () => {
     if (config.urls.length < 3)
@@ -915,6 +979,26 @@ export default function CreateAgentPage() {
         setResultMessage({ type: "error", text: "Enter an Agent Name" });
         return false;
       }
+      if (!config.language) {
+        setResultMessage({ type: "error", text: "Enter the Agent Language" });
+        return false;
+      }
+      if (!config.tone) {
+        setResultMessage({ type: "error", text: "Enter the Agent Tone" });
+        return false;
+      }
+      if (!config.greeting_message) {
+        setResultMessage({ type: "error", text: "Enter a Greeting Message" });
+        return false;
+      }
+      if (!config.persona) {
+        setResultMessage({ type: "error", text: "Enter the Agent Persona" });
+        return false;
+      }
+      if (!config.task) {
+        setResultMessage({ type: "error", text: "Enter the Agent Task" });
+        return false;
+      }
       if (!config.triggerCode) {
         setResultMessage({ type: "error", text: "Set a Trigger Code" });
         return false;
@@ -1123,6 +1207,8 @@ export default function CreateAgentPage() {
                   placeholder="e.g. Telerivet.Inc"
                   value={config.businessName}
                   disabled={deployed}
+                  required={true}
+                  tooltip="The name of your business or organization."
                   onChange={(e) =>
                     handleInputChange("businessName", e.target.value)
                   }
@@ -1132,6 +1218,7 @@ export default function CreateAgentPage() {
                   placeholder="e.g. https://www.telerivet.com"
                   value={config.businessURL}
                   disabled={deployed}
+                  tooltip="The official website URL of your business."
                   onChange={(e) =>
                     handleInputChange("businessURL", e.target.value)
                   }
@@ -1141,6 +1228,8 @@ export default function CreateAgentPage() {
                   value={config.industry}
                   options={industries}
                   disabled={deployed}
+                  required={true}
+                  tooltip="The industry your business operates in."
                   onChange={(e) =>
                     handleInputChange("industry", e.target.value)
                   }
@@ -1151,6 +1240,7 @@ export default function CreateAgentPage() {
                   placeholder="Briefly describe your business..."
                   value={config.shortDescription}
                   disabled={deployed}
+                  tooltip="A brief description of your business for context."
                   onChange={(e) =>
                     handleInputChange("shortDescription", e.target.value)
                   }
@@ -1176,6 +1266,8 @@ export default function CreateAgentPage() {
                   placeholder="e.g. Customer Support Assistant"
                   value={config.agentName}
                   disabled={deployed}
+                  required={true}
+                  tooltip="The name of your AI agent."
                   onChange={(e) =>
                     handleInputChange("agentName", e.target.value)
                   }
@@ -1186,6 +1278,8 @@ export default function CreateAgentPage() {
                     value={config.language}
                     options={languages}
                     disabled={deployed}
+                    required={true}
+                    tooltip="The language your agent will use."
                     onChange={(e) =>
                       handleInputChange("language", e.target.value)
                     }
@@ -1195,19 +1289,32 @@ export default function CreateAgentPage() {
                     value={config.tone}
                     options={tones}
                     disabled={deployed}
+                    required={true}
+                    tooltip="The tone/style of communication for your agent."
                     onChange={(e) => handleInputChange("tone", e.target.value)}
                   />
                 </div>
 
                 <div className="space-y-2">
-                  <label className="text-sm font-semibold text-gray-700 dark:text-gray-300 ml-1">
-                    Agent Features
+
+                  <label className="text-sm font-semibold text-gray-700 dark:text-gray-300 ml-1 flex items-center justify-between gap-1">
+                    <span>Agent Features <span className="text-red-500 ml-1">*</span></span>
+                    <div className="group relative ml-1">
+                      <HelpCircle className="w-4 h-4 text-gray-400 hover:text-blue-500 cursor-help transition-colors" />
+                      {/* Tooltip Popup */}
+                      <div className="absolute bottom-full left-1/2 transform -translate-x-1/2 mb-2 hidden group-hover:block w-48 p-2 bg-gray-900 text-white text-xs rounded-lg shadow-lg z-50 pointer-events-none animate-in fade-in zoom-in-95 duration-200">
+                        Select additional features to enhance your agent&apos;s capabilities.
+                        {/* Tiny arrow pointing down */}
+                        <div className="absolute top-full left-1/2 transform -translate-x-1/2 -mt-1 border-4 border-transparent border-t-gray-900" />
+                      </div>
+                    </div>
                   </label>
                   <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
                     <Checkbox
                       label="Location Service"
                       checked={Boolean(config.features?.locationService)}
                       disabled={deployed}
+
                       onChange={(checked) =>
                         setConfig((prev) => ({
                           ...prev,
@@ -1226,6 +1333,7 @@ export default function CreateAgentPage() {
                       label="Search Tool"
                       checked={Boolean(config.features?.searchTool)}
                       disabled={deployed}
+
                       onChange={(checked) =>
                         setConfig((prev) => ({
                           ...prev,
@@ -1263,10 +1371,10 @@ export default function CreateAgentPage() {
 
                 <div
                   onClick={() => handleIndustryAutoFill(!isIndustryAutoFillMode)}
-                  className={`flex items-start p-4 border rounded-2xl cursor-pointer transition-all mt-4
+                  className={`flex items-start p-4  rounded-2xl cursor-pointer transition-all mt-4
                       ${isIndustryAutoFillMode
-                      ? "bg-blue-50 border-blue-500 dark:bg-blue-900/20 dark:border-blue-500"
-                      : "bg-white dark:bg-gray-800/50 border-gray-200 dark:border-gray-700 hover:border-gray-300"
+                    // ? "bg-blue-50 border-blue-500 dark:bg-blue-900/20 dark:border-blue-500"
+                    // : "bg-white dark:bg-gray-800/50 border-gray-200 dark:border-gray-700 hover:border-gray-300"
                     }`}
                 >
                   {/* The Checkbox Square */}
@@ -1284,12 +1392,13 @@ export default function CreateAgentPage() {
                   <div className="flex-1">
                     <div className="flex items-center gap-2 mb-1">
 
-                      <span className="text-sm font-semibold text-gray-700 dark:text-gray-300 select-none">
-                        Auto-fill Agent Fields
-                      </span>
+                      <p className="text-xs text-gray-500 dark:text-gray-400 select-none">
+                        Automatically populate Greeting, Persona, and Task based on
+                        {/* <span className="font-semibold text-blue-600 dark:text-blue-400"> {config.industry || "Industry"}</span>. */}
+                      </p>
                     </div>
                     <p className="text-xs text-gray-500 dark:text-gray-400 select-none">
-                      Automatically populate Greeting, Persona, and Task based on
+                      {/* Automatically populate Greeting, Persona, and Task based on */}
                       <span className="font-semibold text-blue-600 dark:text-blue-400"> {config.industry || "Industry"}</span>.
                     </p>
                   </div>
@@ -1300,6 +1409,8 @@ export default function CreateAgentPage() {
                   placeholder="e.g. Hello! How can I assist you today?"
                   value={config.greeting_message}
                   disabled={deployed}
+                  required={true}
+                  tooltip="The initial greeting message your agent will use."
                   onChange={(e) =>
                     handleInputChange("greeting_message", e.target.value)
                   }
@@ -1310,6 +1421,8 @@ export default function CreateAgentPage() {
                     placeholder="Describe the agent's persona..."
                     value={config.persona}
                     disabled={deployed}
+                    required={true}
+                    tooltip="Describe the agent's persona in detail."
                     onChange={(e) =>
                       handleInputChange("persona", e.target.value)
                     }
@@ -1319,6 +1432,8 @@ export default function CreateAgentPage() {
                     placeholder="Describe the specific tasks..."
                     value={config.task}
                     disabled={deployed}
+                    required={true}
+                    tooltip="Describe the specific tasks your agent will perform."
                     onChange={(e) => handleInputChange("task", e.target.value)}
                   />
                 </div>
@@ -1342,6 +1457,7 @@ export default function CreateAgentPage() {
                         label="Project ID"
                         value={config.model}
                         disabled={deployed}
+                        tooltip="The AI model or project ID to use for the agent."
                         onChange={(e) =>
                           handleInputChange("model", e.target.value)
                         }
@@ -1351,6 +1467,7 @@ export default function CreateAgentPage() {
                         value={config.route}
                         options={route}
                         disabled={deployed}
+                        tooltip="The communication route for the agent."
                         onChange={(e) =>
                           handleInputChange("route", e.target.value)
                         }
@@ -1360,6 +1477,9 @@ export default function CreateAgentPage() {
                           label="Trigger Code"
                           placeholder="e.g. HELLO START"
                           value={config.triggerCode}
+                          required={true}
+                          disabled={deployed}
+                          tooltip="The code users send to activate the agent."
                           onChange={handleTriggerCodeChange}
                           hint="Max 4 words, Uppercase"
                         />
@@ -1375,15 +1495,24 @@ export default function CreateAgentPage() {
         {step === 3 && (
           <section className="bg-white/80 dark:bg-gray-900/80 backdrop-blur-xl border border-gray-100 dark:border-gray-800 rounded-3xl p-8 shadow-xl shadow-gray-200/50 dark:shadow-none">
             <div className="flex items-center gap-3 mb-8">
-              <div className="h-8 w-1 bg-emerald-500 rounded-full" />
+              <div className="h-8 w-1 bg-blue-500 rounded-full" />
               <h2 className="text-2xl font-bold text-gray-900 dark:text-white">
                 Knowledge Base
               </h2>
             </div>
             <div className="space-y-8">
               <div className="space-y-4">
-                <label className="text-sm font-semibold text-gray-700 dark:text-gray-300 ml-1">
-                  Source URLs
+                <label className="text-sm font-semibold text-gray-700 dark:text-gray-300 ml-1 flex items-center justify-between gap-1">
+                  <span>Source URLs</span>
+                  <div className="group relative ml-1">
+                    <HelpCircle className="w-4 h-4 text-gray-400 hover:text-blue-500 cursor-help transition-colors" />
+                    {/* Tooltip Popup */}
+                    <div className="absolute bottom-full left-1/2 transform -translate-x-1/2 mb-2 hidden group-hover:block w-48 p-2 bg-gray-900 text-white text-xs rounded-lg shadow-lg z-50 pointer-events-none animate-in fade-in zoom-in-95 duration-200">
+                      Add up to 3 URLs for the agent to reference when assisting users.
+                      {/* Tiny arrow pointing down */}
+                      <div className="absolute top-full left-1/2 transform -translate-x-1/2 -mt-1 border-4 border-transparent border-t-gray-900" />
+                    </div>
+                  </div>
                 </label>
                 {config.urls.map((url, index) => (
                   <div key={index} className="flex gap-2">
@@ -1396,8 +1525,14 @@ export default function CreateAgentPage() {
                         onChange={(e) => handleUrlChange(index, e.target.value)}
                       />
                     </div>
+                    <button
+                      onClick={() => handleUrlRemove(index)}
+                      className="p-3 mt-2 h-[58px] rounded-xl bg-red-50 text-red-500 cursor-pointer hover:bg-red-100 transition-colors disabled:opacity-40 disabled:cursor-not-allowed"
+                    >
+                      <Trash2 className="w-5 h-5" />
+                    </button>
                   </div>
-                ))}
+                ))}<br />
                 {config.urls.length < 3 && (
                   <button
                     type="button"
@@ -1409,9 +1544,20 @@ export default function CreateAgentPage() {
                   </button>
                 )}
               </div>
-              <div className="pt-8 border-t border-gray-100 dark:border-gray-800">
-                <label className="block text-sm font-semibold text-gray-700 dark:text-gray-300 mb-4 ml-1">
-                  Upload Documents
+              <div className="pt-8">
+                <label className="text-sm font-semibold text-gray-700 dark:text-gray-300 ml-1 flex items-center justify-between gap-1 mb-4">
+                  <span>Upload Documents</span>
+
+                  <div className="group relative ml-1">
+                    <HelpCircle className="w-4 h-4 text-gray-400 hover:text-blue-500 cursor-help transition-colors" />
+                    {/* Tooltip Popup */}
+                    <div className="absolute bottom-full left-1/2 transform -translate-x-1/2 mb-2 hidden group-hover:block w-48 p-2 bg-gray-900 text-white text-xs rounded-lg shadow-lg z-50 pointer-events-none animate-in fade-in zoom-in-95 duration-200">
+                      Upload PDF documents for the agent to use as reference material.
+                      {/* Tiny arrow pointing down */}
+                      <div className="absolute top-full left-1/2 transform -translate-x-1/2 -mt-1 border-4 border-transparent border-t-gray-900" />
+                    </div>
+                  </div>
+
                 </label>
                 <FileDropZone
                   files={config.documents}
