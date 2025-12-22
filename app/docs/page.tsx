@@ -1,457 +1,762 @@
-'use client';
+"use client";
 
-import React, { useState } from 'react';
+import React, { useState } from "react";
 import {
-  Book, Code, Database, Server, Layers, Search,
-  ChevronRight, Terminal, FileJson, Shield, Bot
-} from 'lucide-react';
+  Book,
+  Code,
+  Database,
+  Server,
+  Layers,
+  Search,
+  ChevronRight,
+  Terminal,
+  Shield,
+  Bot,
+  Lock,
+  Key,
+  Workflow,
+  Fingerprint,
+  Copy,
+  Check,
+  Menu,
+  X,
+  QrCode,
+  FileText,
+  LayoutDashboard,
+  PlusCircle,
+  Settings,
+  Map,
+} from "lucide-react";
 
-// --- AI Context Prompt (The "Brain" for Cursor) ---
+// --- 1. AI Context Prompt (The "Brain") ---
 const aiContextPrompt = `
-YOU ARE WORKING ON PROJECT: SAHAYATA AGENT
+YOU ARE WORKING ON PROJECT: SAHAYATA AGENT (NEXT GEN)
+
+--- ARCHITECTURE: SPLIT STACK ---
+1. Identity Provider: Supabase Auth (Handles Users, Sessions, JWTs).
+2. Data Store: External PostgreSQL (Handles Business Data).
+3. The Bridge: Next.js Middleware & API Routes link "Supabase User ID" to "Postgres owner_id".
 
 --- TECH STACK ---
-- Framework: Next.js 14 (App Router)
-- Language: TypeScript
-- Styling: Tailwind CSS
-- Icons: Lucide React
-- Components: Functional React Components (Client & Server)
-- Data Fetching: React Hooks (useEffect/useState) for Client, Direct DB calls for API Routes.
+- Framework: Next.js 16 (App Router)
+- Auth: @supabase/ssr + @supabase/supabase-js
+- Database: PostgreSQL (Direct connection via 'pg' library)
+- Styling: Tailwind CSS 4 + Framer Motion
+- State: React 19 Hooks
 
---- DATABASE SCHEMA (PostgreSQL) ---
-- Host: 52.186.169.156
-- Schema: "agentstudio"
-- Table: "agents"
-- SQL Definition:
-  CREATE TABLE IF NOT EXISTS agentstudio.agents (
-    id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
-    name VARCHAR(255) UNIQUE NOT NULL,
-    persona TEXT,
-    task TEXT,
-    status VARCHAR(50) DEFAULT 'Training',
-    urls JSONB DEFAULT '[]'::jsonb,
-    actions JSONB DEFAULT '{}'::jsonb,
-    created_at TIMESTAMP DEFAULT NOW(),
-    updated_at TIMESTAMP DEFAULT NOW()
-  );
+--- DATABASE SCHEMA (External Postgres) ---
+TABLE organizations (
+  id UUID PRIMARY KEY,
+  name VARCHAR(255),
+  owner_id UUID NOT NULL, -- Links to Supabase auth.users.id
+  industry VARCHAR(255),
+  is_active BOOLEAN DEFAULT true
+);
 
---- API ROUTES ---
-1. CREATE/UPDATE AGENT
-   - Endpoint: POST /api/agents
-   - Description: Upserts agent config based on 'name'.
-   - Body: { agentName, persona, task, urls, possibleActions, status }
+TABLE agents (
+  id UUID PRIMARY KEY,
+  organization_id UUID REFERENCES organizations(id),
+  name VARCHAR(255),
+  allowed_actions JSONB DEFAULT '[]', -- Snake_case actions
+  model_config JSONB DEFAULT '{}',
+  document_refs JSONB DEFAULT '[]',
+  greeting_message TEXT,
+  qr_code_base64 TEXT
+);
 
 --- CODING RULES ---
-1. Use 'use client' for any component using hooks (useState, useEffect).
-2. Never expose DB credentials in client components; use API routes.
-3. Use Lucide-React for all icons.
-4. Use Tailwind for all styling (no CSS modules).
+1. PROTECTED ROUTES: All API routes must verify Supabase session first.
+2. ROW LEVEL SECURITY (LOGICAL): Every SELECT must include "WHERE owner_id = user.id" (via organization join).
+3. MIDDLEWARE: middleware.ts protects /dashboard and /create-agent.
 `.trim();
 
-// --- Documentation Content Data ---
+// --- 2. Documentation Data Structure ---
 
 type DocSection = {
   id: string;
   title: string;
   icon: React.ElementType;
-  content: React.ReactNode;
+  description: string;
   tags: string[];
+  content: React.ReactNode;
 };
 
-const docSections: DocSection[] = [
-  {
-    id: 'ai-context',
-    title: 'AI / Cursor Context',
-    icon: Bot,
-    tags: ['cursor', 'llm', 'prompt', 'context', 'rules', '.cursorrules'],
-    content: (
-      <div className="space-y-4">
-        <p className="text-gray-600 dark:text-gray-300">
-          To make Cursor (or any AI assistant) understand this project immediately, copy the context block below. You can paste this into your <strong>.cursorrules</strong> file in the root directory, or use it as the initial prompt for a new chat session.
-        </p>
+// --- Helper Component: CopyBlock ---
+const CopyBlock = ({
+  text,
+  label = "SQL",
+}: {
+  text: string;
+  label?: string;
+}) => {
+  const [copied, setCopied] = useState(false);
 
-        <div className="relative group">
-          <div className="absolute -inset-0.5 rounded-xl opacity-20 group-hover:opacity-40 transition blur"></div>
-          <div className="relative bg-slate-950 rounded-xl p-4 border border-slate-800">
-            <div className="flex justify-between items-center mb-3 border-b border-slate-800 pb-3">
-              <div className="flex items-center gap-2 text-xs font-mono text-purple-400">
-                <Bot className="w-3 h-3" />
-                <span>System Context / .cursorrules</span>
-              </div>
-              <button
-                onClick={() => navigator.clipboard.writeText(aiContextPrompt)}
-                className="text-xs bg-purple-600 hover:bg-purple-500 text-white px-3 py-1.5 rounded-md transition-colors font-medium flex items-center gap-2"
-              >
-                Copy Context
-              </button>
-            </div>
-            <pre className="text-xs text-slate-300 font-mono whitespace-pre-wrap h-[400px] overflow-y-auto custom-scrollbar p-1">
-              {aiContextPrompt}
-            </pre>
-          </div>
-        </div>
-
-        <div className="bg-blue-50 dark:bg-blue-900/10 border border-blue-100 dark:border-blue-800 p-4 rounded-xl">
-          <h5 className="font-bold text-blue-800 dark:text-blue-400 text-sm mb-1">Why this works?</h5>
-          <p className="text-xs text-blue-700 dark:text-blue-300">
-            AI tools usually have to &quot;guess&quot; your schema or read multiple files to understand relationships. By providing this &quot;Master Prompt&quot;, you forcefully align the AI&apos;s understanding with your actual database structure (`agentstudio.agents`) and API patterns (`/api/agents`) instantly.
-          </p>
-        </div>
-      </div>
-    )
-  },
-  {
-    id: 'stack',
-    title: 'Technology Stack',
-    icon: Layers,
-    tags: ['nextjs', 'react', 'typescript', 'tailwind', 'frontend'],
-    content: (
-      <div className="space-y-4">
-        <p className="text-gray-600 dark:text-gray-300">
-          The Sahayata Agent platform is built on a modern, type-safe, and high-performance stack designed for enterprise scalability.
-        </p>
-        <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-          <div className="p-4 bg-gray-50 dark:bg-gray-800 rounded-xl border border-gray-200 dark:border-gray-700">
-            <h4 className="font-bold text-gray-900 dark:text-white mb-2 flex items-center gap-2">
-              <Code className="w-4 h-4 text-blue-500" /> Frontend Framework
-            </h4>
-            <ul className="list-disc list-inside text-sm text-gray-600 dark:text-gray-400 space-y-1">
-              <li><strong>Next.js 14</strong> (App Router) for server-side rendering and routing.</li>
-              <li><strong>React 18</strong> for component-based UI architecture.</li>
-              <li><strong>TypeScript</strong> for static typing and developer experience.</li>
-              <li><strong>Tailwind CSS</strong> for utility-first, responsive styling.</li>
-            </ul>
-          </div>
-          <div className="p-4 bg-gray-50 dark:bg-gray-800 rounded-xl border border-gray-200 dark:border-gray-700">
-            <h4 className="font-bold text-gray-900 dark:text-white mb-2 flex items-center gap-2">
-              <Server className="w-4 h-4 text-green-500" /> Backend & Data
-            </h4>
-            <ul className="list-disc list-inside text-sm text-gray-600 dark:text-gray-400 space-y-1">
-              <li><strong>Next.js API Routes</strong> for serverless backend logic.</li>
-              <li><strong>PostgreSQL</strong> as the primary relational database.</li>
-              <li><strong>node-postgres (pg)</strong> for direct database connections.</li>
-              <li><strong>Recharts</strong> for data visualization and analytics.</li>
-            </ul>
-          </div>
-        </div>
-      </div>
-    )
-  },
-  {
-    id: 'database',
-    title: 'Database Schema',
-    icon: Database,
-    tags: ['postgres', 'sql', 'schema', 'agents', 'data'],
-    content: (
-      <div className="space-y-4">
-        <p className="text-gray-600 dark:text-gray-300">
-          The application connects to a PostgreSQL instance hosted at <code>52.186.169.156</code>. The primary table is <code>agentstudio.agents</code>.
-        </p>
-        <div className="bg-slate-900 rounded-xl p-4 overflow-x-auto">
-          <pre className="text-sm text-blue-300 font-mono">
-            {`CREATE TABLE IF NOT EXISTS agentstudio.agents (
-  id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
-  name VARCHAR(255) UNIQUE NOT NULL,
-  persona TEXT,
-  task TEXT,
-  status VARCHAR(50) DEFAULT 'Training',
-  urls JSONB DEFAULT '[]'::jsonb,
-  actions JSONB DEFAULT '{}'::jsonb,
-  created_at TIMESTAMP DEFAULT NOW(),
-  updated_at TIMESTAMP DEFAULT NOW()
-);`}
-          </pre>
-        </div>
-        <div className="flex gap-2 text-sm">
-          <span className="px-2 py-1 bg-yellow-100 text-yellow-700 dark:bg-yellow-900/30 dark:text-yellow-400 rounded border border-yellow-200 dark:border-yellow-800">
-            Schema: agentstudio
-          </span>
-          <span className="px-2 py-1 bg-blue-100 text-blue-700 dark:bg-blue-900/30 dark:text-blue-400 rounded border border-blue-200 dark:border-blue-800">
-            User: sb_devs
-          </span>
-        </div>
-      </div>
-    )
-  },
-  {
-    id: 'api',
-    title: 'API Reference',
-    icon: Terminal,
-    tags: ['api', 'endpoints', 'rest', 'telerivet'],
-    content: (
-      <div className="space-y-6">
-        <div>
-          <h4 className="text-lg font-semibold text-gray-900 dark:text-white mb-2">Internal Endpoints</h4>
-          <div className="p-4 bg-white dark:bg-gray-800 border border-gray-200 dark:border-gray-700 rounded-xl shadow-sm">
-            <div className="flex items-center gap-3 mb-2">
-              <span className="px-2 py-1 text-xs font-bold bg-blue-100 text-blue-700 dark:bg-blue-900/30 dark:text-blue-400 rounded uppercase">POST</span>
-              <code className="text-sm font-mono text-gray-700 dark:text-gray-300">/api/agents</code>
-            </div>
-            <p className="text-sm text-gray-600 dark:text-gray-400 mb-3">
-              Creates a new agent or updates an existing one based on the <code>name</code> unique constraint.
-            </p>
-            <div className="bg-gray-50 dark:bg-gray-900/50 p-3 rounded-lg">
-              <p className="text-xs font-mono text-gray-500 mb-1">Payload:</p>
-              <pre className="text-xs text-gray-700 dark:text-gray-300 font-mono">
-                {`{
-  "agentName": "String",
-  "persona": "String",
-  "task": "String",
-  "urls": ["String"],
-  "possibleActions": { ... }
-}`}
-              </pre>
-            </div>
-          </div>
-        </div>
-
-        <div>
-          <h4 className="text-lg font-semibold text-gray-900 dark:text-white mb-2">External Integrations (Telerivet)</h4>
-          <p className="text-gray-600 dark:text-gray-300 text-sm mb-3">
-            The <strong>Client Dashboard</strong> visualizes data directly from Telerivet&apos;s REST API.
-          </p>
-          <ul className="space-y-2 text-sm">
-            <li className="flex items-start gap-2">
-              <span className="mt-1 w-1.5 h-1.5 bg-green-500 rounded-full shrink-0" />
-              <span className="text-gray-700 dark:text-gray-300">
-                <code>GET /projects/&#123;id&#125;/messages</code> - Used for Traffic Charts & Recent Logs.
-              </span>
-            </li>
-            <li className="flex items-start gap-2">
-              <span className="mt-1 w-1.5 h-1.5 bg-green-500 rounded-full shrink-0" />
-              <span className="text-gray-700 dark:text-gray-300">
-                <code>GET /projects/&#123;id&#125;</code> - Fetches balance and timezone.
-              </span>
-            </li>
-          </ul>
-        </div>
-      </div>
-    )
-  },
-  {
-    id: 'security',
-    title: 'Security & Environment',
-    icon: Shield,
-    tags: ['env', 'security', 'variables', 'deployment'],
-    content: (
-      <div className="space-y-4">
-        <p className="text-gray-600 dark:text-gray-300">
-          Application security is managed through environment variables and Next.js built-in protections.
-        </p>
-        <div className="bg-amber-50 dark:bg-amber-900/10 border border-amber-200 dark:border-amber-800 p-4 rounded-xl">
-          <h5 className="font-bold text-amber-800 dark:text-amber-400 text-sm mb-1 flex items-center gap-2">
-            <Shield className="w-3 h-3" /> Important
-          </h5>
-          <p className="text-xs text-amber-700 dark:text-amber-300">
-            Never commit <code>.env.local</code> files containing database passwords or API keys. The Postgres credentials currently in the code are for development only and should be moved to environment variables in production.
-          </p>
-        </div>
-        <div className="space-y-2">
-          <h5 className="text-sm font-semibold text-gray-900 dark:text-white">Required Environment Variables:</h5>
-          <code className="block w-full bg-gray-100 dark:bg-gray-800 p-3 rounded-lg text-xs font-mono text-gray-700 dark:text-gray-300">
-            PG_HOST=52.186.169.156<br />
-            PG_USER=sb_devs<br />
-            PG_PASSWORD=********<br />
-            PG_DATABASE=db_sbdev
-          </code>
-        </div>
-      </div>
-    )
-  }
-];
-
-export default function DocsPage() {
-  const [searchQuery, setSearchQuery] = useState('');
-  const [activeSection, setActiveSection] = useState<string>(docSections[0].id);
-
-  // Filter sections based on search
-  const filteredSections = docSections.filter(section => {
-    const query = searchQuery.toLowerCase();
-    return (
-      section.title.toLowerCase().includes(query) ||
-      section.tags.some(tag => tag.includes(query)) ||
-      // Simple content check (react elements make this tricky, mainly relying on tags/title for robust search)
-      JSON.stringify(section.tags).includes(query)
-    );
-  });
-
-  const currentDoc = docSections.find(s => s.id === activeSection) || docSections[0];
+  const handleCopy = () => {
+    navigator.clipboard.writeText(text);
+    setCopied(true);
+    setTimeout(() => setCopied(false), 2000);
+  };
 
   return (
-    <div className="relative min-h-screen overflow-hidden bg-linear-to-br from-slate-50 via-white to-slate-100 text-slate-900 dark:from-slate-950 dark:via-slate-950 dark:to-slate-900 dark:text-slate-100">
-      <div className="pointer-events-none absolute -top-40 -right-32 h-96 w-96 rounded-full bg-blue-500/30 blur-[160px] opacity-70 dark:bg-blue-700/20" />
-      <div className="pointer-events-none absolute top-1/3 -left-44 h-80 w-80 rounded-full bg-violet-400/30 blur-[180px] dark:bg-violet-700/20" />
-      <div className="pointer-events-none absolute inset-0 bg-[radial-gradient(circle_at_top,rgba(15,23,42,0.05),transparent_45%)] dark:bg-[radial-gradient(circle_at_top,rgba(56,189,248,0.08),transparent_40%)]" />
+    <div className="relative group rounded-xl overflow-hidden border border-slate-200 dark:border-slate-800 bg-slate-50 dark:bg-slate-900 my-4">
+      <div className="flex justify-between items-center px-4 py-2 bg-slate-100 dark:bg-slate-800/50 border-b border-slate-200 dark:border-slate-800">
+        <span className="text-xs font-mono font-semibold text-slate-500 dark:text-slate-400">
+          {label}
+        </span>
+        <button
+          onClick={handleCopy}
+          className="flex items-center gap-1.5 text-xs font-medium text-slate-500 hover:text-blue-600 dark:text-slate-400 dark:hover:text-blue-400 transition-colors"
+        >
+          {copied ? (
+            <Check className="w-3.5 h-3.5" />
+          ) : (
+            <Copy className="w-3.5 h-3.5" />
+          )}
+          {copied ? "Copied!" : "Copy"}
+        </button>
+      </div>
+      <pre className="p-4 overflow-x-auto text-xs sm:text-sm font-mono text-slate-700 dark:text-slate-300 whitespace-pre-wrap leading-relaxed">
+        {text}
+      </pre>
+    </div>
+  );
+};
 
-      <div className="relative z-10 max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-12 space-y-10">
-        <section className="rounded-4xl border border-white/60 bg-white/70 px-6 py-10 shadow-2xl backdrop-blur-xl dark:border-white/10 dark:bg-white/5">
-          <div className="flex flex-col gap-8 md:flex-row md:items-center md:justify-between">
-            <div className="space-y-5">
-              <span className="inline-flex items-center gap-2 rounded-full border border-slate-200/80 px-3 py-1 text-xs font-semibold uppercase tracking-[0.25em] text-slate-500 dark:border-white/10 dark:text-slate-300">
-                Docs
-                <span className="h-1.5 w-1.5 rounded-full bg-blue-500" />
-                Live
-              </span>
-              <div>
-                <h1 className="text-3xl font-semibold leading-tight text-slate-900 md:text-4xl dark:text-white">
-                  Build, scale, and operate the Sahayata Agent confidently.
-                </h1>
-                <p className="mt-3 max-w-3xl text-base text-slate-600 dark:text-slate-300">
-                  Interactive documentation with instant context, database references, and the exact AI prompt we use to bootstrap Cursor.
-                </p>
-              </div>
-              <div className="flex flex-wrap gap-3 text-xs text-slate-500 dark:text-slate-200">
-                <span className="inline-flex items-center gap-2 rounded-full border border-slate-200/70 px-3 py-1 dark:border-white/10">
-                  <Layers className="h-3.5 w-3.5 text-blue-500" />
-                  Next.js 14
-                </span>
-                <span className="inline-flex items-center gap-2 rounded-full border border-slate-200/70 px-3 py-1 dark:border-white/10">
-                  <Database className="h-3.5 w-3.5 text-green-500" />
-                  PostgreSQL
-                </span>
-                <span className="inline-flex items-center gap-2 rounded-full border border-slate-200/70 px-3 py-1 dark:border-white/10">
-                  <Shield className="h-3.5 w-3.5 text-amber-500" />
-                  Secure APIs
-                </span>
-              </div>
+// --- Documentation Content ---
+const docSections: DocSection[] = [
+  {
+    id: "ai-context",
+    title: "AI System Prompt",
+    icon: Bot,
+    description:
+      "Bootstrap Cursor or any LLM with the project context immediately.",
+    tags: ["cursor", "llm", "setup"],
+    content: (
+      <div className="space-y-6">
+        <div className="bg-blue-50 dark:bg-blue-900/10 border border-blue-100 dark:border-blue-800 p-6 rounded-2xl">
+          <h3 className="text-lg font-bold text-blue-900 dark:text-blue-100 mb-2">
+            Why this matters?
+          </h3>
+          <p className="text-sm text-blue-800 dark:text-blue-200 leading-relaxed">
+            AI tools usually "guess" your schema. By copying the block below
+            into your <strong>.cursorrules</strong> file or chat window, you
+            force the AI to understand your exact "Split Stack" architecture
+            (Supabase + External Postgres) instantly.
+          </p>
+        </div>
+        <CopyBlock
+          text={aiContextPrompt}
+          label="SYSTEM PROMPT / .cursorrules"
+        />
+      </div>
+    ),
+  },
+  {
+    id: "architecture",
+    title: "Architecture Overview",
+    icon: Layers,
+    description:
+      "Understanding the Split Stack: Supabase Auth + External Postgres.",
+    tags: ["supabase", "postgres", "security"],
+    content: (
+      <div className="space-y-8">
+        <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+          <div className="p-6 rounded-2xl border border-slate-200 dark:border-slate-800 bg-white dark:bg-slate-900/50">
+            <div className="w-10 h-10 bg-green-100 dark:bg-green-900/30 rounded-lg flex items-center justify-center mb-4 text-green-600 dark:text-green-400">
+              <Fingerprint className="w-5 h-5" />
             </div>
+            <h4 className="font-bold text-slate-900 dark:text-white mb-2">
+              1. Identity (Supabase)
+            </h4>
+            <p className="text-sm text-slate-500 dark:text-slate-400">
+              Handles Sign Up, Login, Password Reset, and Magic Links. It issues
+              a <strong>JWT Session</strong> containing a unique User UUID.
+            </p>
+          </div>
 
-            <div className="grid w-full gap-4 sm:grid-cols-2 md:w-auto">
-              <div className="rounded-2xl border border-white/50 bg-white/80 p-4 text-slate-900 shadow-lg dark:border-white/10 dark:bg-slate-900/60 dark:text-white">
-                <p className="text-sm text-slate-500 dark:text-slate-400">Docs Coverage</p>
-                <p className="mt-2 text-3xl font-bold">{docSections.length}</p>
-                <p className="text-xs text-slate-500 dark:text-slate-400">core topics linked to product areas</p>
-              </div>
-              <div className="rounded-2xl border border-white/50 bg-linear-to-br from-blue-600 to-indigo-600 p-4 text-white shadow-lg dark:border-white/10">
-                <p className="text-sm text-white/80">AI Context Prompt</p>
-                <p className="mt-2 text-3xl font-bold">1</p>
-                <p className="text-xs text-white/80">copyable master prompt for Cursor</p>
-              </div>
+          <div className="p-6 rounded-2xl border border-slate-200 dark:border-slate-800 bg-white dark:bg-slate-900/50">
+            <div className="w-10 h-10 bg-blue-100 dark:bg-blue-900/30 rounded-lg flex items-center justify-center mb-4 text-blue-600 dark:text-blue-400">
+              <Database className="w-5 h-5" />
+            </div>
+            <h4 className="font-bold text-slate-900 dark:text-white mb-2">
+              2. Data (External Postgres)
+            </h4>
+            <p className="text-sm text-slate-500 dark:text-slate-400">
+              Stores your actual business data (Agents, Organizations). It does{" "}
+              <strong>not</strong> have a foreign key to Supabase users.
+            </p>
+          </div>
+        </div>
+      </div>
+    ),
+  },
+  {
+    id: "pages-structure",
+    title: "Pages & Routing",
+    icon: Map,
+    description: "Map of the application interface and route purposes.",
+    tags: ["routes", "ui", "navigation"],
+    content: (
+      <div className="space-y-6">
+        <p className="text-sm text-slate-600 dark:text-slate-400">
+          The application is divided into public authentication pages and a
+          protected dashboard area.
+        </p>
+
+        <div className="space-y-4">
+          {/* Dashboard */}
+          <div className="flex gap-4 p-4 rounded-xl border border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-800/50">
+            <div className="mt-1">
+              <LayoutDashboard className="w-5 h-5 text-blue-500" />
+            </div>
+            <div>
+              <h4 className="font-bold text-slate-900 dark:text-white flex items-center gap-2">
+                /dashboard
+                <span className="px-1.5 py-0.5 rounded text-[10px] font-bold bg-green-100 text-green-700 dark:bg-green-900/30 dark:text-green-400">
+                  PROTECTED
+                </span>
+              </h4>
+              <p className="text-xs text-slate-500 dark:text-slate-400 mt-1">
+                The main landing page after login. Displays metrics (active
+                agents, documents) and includes a <strong>Sandbox</strong> for
+                testing agent greeting messages and QR codes.
+              </p>
+            </div>
+          </div>
+
+          {/* Create Agent */}
+          <div className="flex gap-4 p-4 rounded-xl border border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-800/50">
+            <div className="mt-1">
+              <PlusCircle className="w-5 h-5 text-purple-500" />
+            </div>
+            <div>
+              <h4 className="font-bold text-slate-900 dark:text-white flex items-center gap-2">
+                /create-agent
+                <span className="px-1.5 py-0.5 rounded text-[10px] font-bold bg-green-100 text-green-700 dark:bg-green-900/30 dark:text-green-400">
+                  PROTECTED
+                </span>
+              </h4>
+              <p className="text-xs text-slate-500 dark:text-slate-400 mt-1">
+                A multi-step wizard. Step 1: Business Profile. Step 2: Agent
+                Persona & Features. Step 3: Knowledge Base Uploads.
+                <br />
+                <em>
+                  Triggers document upload and QR generation upon submission.
+                </em>
+              </p>
+            </div>
+          </div>
+
+          {/* Configure Agent */}
+          <div className="flex gap-4 p-4 rounded-xl border border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-800/50">
+            <div className="mt-1">
+              <Settings className="w-5 h-5 text-amber-500" />
+            </div>
+            <div>
+              <h4 className="font-bold text-slate-900 dark:text-white flex items-center gap-2">
+                /configure-agent
+                <span className="px-1.5 py-0.5 rounded text-[10px] font-bold bg-green-100 text-green-700 dark:bg-green-900/30 dark:text-green-400">
+                  PROTECTED
+                </span>
+              </h4>
+              <p className="text-xs text-slate-500 dark:text-slate-400 mt-1">
+                Management list view. Allows editing existing agents, updating
+                prompts, and viewing uploaded files.
+              </p>
+            </div>
+          </div>
+
+          {/* Auth Pages */}
+          <div className="flex gap-4 p-4 rounded-xl border border-slate-200 dark:border-slate-700 bg-slate-50 dark:bg-slate-900">
+            <div className="mt-1">
+              <Shield className="w-5 h-5 text-slate-500" />
+            </div>
+            <div>
+              <h4 className="font-bold text-slate-900 dark:text-white flex items-center gap-2">
+                /login & /register
+                <span className="px-1.5 py-0.5 rounded text-[10px] font-bold bg-blue-100 text-blue-700 dark:bg-blue-900/30 dark:text-blue-400">
+                  PUBLIC
+                </span>
+              </h4>
+              <p className="text-xs text-slate-500 dark:text-slate-400 mt-1">
+                Supabase authentication pages. <code>/register</code> sends
+                email verification. <code>/auth/callback</code> handles the
+                verification redirect.
+              </p>
+            </div>
+          </div>
+        </div>
+      </div>
+    ),
+  },
+  {
+    id: "api-reference",
+    title: "API Reference",
+    icon: Terminal,
+    description: "Detailed documentation of all backend endpoints.",
+    tags: ["endpoints", "json", "requests", "qr", "uploads"],
+    content: (
+      <div className="space-y-12">
+        {/* GET AGENTS */}
+        <section>
+          <div className="flex items-center gap-3 mb-4">
+            <span className="px-2.5 py-1 text-xs font-bold bg-blue-100 text-blue-700 dark:bg-blue-900/30 dark:text-blue-400 rounded-md tracking-wide">
+              GET
+            </span>
+            <code className="text-lg font-mono font-semibold text-slate-900 dark:text-white">
+              /api/agents
+            </code>
+          </div>
+          <p className="text-sm text-slate-600 dark:text-slate-400 mb-4">
+            Fetches all agents belonging to the authenticated user.
+            Automatically filters by joining the <code>organizations</code>{" "}
+            table.
+          </p>
+          <CopyBlock
+            label="RESPONSE EXAMPLE (200 OK)"
+            text={`{
+  "success": true,
+  "data": [
+    {
+      "id": "550e8400-e29b-41d4-a716-446655440000",
+      "agent_name": "Support Bot",
+      "status": "Training",
+      "business_name": "Acme Corp",
+      "actions": ["updateContactTable", "web_search_tool"]
+    }
+  ]
+}`}
+          />
+        </section>
+
+        {/* POST AGENTS */}
+        <section>
+          <div className="flex items-center gap-3 mb-4">
+            <span className="px-2.5 py-1 text-xs font-bold bg-green-100 text-green-700 dark:bg-green-900/30 dark:text-green-400 rounded-md tracking-wide">
+              POST
+            </span>
+            <code className="text-lg font-mono font-semibold text-slate-900 dark:text-white">
+              /api/agents
+            </code>
+          </div>
+          <p className="text-sm text-slate-600 dark:text-slate-400 mb-4">
+            Creates a new Organization and Agent in a single transaction. The
+            backend automatically extracts the user ID from the session to set
+            ownership.
+          </p>
+          <CopyBlock
+            label="REQUEST BODY"
+            text={`{
+  "organization": {
+    "name": "My Business",
+    "industry": "Retail",
+    "website": "https://example.com"
+  },
+  "agents": [
+    {
+      "name": "Sales Agent",
+      "language": "English",
+      "tone": "Friendly",
+      "allowed_actions": ["nearby_search_tool", "web_search_tool"],
+      "greeting_message": "Hello! How can I help you buy?"
+    }
+  ]
+}`}
+          />
+        </section>
+
+        {/* UPLOADS */}
+        <section className="pt-8 border-t border-slate-200 dark:border-slate-800">
+          <div className="flex items-center gap-3 mb-2">
+            <FileText className="w-6 h-6 text-orange-600 dark:text-orange-400" />
+            <h3 className="text-xl font-bold text-slate-900 dark:text-white">
+              Document Uploads
+            </h3>
+          </div>
+          <p className="text-sm text-slate-600 dark:text-slate-400 mb-6">
+            Proxies PDF uploads to the external Knowledge Base provider
+            (Symbiosis). Files must be under 10MB.
+          </p>
+
+          <div className="flex items-center gap-3 mb-4">
+            <span className="px-2.5 py-1 text-xs font-bold bg-green-100 text-green-700 dark:bg-green-900/30 dark:text-green-400 rounded-md tracking-wide">
+              POST
+            </span>
+            <code className="text-lg font-mono font-semibold text-slate-900 dark:text-white">
+              /api/uploads
+            </code>
+          </div>
+
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+            <div>
+              <p className="text-xs font-bold text-slate-500 uppercase tracking-wider mb-2">
+                Request Body (FormData)
+              </p>
+              <ul className="list-disc list-inside text-xs text-slate-600 dark:text-slate-400 space-y-2 font-mono bg-slate-50 dark:bg-slate-900/50 p-4 rounded-xl border border-slate-200 dark:border-slate-800">
+                <li>
+                  <span className="font-bold text-slate-900 dark:text-white">
+                    file
+                  </span>
+                  : (Binary) PDF file
+                </li>
+                <li>
+                  <span className="font-bold text-slate-900 dark:text-white">
+                    agent_id
+                  </span>
+                  : UUID
+                </li>
+                <li>
+                  <span className="font-bold text-slate-900 dark:text-white">
+                    organization_id
+                  </span>
+                  : UUID
+                </li>
+              </ul>
+            </div>
+            <div>
+              <p className="text-xs font-bold text-slate-500 uppercase tracking-wider mb-2">
+                Response
+              </p>
+              <CopyBlock
+                label="JSON Response"
+                text={`{
+  "success": true,
+  "data": {
+    "id": "doc-uuid-123",
+    "url": "https://storage.symbiosis.com/..."
+  }
+}`}
+              />
             </div>
           </div>
         </section>
 
-        <div className="flex flex-col gap-8 pb-10 md:flex-row">
-          {/* Sidebar / Table of Contents */}
-          <aside className="w-full shrink-0 space-y-6 md:w-80">
-            {/* Search Widget */}
+        {/* QR GENERATION */}
+        <section className="pt-8 border-t border-slate-200 dark:border-slate-800">
+          <div className="flex items-center gap-3 mb-2">
+            <QrCode className="w-6 h-6 text-purple-600 dark:text-purple-400" />
+            <h3 className="text-xl font-bold text-slate-900 dark:text-white">
+              QR Integrations
+            </h3>
+          </div>
+          <p className="text-sm text-slate-600 dark:text-slate-400 mb-6">
+            Generates WhatsApp activation QR codes via Symbiosis API.
+          </p>
+
+          <div className="flex items-center gap-3 mb-4">
+            <span className="px-2.5 py-1 text-xs font-bold bg-purple-100 text-purple-700 dark:bg-purple-900/30 dark:text-purple-400 rounded-md tracking-wide">
+              POST
+            </span>
+            <code className="text-lg font-mono font-semibold text-slate-900 dark:text-white">
+              /api/integrations/qr
+            </code>
+          </div>
+
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+            <div>
+              <p className="text-xs font-bold text-slate-500 uppercase tracking-wider mb-2">
+                Request Body
+              </p>
+              <CopyBlock
+                label="JSON Payload"
+                text={`{
+  "agentId": "uuid-string",
+  "agentName": "Support Agent",
+  "businessName": "Acme Corp",
+  "triggerCode": "HELP" // Optional
+}`}
+              />
+            </div>
+            <div>
+              <p className="text-xs font-bold text-slate-500 uppercase tracking-wider mb-2">
+                Response
+              </p>
+              <CopyBlock
+                label="JSON Response"
+                text={`{
+  "success": true,
+  "qrCodeUrl": "data:image/png;base64,iVB...",
+  "message": "QR generated with trigger: HELP",
+  "usedTriggerCode": "HELP"
+}`}
+              />
+            </div>
+          </div>
+        </section>
+      </div>
+    ),
+  },
+  {
+    id: "database",
+    title: "Database Schema",
+    icon: Database,
+    description: "SQL definitions for the External Postgres database.",
+    tags: ["sql", "tables", "schema"],
+    content: (
+      <div className="space-y-6">
+        <p className="text-sm text-slate-600 dark:text-slate-400">
+          Run these SQL commands on your external PostgreSQL instance to set up
+          the tables required for the application.
+        </p>
+        <CopyBlock
+          label="SQL MIGRATION"
+          text={`-- 1. Organizations Table
+CREATE TABLE organizations (
+  id UUID PRIMARY KEY,
+  name VARCHAR(255) NOT NULL,
+  owner_id UUID NOT NULL, -- The Supabase User ID stored as UUID/String
+  website VARCHAR(255),
+  industry VARCHAR(255),
+  short_description TEXT,
+  is_active BOOLEAN DEFAULT true,
+  created_at TIMESTAMP DEFAULT NOW(),
+  updated_at TIMESTAMP DEFAULT NOW()
+);
+
+-- Index for fast lookup by user
+CREATE INDEX idx_org_owner ON organizations(owner_id);
+
+-- 2. Agents Table
+CREATE TABLE agents (
+  id UUID PRIMARY KEY,
+  organization_id UUID NOT NULL REFERENCES organizations(id),
+  name VARCHAR(255) NOT NULL,
+  language VARCHAR(50),
+  tone VARCHAR(100),
+  status VARCHAR(50) DEFAULT 'Training',
+  persona_prompt TEXT,
+  task_prompt TEXT,
+  trigger_code VARCHAR(50),
+  allowed_actions JSONB DEFAULT '[]'::jsonb,
+  greeting_message TEXT,
+  qr_code_base64 TEXT,
+  document_refs JSONB DEFAULT '[]'::jsonb,
+  source_urls JSONB DEFAULT '[]'::jsonb,
+  model_config JSONB DEFAULT '{}'::jsonb,
+  created_at TIMESTAMP DEFAULT NOW(),
+  updated_at TIMESTAMP DEFAULT NOW()
+);`}
+        />
+      </div>
+    ),
+  },
+];
+
+export default function DocsPage() {
+  // --- State ---
+  const [isLocked, setIsLocked] = useState(true);
+  const [passwordInput, setPasswordInput] = useState("");
+  const [errorShake, setErrorShake] = useState(false);
+
+  const [activeSection, setActiveSection] = useState<string>(docSections[0].id);
+  const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
+  const [searchQuery, setSearchQuery] = useState("");
+
+  // --- Password Logic ---
+  const handleUnlock = (e: React.FormEvent) => {
+    e.preventDefault();
+    if (passwordInput === "open1") {
+      setIsLocked(false);
+    } else {
+      setErrorShake(true);
+      setTimeout(() => setErrorShake(false), 500);
+      setPasswordInput("");
+    }
+  };
+
+  // --- Filter Logic ---
+  const filteredSections = docSections.filter(
+    (s) =>
+      s.title.toLowerCase().includes(searchQuery.toLowerCase()) ||
+      s.tags.some((t) => t.includes(searchQuery.toLowerCase()))
+  );
+
+  const currentDoc =
+    docSections.find((s) => s.id === activeSection) || docSections[0];
+
+  // --------------------------------------------------------------------------
+  // RENDER: LOCKED SCREEN
+  // --------------------------------------------------------------------------
+  if (isLocked) {
+    return (
+      <div className="min-h-screen flex flex-col items-center justify-center bg-slate-50 dark:bg-slate-950 px-4">
+        <div
+          className={`w-full max-w-sm bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 rounded-3xl shadow-2xl p-8 transition-all duration-200 ${
+            errorShake ? "translate-x-2 ring-2 ring-red-500/20" : ""
+          }`}
+        >
+          <div className="flex flex-col items-center mb-8">
+            <div className="w-16 h-16 bg-blue-600 text-white rounded-2xl flex items-center justify-center mb-6 shadow-lg shadow-blue-600/20">
+              <Lock className="w-8 h-8" />
+            </div>
+            <h1 className="text-2xl font-bold text-slate-900 dark:text-white text-center">
+              Protected Docs
+            </h1>
+            <p className="text-sm text-slate-500 dark:text-slate-400 text-center mt-2 max-w-[240px]">
+              These architectural documents are restricted to authorized
+              developers.
+            </p>
+          </div>
+
+          <form onSubmit={handleUnlock} className="space-y-4">
             <div className="relative group">
-              <div className="absolute inset-0 rounded-3xl bg-linear-to-r from-blue-500/30 via-indigo-500/30 to-blue-500/30 opacity-70 blur-2xl transition duration-500 group-hover:opacity-100 dark:from-blue-600/40 dark:via-indigo-600/40" />
-              <div className="relative flex items-center gap-3 rounded-3xl border border-white/60 bg-white/80 px-4 py-4 shadow-xl backdrop-blur-2xl dark:border-white/10 dark:bg-slate-900/70">
-                <Search className="h-5 w-5 text-slate-400 dark:text-slate-500" />
-                <input
-                  type="text"
-                  placeholder="Ask or search docs..."
-                  value={searchQuery}
-                  onChange={(e) => setSearchQuery(e.target.value)}
-                  className="w-full bg-transparent text-sm text-slate-900 placeholder:text-slate-400 focus:outline-none dark:text-white dark:placeholder:text-slate-500"
-                />
-                <span className="rounded-full border border-slate-200 px-2 py-1 text-[10px] font-semibold uppercase tracking-wide text-slate-500 dark:border-white/10 dark:text-slate-300">
-                  ⌘K
-                </span>
-              </div>
+              <Key className="absolute left-4 top-3.5 h-5 w-5 text-slate-400 group-focus-within:text-blue-500 transition-colors" />
+              <input
+                type="password"
+                value={passwordInput}
+                onChange={(e) => setPasswordInput(e.target.value)}
+                className="w-full pl-12 pr-4 py-3 bg-slate-50 dark:bg-slate-800/50 border border-slate-200 dark:border-slate-700 rounded-xl focus:outline-none focus:ring-2 focus:ring-blue-500/50 transition-all text-slate-900 dark:text-white placeholder:text-slate-400"
+                placeholder="Enter password..."
+                autoFocus
+              />
             </div>
-
-            <div className="flex flex-wrap gap-2 text-xs">
-              {["stack", "api", "security", "cursor"].map((chip) => (
-                <button
-                  key={chip}
-                  onClick={() => setSearchQuery(chip)}
-                  className="rounded-full border border-slate-200/80 px-3 py-1 text-slate-600 transition hover:border-blue-500 hover:text-blue-600 dark:border-white/10 dark:text-slate-300 dark:hover:border-blue-400 dark:hover:text-blue-400"
-                >
-                  #{chip}
-                </button>
-              ))}
-              {searchQuery && (
-                <button
-                  onClick={() => setSearchQuery("")}
-                  className="rounded-full border border-red-200/80 px-3 py-1 text-red-500 transition hover:bg-red-50 dark:border-red-900/50 dark:text-red-300 dark:hover:bg-red-900/30"
-                >
-                  Clear
-                </button>
-              )}
-            </div>
-
-            <nav className="flex-1 space-y-2 rounded-3xl border border-white/60 bg-white/70 p-4 shadow-lg backdrop-blur-xl dark:border-white/10 dark:bg-slate-900/60">
-              {filteredSections.map((section) => (
-                <button
-                  key={section.id}
-                  onClick={() => setActiveSection(section.id)}
-                  className={`group w-full rounded-2xl border p-4 text-left transition-all duration-200 ${activeSection === section.id
-                    ? "border-blue-500 bg-linear-to-r from-blue-600 to-indigo-600 text-white shadow-lg shadow-blue-600/30"
-                    : "border-white/40 bg-white/70 text-slate-600 hover:border-blue-200 hover:text-slate-900 dark:border-white/10 dark:bg-slate-900/40 dark:text-slate-400 dark:hover:border-blue-500 dark:hover:text-white"
-                    }`}
-                >
-                  <div className="flex items-center justify-between gap-3">
-                    <div className="flex items-center gap-3">
-                      <section.icon
-                        className={`h-5 w-5 ${activeSection === section.id
-                          ? "text-white"
-                          : "text-slate-400 group-hover:text-blue-500"
-                          }`}
-                      />
-                      <span className="font-medium">{section.title}</span>
-                    </div>
-                    {activeSection === section.id && <ChevronRight className="h-4 w-4 opacity-80" />}
-                  </div>
-                </button>
-              ))}
-
-              {filteredSections.length === 0 && (
-                <div className="text-center rounded-2xl border border-dashed border-slate-200/80 p-8 text-sm text-slate-500 dark:border-white/10 dark:text-slate-400">
-                  <p>No docs found for &quot;{searchQuery}&quot;</p>
-                  <button onClick={() => setSearchQuery("")} className="mt-2 text-blue-500 hover:underline dark:text-blue-300">
-                    Clear search
-                  </button>
-                </div>
-              )}
-            </nav>
-
-            {/* Quick Stats Widget */}
-            <div className="rounded-3xl border border-white/40 bg-linear-to-br from-slate-900 via-slate-900 to-indigo-900 p-5 text-white shadow-2xl dark:border-white/5 dark:from-indigo-950 dark:via-slate-950 dark:to-slate-900">
-              <div className="flex items-center gap-2 mb-3 text-white/70">
-                <Book className="h-4 w-4" />
-                <span className="text-xs font-bold uppercase tracking-wider">Knowledge graph</span>
-              </div>
-              <div className="flex items-end gap-4">
-                <p className="text-4xl font-bold">{docSections.length}</p>
-                <p className="text-sm text-white/70">sections documented</p>
-              </div>
-              <p className="mt-3 text-xs text-white/60">Updated automatically when you edit docs content.</p>
-            </div>
-          </aside>
-
-          {/* Main Content Area */}
-          <main className="relative flex-1 overflow-hidden rounded-4xl border border-white/60 bg-white/80 p-8 shadow-2xl backdrop-blur-2xl dark:border-white/10 dark:bg-slate-900/70 md:p-12">
-            <div className="pointer-events-none absolute -top-24 right-0 h-48 w-48 rounded-full bg-blue-500/20 blur-3xl" />
-            <div className="pointer-events-none absolute bottom-0 left-10 h-32 w-32 rounded-full bg-indigo-500/15 blur-3xl" />
-
-            {/* Content Header */}
-            <div className="relative flex flex-wrap items-center gap-6 border-b border-white/70 pb-8 dark:border-white/10">
-              <div className="rounded-2xl border border-white/60 bg-white/80 p-4 text-blue-600 shadow-inner dark:border-white/10 dark:bg-blue-500/10 dark:text-blue-300">
-                <currentDoc.icon className="h-10 w-10" />
-              </div>
-              <div>
-                <h2 className="text-3xl font-semibold text-slate-900 dark:text-white">{currentDoc.title}</h2>
-                <div className="mt-3 flex flex-wrap gap-2">
-                  {currentDoc.tags.map((tag) => (
-                    <span key={tag} className="rounded-full border border-slate-200/80 px-3 py-1 text-xs font-mono uppercase tracking-wide text-slate-500 dark:border-white/10 dark:text-slate-300">
-                      #{tag}
-                    </span>
-                  ))}
-                </div>
-              </div>
-            </div>
-
-            {/* Content Body */}
-            <div className="relative mt-10 max-h-[calc(100vh-280px)] overflow-y-auto pr-2">
-              <div className="prose prose-slate max-w-none leading-relaxed text-slate-700 dark:prose-invert dark:text-slate-100">
-                {currentDoc.content}
-              </div>
-            </div>
-          </main>
+            <button
+              type="submit"
+              className="w-full py-3 bg-blue-600 hover:bg-blue-700 text-white font-semibold rounded-xl transition-all shadow-lg shadow-blue-600/20 active:scale-[0.98]"
+            >
+              Unlock Access
+            </button>
+          </form>
+          <div className="mt-6 text-center">
+            <p className="text-xs text-slate-400">Hint: open...</p>
+          </div>
         </div>
       </div>
+    );
+  }
+
+  // --------------------------------------------------------------------------
+  // RENDER: MAIN DOCS UI
+  // --------------------------------------------------------------------------
+  return (
+    <div className="min-h-screen bg-slate-50 dark:bg-slate-950 text-slate-900 dark:text-slate-100 flex">
+      {/* --- Sidebar (Desktop) --- */}
+      <aside className="hidden lg:flex flex-col w-80 h-screen sticky top-0 border-r border-slate-200 dark:border-slate-800 bg-white/50 dark:bg-slate-900/50 backdrop-blur-xl">
+        <div className="p-6 border-b border-slate-200 dark:border-slate-800">
+          <h1 className="text-xl font-bold bg-gradient-to-r from-blue-600 to-indigo-600 bg-clip-text text-transparent">
+            Sahayata<span className="font-light">Docs</span>
+          </h1>
+          <p className="text-xs text-slate-500 mt-1">
+            Split Stack Architecture
+          </p>
+        </div>
+
+        <div className="p-4">
+          <div className="relative mb-6">
+            <Search className="absolute left-3 top-2.5 h-4 w-4 text-slate-400" />
+            <input
+              type="text"
+              placeholder="Search topics..."
+              value={searchQuery}
+              onChange={(e) => setSearchQuery(e.target.value)}
+              className="w-full pl-9 pr-4 py-2 bg-white dark:bg-slate-800 border border-slate-200 dark:border-slate-700 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-blue-500/50 transition-all"
+            />
+          </div>
+
+          <nav className="space-y-1">
+            {filteredSections.map((section) => (
+              <button
+                key={section.id}
+                onClick={() => setActiveSection(section.id)}
+                className={`w-full flex items-center gap-3 px-3 py-2.5 rounded-lg text-sm font-medium transition-all duration-200 ${
+                  activeSection === section.id
+                    ? "bg-blue-50 text-blue-700 dark:bg-blue-900/20 dark:text-blue-300"
+                    : "text-slate-600 hover:bg-slate-100 dark:text-slate-400 dark:hover:bg-slate-800"
+                }`}
+              >
+                <section.icon
+                  className={`w-4 h-4 ${
+                    activeSection === section.id
+                      ? "text-blue-500"
+                      : "text-slate-400"
+                  }`}
+                />
+                {section.title}
+                {activeSection === section.id && (
+                  <ChevronRight className="w-3 h-3 ml-auto opacity-50" />
+                )}
+              </button>
+            ))}
+          </nav>
+        </div>
+
+        <div className="mt-auto p-6 border-t border-slate-200 dark:border-slate-800">
+          <div className="flex items-center gap-3 text-xs text-slate-500">
+            <Shield className="w-3 h-3 text-green-500" />
+            <span>Authenticated Access</span>
+          </div>
+        </div>
+      </aside>
+
+      {/* --- Main Content --- */}
+      <main className="flex-1 min-w-0">
+        {/* Mobile Header */}
+        <div className="lg:hidden flex items-center justify-between p-4 border-b border-slate-200 dark:border-slate-800 bg-white dark:bg-slate-900">
+          <span className="font-bold">Sahayata Docs</span>
+          <button
+            onClick={() => setMobileMenuOpen(!mobileMenuOpen)}
+            className="p-2"
+          >
+            {mobileMenuOpen ? (
+              <X className="w-5 h-5" />
+            ) : (
+              <Menu className="w-5 h-5" />
+            )}
+          </button>
+        </div>
+
+        {/* Mobile Menu Overlay */}
+        {mobileMenuOpen && (
+          <div className="lg:hidden absolute inset-0 z-50 bg-white dark:bg-slate-900 p-4">
+            <nav className="space-y-2 mt-10">
+              {docSections.map((section) => (
+                <button
+                  key={section.id}
+                  onClick={() => {
+                    setActiveSection(section.id);
+                    setMobileMenuOpen(false);
+                  }}
+                  className="w-full flex items-center gap-3 p-4 rounded-xl bg-slate-50 dark:bg-slate-800 text-left font-medium"
+                >
+                  <section.icon className="w-5 h-5 text-blue-500" />
+                  {section.title}
+                </button>
+              ))}
+            </nav>
+          </div>
+        )}
+
+        {/* Content Body */}
+        <div className="max-w-4xl mx-auto p-6 lg:p-12 space-y-8">
+          <header className="space-y-4 border-b border-slate-200 dark:border-slate-800 pb-8">
+            <div className="flex items-center gap-3">
+              <div className="p-2.5 bg-blue-600 rounded-xl shadow-lg shadow-blue-600/20 text-white">
+                <currentDoc.icon className="w-6 h-6" />
+              </div>
+              <h1 className="text-3xl font-bold text-slate-900 dark:text-white">
+                {currentDoc.title}
+              </h1>
+            </div>
+            <p className="text-lg text-slate-600 dark:text-slate-300 max-w-2xl">
+              {currentDoc.description}
+            </p>
+            <div className="flex flex-wrap gap-2 pt-2">
+              {currentDoc.tags.map((tag) => (
+                <span
+                  key={tag}
+                  className="px-2.5 py-1 rounded-md text-xs font-mono bg-slate-100 text-slate-600 dark:bg-slate-800 dark:text-slate-400 border border-slate-200 dark:border-slate-700"
+                >
+                  #{tag}
+                </span>
+              ))}
+            </div>
+          </header>
+          <div className="prose prose-slate dark:prose-invert max-w-none">
+            {currentDoc.content}
+          </div>
+          <div className="h-20" /> {/* Bottom spacer */}
+        </div>
+      </main>
     </div>
   );
 }
