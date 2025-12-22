@@ -1,10 +1,22 @@
 import { NextResponse } from "next/server";
 import { db } from "../../../../lib/db";
+import { createClient } from "../../../../utils/supabase/server";
 
 export async function GET(request: Request, context: { params: any }) {
+  const supabase = await createClient();
+  const {
+    data: { user },
+    error,
+  } = await supabase.auth.getUser();
+
+  if (error || !user) {
+    return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
+  }
+
   // `context.params` may be a Promise in some Next.js typings; resolve safely
   const resolvedParams = await Promise.resolve(context?.params);
-  const id = resolvedParams?.id || new URL(request.url).pathname.split("/").pop();
+  const id =
+    resolvedParams?.id || new URL(request.url).pathname.split("/").pop();
   try {
     const result = await db.query(
       `SELECT 
@@ -20,12 +32,18 @@ export async function GET(request: Request, context: { params: any }) {
     );
 
     if (!result.rows || result.rows.length === 0) {
-      return NextResponse.json({ success: false, error: "Agent not found" }, { status: 404 });
+      return NextResponse.json(
+        { success: false, error: "Agent not found" },
+        { status: 404 }
+      );
     }
 
     return NextResponse.json({ success: true, data: result.rows[0] });
   } catch (err) {
     console.error("--- FETCH AGENT BY ID FAILED ---", err);
-    return NextResponse.json({ success: false, error: "Server error" }, { status: 500 });
+    return NextResponse.json(
+      { success: false, error: "Server error" },
+      { status: 500 }
+    );
   }
 }

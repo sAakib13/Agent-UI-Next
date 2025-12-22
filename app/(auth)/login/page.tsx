@@ -3,6 +3,7 @@
 import React, { useState } from "react";
 import { useRouter } from "next/navigation";
 import { Zap, Loader2 } from "lucide-react";
+import { createBrowserClient } from "@supabase/ssr"; // Import Supabase Client
 
 export default function LoginPage() {
   const router = useRouter();
@@ -11,7 +12,13 @@ export default function LoginPage() {
   const [error, setError] = useState("");
   const [loading, setLoading] = useState(false);
 
-  const handleLogin = (e: React.FormEvent) => {
+  // Initialize Supabase Client for the Browser
+  const supabase = createBrowserClient(
+    process.env.NEXT_PUBLIC_SUPABASE_URL!,
+    process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!
+  );
+
+  const handleLogin = async (e: React.FormEvent) => {
     e.preventDefault();
     setError("");
 
@@ -22,21 +29,31 @@ export default function LoginPage() {
 
     setLoading(true);
 
-    // --- Mock Login Function ---
-    // Simulate API call delay and credential check
-    setTimeout(() => {
-      // Successful login for specific credentials
-      if (email === "test@sahayata.ai" && password === "password123") {
-        console.log("Login successful for:", email);
-        router.push("/dashboard");
-      } else {
-        // Failed login
-        setError(
-          "Invalid email or password. Hint: Try test@sahayata.ai / password123"
-        );
+    try {
+      // --- REAL SUPABASE LOGIN ---
+      const { error: authError } = await supabase.auth.signInWithPassword({
+        email,
+        password,
+      });
+
+      if (authError) {
+        // Handle Supabase errors (Invalid login, etc.)
+        setError(authError.message);
         setLoading(false);
+      } else {
+        // Success!
+        console.log("Login successful");
+
+        // 1. Refresh router to ensure Server Components see the new cookie
+        router.refresh();
+
+        // 2. Redirect to dashboard
+        router.push("/dashboard");
       }
-    }, 1500);
+    } catch (err) {
+      setError("An unexpected error occurred.");
+      setLoading(false);
+    }
   };
 
   return (
@@ -52,9 +69,6 @@ export default function LoginPage() {
             <span className="text-blue-600 dark:text-blue-400">Agent</span>
           </h1>
         </div>
-        {/* <p className="text-gray-600 dark:text-gray-400 text-lg">
-          Sign in to your dashboard
-        </p> */}
       </div>
 
       <form onSubmit={handleLogin} className="space-y-6">
