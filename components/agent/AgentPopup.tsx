@@ -52,14 +52,17 @@ export const AgentPopup: React.FC<AgentPopupProps> = ({ showPopup, onClose }) =>
     const handleContinue = () => {
         setTimeout(() => router.push("/dashboard"), 800);
     }
+    const handleClose = () => {
+        onClose(); setTimeout(() => router.push("/dashboard"), 500);
+    }
 
     return (
         <div className="fixed inset-0 bg-black/40 flex items-center justify-center z-50">
             <div className="relative bg-white rounded-2xl p-8 shadow-xl w-[400px] text-center">
                 {/* Close X button */}
                 <button
-                    onClick={() => onClose}
-                    className="absolute top-3 right-3 text-gray-400 hover:text-gray-600 font-bold text-lg"
+                    onClick={() => handleClose()}
+                    className="absolute top-3 right-3 text-gray-400 hover:text-gray-600 font-bold text-lg cursor-pointer"
                 >
                     <X></X>
                 </button>

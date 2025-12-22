@@ -674,7 +674,7 @@ export default function AgentManagementPage() {
                     </div>
                     <button
                       onClick={() => handleRemoveUrl(i)}
-                      className="p-3 mt-2 h-[58px] rounded-2xl bg-red-50 text-red-500"
+                      className="p-3 mt-2 h-[58px] rounded-xl bg-red-50 text-red-500 cursor-pointer hover:bg-red-100 transition-colors disabled:opacity-40 disabled:cursor-not-allowed"
                     >
                       <Trash2 className="w-5 h-5" />
                     </button>
