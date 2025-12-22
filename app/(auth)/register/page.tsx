@@ -40,7 +40,7 @@ export default function RegisterPage() {
         password,
         options: {
           // Redirect them back to your site after they click the email link
-          emailRedirectTo: `${window.location.origin}/auth/callback`,
+          emailRedirectTo: `${window.location.origin}/callback`,
         },
       });
 
