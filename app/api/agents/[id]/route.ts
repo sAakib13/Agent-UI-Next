@@ -12,6 +12,7 @@ export async function GET(request: Request, context: { params: any }) {
   if (error || !user) {
     return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
   }
+
   // `context.params` may be a Promise in some Next.js typings; resolve safely
   const resolvedParams = await Promise.resolve(context?.params);
   const id =

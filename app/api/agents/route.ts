@@ -2,6 +2,7 @@ import { NextResponse } from "next/server";
 import { db } from "../../../lib/db";
 import { v4 as uuidv4 } from "uuid";
 import { z } from "zod";
+import { createClient } from "@/lib/supbase"; // Ensure this path matches your file structure
 
 // --- Validation Schemas ---
 
@@ -44,10 +45,26 @@ const bodySchema = z.object({
 
 // --- API Route Handlers ---
 
-// GET: Fetch all agents (Superadmin View)
+// GET: Fetch agents for the authenticated user
 export async function GET(_request: Request) {
   try {
-    const result = await db.query(`
+    // 1. Verify Auth
+    const supabase = await createClient();
+    const {
+      data: { user },
+      error: authError,
+    } = await supabase.auth.getUser();
+
+    if (authError || !user) {
+      return NextResponse.json(
+        { success: false, error: "Unauthorized" },
+        { status: 401 }
+      );
+    }
+
+    // 2. Query Database (Filtered by owner_id)
+    const result = await db.query(
+      `
       SELECT 
         a.id, a.name AS agent_name, a.trigger_code, a.updated_at, a.language, a.tone,
         a.status, a.persona_prompt, a.task_prompt, a.allowed_actions AS actions, a.qr_code_base64, a.greeting_message,
@@ -55,33 +72,49 @@ export async function GET(_request: Request) {
         o.name AS business_name, o.industry, o.short_description, o.website AS business_url
       FROM agents a
       JOIN organizations o ON a.organization_id = o.id
-    `);
+      WHERE o.owner_id = $1  -- Only return agents owned by this user
+    `,
+      [user.id]
+    );
 
     return NextResponse.json({
       success: true,
       data: result.rows,
     });
   } catch (error) {
-    console.error("--- SUPERADMIN AGENT FETCH FAILED ---");
+    console.error("--- AGENT FETCH FAILED ---");
     console.error("FULL DATABASE ERROR:", error);
 
     return NextResponse.json(
       {
         success: false,
         error:
-          "Server error during agent aggregation. Check database connection and schema.",
+          "Server error during agent aggregation. Check database connection.",
       },
       { status: 500 }
     );
   }
 }
 
-// POST: Create Organization + Agents
+// POST: Create Organization + Agents (Linked to User)
 export async function POST(request: Request) {
   try {
-    const body = await request.json();
+    // 1. Verify Auth
+    const supabase = await createClient();
+    const {
+      data: { user },
+      error: authError,
+    } = await supabase.auth.getUser();
 
-    // 1. Validate request body
+    if (authError || !user) {
+      return NextResponse.json(
+        { success: false, error: "Unauthorized" },
+        { status: 401 }
+      );
+    }
+
+    // 2. Validate request body
+    const body = await request.json();
     const parsed = bodySchema.safeParse(body);
 
     if (!parsed.success) {
@@ -90,10 +123,11 @@ export async function POST(request: Request) {
 
     const { organization, agents } = parsed.data;
 
-    // 2. Begin transaction
+    // 3. Begin transaction
     await db.query("BEGIN");
 
-    // 2a. Ensure optional columns exist
+    // 3a. Ensure optional columns exist (Schema migration check)
+    // Note: It is better to move these to a migration script, but keeping them here as per your original code.
     await db.query(
       "ALTER TABLE agents ADD COLUMN IF NOT EXISTS allowed_actions JSONB DEFAULT '[]'::jsonb"
     );
@@ -107,12 +141,12 @@ export async function POST(request: Request) {
       "ALTER TABLE agents ADD COLUMN IF NOT EXISTS model_config JSONB DEFAULT '{}'::jsonb"
     );
 
-    // 3. Insert Organization
+    // 4. Insert Organization (WITH owner_id)
     const organizationId = organization.id ?? uuidv4();
     const orgResult = await db.query(
       `INSERT INTO organizations (
-         id, name, website, industry, short_description, is_active, created_at, updated_at
-       ) VALUES ($1, $2, $3, $4, $5, $6, NOW(), NOW())
+         id, name, website, industry, short_description, is_active, owner_id, created_at, updated_at
+       ) VALUES ($1, $2, $3, $4, $5, $6, $7, NOW(), NOW())
        RETURNING *`,
       [
         organizationId,
@@ -121,16 +155,16 @@ export async function POST(request: Request) {
         organization.industry || null,
         organization.short_description || null,
         organization.is_active,
+        user.id, // $7 - Link to Supabase User
       ]
     );
 
     const newOrg = orgResult.rows[0];
 
-    // 4. Insert Agents
+    // 5. Insert Agents
     const insertedAgents = [];
     for (const agent of agents) {
       const agentId = agent.id ?? uuidv4();
-      // NOTE: allowed_actions now includes both possibleActions and features (all combined)
       const result = await db.query(
         `INSERT INTO agents (
            id, organization_id, name, language, tone, status,
@@ -159,7 +193,7 @@ export async function POST(request: Request) {
       insertedAgents.push(result.rows[0]);
     }
 
-    // 5. Commit transaction
+    // 6. Commit transaction
     await db.query("COMMIT");
 
     return NextResponse.json(
@@ -170,7 +204,6 @@ export async function POST(request: Request) {
     console.error("--- CREATE AGENT FAILED ---");
     console.error(error);
 
-    // Ensure we rollback so we don't leave partial data or locked rows
     await db.query("ROLLBACK");
 
     return NextResponse.json(

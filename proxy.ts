@@ -1,7 +1,9 @@
+// middleware.ts (or proxy.ts)
 import { type NextRequest } from "next/server";
-import { updateSession } from "@/utils/supabase/middleware"; // * You'll need a middleware helper
+import { updateSession } from "@/utils/supabase/middleware";
 
-export async function middleware(request: NextRequest) {
+// FIX: Change 'export async function middleware' to 'export default async function'
+export default async function middleware(request: NextRequest) {
   // This refreshes the auth token and protects routes
   return await updateSession(request);
 }
