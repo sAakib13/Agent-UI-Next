@@ -1,22 +1,34 @@
 "use client";
 
-import React, { useState } from "react";
-import { useRouter } from "next/navigation";
+import React, { useState, useEffect } from "react";
+import { useRouter, useSearchParams } from "next/navigation"; // Added useSearchParams
 import { Zap, Loader2 } from "lucide-react";
-import { createBrowserClient } from "@supabase/ssr"; // Import Supabase Client
+import { createBrowserClient } from "@supabase/ssr";
 
 export default function LoginPage() {
   const router = useRouter();
+  const searchParams = useSearchParams(); // Hook to read URL params
+
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
   const [error, setError] = useState("");
   const [loading, setLoading] = useState(false);
 
-  // Initialize Supabase Client for the Browser
+  // Initialize Supabase Client
   const supabase = createBrowserClient(
     process.env.NEXT_PUBLIC_SUPABASE_URL!,
     process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!
   );
+
+  // Check for errors from the callback URL (e.g. invalid email link)
+  useEffect(() => {
+    const errorParam = searchParams.get("error");
+    if (errorParam === "invalid_link") {
+      setError(
+        "This verification link is invalid or expired. Please try logging in or requesting a new one."
+      );
+    }
+  }, [searchParams]);
 
   const handleLogin = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -30,24 +42,17 @@ export default function LoginPage() {
     setLoading(true);
 
     try {
-      // --- REAL SUPABASE LOGIN ---
       const { error: authError } = await supabase.auth.signInWithPassword({
         email,
         password,
       });
 
       if (authError) {
-        // Handle Supabase errors (Invalid login, etc.)
         setError(authError.message);
         setLoading(false);
       } else {
-        // Success!
         console.log("Login successful");
-
-        // 1. Refresh router to ensure Server Components see the new cookie
         router.refresh();
-
-        // 2. Redirect to dashboard
         router.push("/dashboard");
       }
     } catch (err) {
