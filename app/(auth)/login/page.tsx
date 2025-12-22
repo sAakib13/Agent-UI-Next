@@ -1,13 +1,14 @@
 "use client";
 
-import React, { useState, useEffect } from "react";
-import { useRouter, useSearchParams } from "next/navigation"; // Added useSearchParams
+import React, { useState, useEffect, Suspense } from "react"; // Added Suspense
+import { useRouter, useSearchParams } from "next/navigation";
 import { Zap, Loader2 } from "lucide-react";
 import { createBrowserClient } from "@supabase/ssr";
 
-export default function LoginPage() {
+// --- 1. The Logic Component (Wrapped inside Suspense later) ---
+function LoginForm() {
   const router = useRouter();
-  const searchParams = useSearchParams(); // Hook to read URL params
+  const searchParams = useSearchParams();
 
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
@@ -20,7 +21,7 @@ export default function LoginPage() {
     process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!
   );
 
-  // Check for errors from the callback URL (e.g. invalid email link)
+  // Check URL for errors (e.g., from email confirmation)
   useEffect(() => {
     const errorParam = searchParams.get("error");
     if (errorParam === "invalid_link") {
@@ -77,7 +78,6 @@ export default function LoginPage() {
       </div>
 
       <form onSubmit={handleLogin} className="space-y-6">
-        {/* Email Input */}
         <div>
           <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1 ml-1">
             Email
@@ -93,7 +93,6 @@ export default function LoginPage() {
           />
         </div>
 
-        {/* Password Input */}
         <div>
           <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1 ml-1">
             Password
@@ -109,7 +108,6 @@ export default function LoginPage() {
           />
         </div>
 
-        {/* Error Message */}
         {error && (
           <div
             className="p-3 text-sm font-medium text-red-700 dark:text-red-400 bg-red-100 dark:bg-red-900/30 rounded-lg border border-red-200 dark:border-red-800"
@@ -119,7 +117,6 @@ export default function LoginPage() {
           </div>
         )}
 
-        {/* Login Button */}
         <button
           type="submit"
           disabled={loading}
@@ -130,7 +127,6 @@ export default function LoginPage() {
         </button>
       </form>
 
-      {/* Footer Link */}
       <div className="mt-8 text-center text-sm">
         <p className="text-gray-500 dark:text-gray-400">
           Don&apos;t have an account?
@@ -143,5 +139,21 @@ export default function LoginPage() {
         </p>
       </div>
     </div>
+  );
+}
+
+// --- 2. The Main Page Export (With Suspense Boundary) ---
+export default function LoginPage() {
+  return (
+    // We wrap the component that uses `useSearchParams` in Suspense
+    <Suspense
+      fallback={
+        <div className="flex min-h-screen items-center justify-center">
+          <Loader2 className="w-8 h-8 animate-spin text-blue-600" />
+        </div>
+      }
+    >
+      <LoginForm />
+    </Suspense>
   );
 }
