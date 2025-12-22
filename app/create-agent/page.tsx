@@ -68,8 +68,6 @@ type AgentConfig = {
   };
 };
 
-
-
 // Initial state without ID (ID is generated on mount/state init)
 const initialConfigBase: Omit<AgentConfig, "id"> = {
   status: "Training",
@@ -100,11 +98,18 @@ const industries = [
   "Consultancy",
   "E-commerce",
   "Insurance/Banks",
-  "Clincs",
   "Education",
   "Travel Agency",
   "Hospitality",
-  "Others"
+  "Automotive",
+  "Real Estate",
+  "Hospital/Healthcare/Clinics",
+  "Legal Services",
+  "Fitness/Wellness",
+  "Food & Beverage",
+  "Retail",
+  "Technology/Software",
+  "Others",
 ];
 const languages = ["English", "Spanish", "French", "German", "Portuguese"];
 const tones = ["Formal", "Casual", "Friendly", "Professional", "Empathetic"];
@@ -246,8 +251,8 @@ const TextInput: React.FC<InputProps> = ({
 }) => (
   <div className="space-y-2">
     <label className="text-sm font-semibold text-gray-700 dark:text-gray-300 ml-1 flex justify-between items-center">
-      <span>{label}{" "}
-        {required && <span className="text-red-500 ml-1">*</span>}
+      <span>
+        {label} {required && <span className="text-red-500 ml-1">*</span>}
       </span>
       {tooltip && (
         <div className="group relative ml-1">
@@ -300,16 +305,18 @@ const Checkbox: React.FC<{
 }> = ({ label, checked, onChange, disabled, tooltip, icon }) => (
   <div
     onClick={() => !disabled && onChange(!checked)}
-    className={`flex items-center p-4 border rounded-2xl cursor-pointer transition-all ${checked
-      ? "bg-blue-50 border-blue-500 dark:bg-blue-900/20 dark:border-blue-500"
-      : "bg-white dark:bg-gray-800/50 border-gray-200 dark:border-gray-700 hover:border-gray-300"
-      } ${disabled ? "opacity-50 cursor-not-allowed" : ""}`}
+    className={`flex items-center p-4 border rounded-2xl cursor-pointer transition-all ${
+      checked
+        ? "bg-blue-50 border-blue-500 dark:bg-blue-900/20 dark:border-blue-500"
+        : "bg-white dark:bg-gray-800/50 border-gray-200 dark:border-gray-700 hover:border-gray-300"
+    } ${disabled ? "opacity-50 cursor-not-allowed" : ""}`}
   >
     <div
-      className={`w-5 h-5 rounded border flex items-center justify-center mr-3 transition-colors ${checked
-        ? "bg-blue-600 border-blue-600"
-        : "bg-white dark:bg-gray-700 border-gray-300 dark:border-gray-600"
-        }`}
+      className={`w-5 h-5 rounded border flex items-center justify-center mr-3 transition-colors ${
+        checked
+          ? "bg-blue-600 border-blue-600"
+          : "bg-white dark:bg-gray-700 border-gray-300 dark:border-gray-600"
+      }`}
     >
       {checked && <Check className="w-3 h-3 text-white" />}
     </div>
@@ -318,7 +325,6 @@ const Checkbox: React.FC<{
       <span className="text-sm font-semibold text-gray-700 dark:text-gray-300 select-none">
         {label}
       </span>
-
     </div>
   </div>
 );
@@ -387,19 +393,22 @@ const RichTextEditorMock: React.FC<{
 }> = ({ label, placeholder, value, disabled, required, tooltip, onChange }) => (
   <div className="space-y-2">
     <label className="text-sm font-semibold text-gray-700 dark:text-gray-300 ml-1 flex items-center justify-between gap-1">
-      <span>{label}{" "}
-        {required && <span className="text-red-500 ml-1">*</span>}</span>
-      <span>{tooltip && (
-        <div className="group relative ml-1">
-          <HelpCircle className="w-4 h-4 text-gray-400 hover:text-blue-500 cursor-help transition-colors" />
-          {/* Tooltip Popup */}
-          <div className="absolute bottom-full left-1/2 transform -translate-x-1/2 mb-2 hidden group-hover:block w-48 p-2 bg-gray-900 text-white text-xs rounded-lg shadow-lg z-50 pointer-events-none animate-in fade-in zoom-in-95 duration-200">
-            {tooltip}
-            {/* Tiny arrow pointing down */}
-            <div className="absolute top-full left-1/2 transform -translate-x-1/2 -mt-1 border-4 border-transparent border-t-gray-900" />
+      <span>
+        {label} {required && <span className="text-red-500 ml-1">*</span>}
+      </span>
+      <span>
+        {tooltip && (
+          <div className="group relative ml-1">
+            <HelpCircle className="w-4 h-4 text-gray-400 hover:text-blue-500 cursor-help transition-colors" />
+            {/* Tooltip Popup */}
+            <div className="absolute bottom-full left-1/2 transform -translate-x-1/2 mb-2 hidden group-hover:block w-48 p-2 bg-gray-900 text-white text-xs rounded-lg shadow-lg z-50 pointer-events-none animate-in fade-in zoom-in-95 duration-200">
+              {tooltip}
+              {/* Tiny arrow pointing down */}
+              <div className="absolute top-full left-1/2 transform -translate-x-1/2 -mt-1 border-4 border-transparent border-t-gray-900" />
+            </div>
           </div>
-        </div>
-      )}</span>
+        )}
+      </span>
     </label>
     <div className="border border-gray-200 dark:border-gray-700 rounded-2xl overflow-hidden bg-white dark:bg-gray-800/50 focus-within:ring-4 focus-within:ring-blue-500/10 focus-within:border-blue-500 transition-all shadow-sm">
       <div className="flex space-x-1 p-2 border-b border-gray-200 dark:border-gray-700 bg-gray-50/50 dark:bg-gray-800/50">
@@ -439,10 +448,11 @@ const FileDropZone: React.FC<{
     <div className="space-y-4">
       <div
         className={`group border-2 border-dashed border-gray-200 dark:border-gray-700 rounded-2xl p-10 text-center transition-all cursor-pointer bg-white dark:bg-gray-900/50 
-        ${disabled
+        ${
+          disabled
             ? "opacity-50 cursor-not-allowed"
             : "hover:border-blue-500 hover:bg-blue-50/30 dark:hover:bg-blue-900/10"
-          }`}
+        }`}
         onClick={() => !disabled && inputRef.current?.click()}
       >
         <input
@@ -531,12 +541,13 @@ const Stepper: React.FC<{ currentStep: number; deployed: boolean }> = ({
               className="flex flex-col items-center group cursor-default"
             >
               <div
-                className={`w-10 h-10 rounded-full flex items-center justify-center font-bold text-sm transition-all duration-300 ring-4 ring-white dark:ring-gray-950 z-10 ${isActive
-                  ? "bg-blue-600 text-white shadow-lg shadow-blue-600/30 scale-110"
-                  : isCompleted || deployed
+                className={`w-10 h-10 rounded-full flex items-center justify-center font-bold text-sm transition-all duration-300 ring-4 ring-white dark:ring-gray-950 z-10 ${
+                  isActive
+                    ? "bg-blue-600 text-white shadow-lg shadow-blue-600/30 scale-110"
+                    : isCompleted || deployed
                     ? "bg-green-500 text-white"
                     : "bg-white dark:bg-gray-900 border-2 border-gray-200 dark:border-gray-800 text-gray-400"
-                  }`}
+                }`}
               >
                 {isCompleted || deployed ? (
                   <Check className="w-5 h-5" />
@@ -545,10 +556,11 @@ const Stepper: React.FC<{ currentStep: number; deployed: boolean }> = ({
                 )}
               </div>
               <span
-                className={`absolute top-12 text-xs font-bold tracking-wide transition-colors duration-300 ${isActive
-                  ? "text-blue-600 dark:text-blue-400"
-                  : "text-gray-400"
-                  }`}
+                className={`absolute top-12 text-xs font-bold tracking-wide transition-colors duration-300 ${
+                  isActive
+                    ? "text-blue-600 dark:text-blue-400"
+                    : "text-gray-400"
+                }`}
               >
                 {step.label}
               </span>
@@ -604,7 +616,7 @@ export default function CreateAgentPage() {
   const handleUrlRemove = (index: number) => {
     const newUrls = config.urls.filter((_, i) => i !== index);
     setConfig((prev) => ({ ...prev, urls: newUrls }));
-  }
+  };
 
   const handleAddUrl = () => {
     if (config.urls.length < 3)
@@ -653,7 +665,10 @@ export default function CreateAgentPage() {
           const businessName = config.businessName || "our business bot";
 
           // Inject the name into the greeting
-          const dynamicGreeting = preset.initialGreeting.replace("[Business Name]", businessName);
+          const dynamicGreeting = preset.initialGreeting.replace(
+            "[Business Name]",
+            businessName
+          );
           // --- NEW LOGIC END ---
 
           // 4. Update State
@@ -672,7 +687,7 @@ export default function CreateAgentPage() {
         }
       }
     }
-  }
+  };
 
   // --- Auto-Fill Logic ---
   const handleAutoFill = () => {
@@ -682,13 +697,16 @@ export default function CreateAgentPage() {
         businessName: "Apex Strategy Group",
         industry: "Consultancy",
         businessURL: "https://www.apexstrategy.example.com",
-        shortDescription: "A premier management consulting firm helping businesses optimize performance and growth.",
+        shortDescription:
+          "A premier management consulting firm helping businesses optimize performance and growth.",
         agentName: "ConsultMate",
         triggerCode: "APEX",
         language: "English",
         tone: "Professional",
-        greeting_message: "Hello! I'm ConsultMate. How can I assist with your business strategy today?",
-        persona: "You are a senior business analyst providing professional, concise, and strategic advice.",
+        greeting_message:
+          "Hello! I'm ConsultMate. How can I assist with your business strategy today?",
+        persona:
+          "You are a senior business analyst providing professional, concise, and strategic advice.",
         task: "Schedule consultations, provide brief industry insights, and collect client requirements.",
         model: "",
         route: "WhatsApp",
@@ -696,26 +714,37 @@ export default function CreateAgentPage() {
           "https://www.mckinsey.com/capabilities",
           "https://www.bcg.com/industries",
         ],
-        features: { locationService: false, searchTool: true, knowledgeBase: true },
-        possibleActions: { updateContactTable: true, delegateToHuman: true }
+        features: {
+          locationService: false,
+          searchTool: true,
+          knowledgeBase: true,
+        },
+        possibleActions: { updateContactTable: true, delegateToHuman: true },
       },
       {
         businessName: "TechVision Solutions",
         industry: "Consultancy",
         businessURL: "https://www.techvision.example.com",
-        shortDescription: "IT consultancy specializing in cloud migration and digital transformation.",
+        shortDescription:
+          "IT consultancy specializing in cloud migration and digital transformation.",
         agentName: "TechAdvisor",
         triggerCode: "TECH",
         language: "English",
         tone: "Professional",
-        greeting_message: "Welcome to TechVision. Need help transforming your digital infrastructure?",
-        persona: "You are a technical consultant knowledgeable in cloud architecture and software solutions.",
+        greeting_message:
+          "Welcome to TechVision. Need help transforming your digital infrastructure?",
+        persona:
+          "You are a technical consultant knowledgeable in cloud architecture and software solutions.",
         task: "Qualify leads for IT services and answer technical capability questions.",
         model: "",
         route: "WhatsApp",
         urls: ["https://aws.amazon.com/solutions/"],
-        features: { locationService: false, searchTool: true, knowledgeBase: true },
-        possibleActions: { updateContactTable: true, delegateToHuman: true }
+        features: {
+          locationService: false,
+          searchTool: true,
+          knowledgeBase: true,
+        },
+        possibleActions: { updateContactTable: true, delegateToHuman: true },
       },
 
       // --- E-commerce ---
@@ -723,40 +752,50 @@ export default function CreateAgentPage() {
         businessName: "Urban Threads",
         industry: "E-commerce",
         businessURL: "https://www.urbanthreads.example.com",
-        shortDescription: "Trendy streetwear and accessories for the modern generation.",
+        shortDescription:
+          "Trendy streetwear and accessories for the modern generation.",
         agentName: "StyleBot",
         triggerCode: "STYLE",
         language: "English",
         tone: "Casual",
-        greeting_message: "Yo! 🧢 Welcome to Urban Threads. Looking for the latest drop?",
-        persona: "You are a hype-beast fashion assistant, trendy, cool, and helpful.",
+        greeting_message:
+          "Yo! 🧢 Welcome to Urban Threads. Looking for the latest drop?",
+        persona:
+          "You are a hype-beast fashion assistant, trendy, cool, and helpful.",
         task: "Suggest outfits, track orders, and handle returns.",
         model: "",
         route: "WhatsApp",
-        urls: [
-          "https://www.nike.com/men",
-          "https://www.asos.com/men/",
-        ],
-        features: { locationService: false, searchTool: false, knowledgeBase: true },
-        possibleActions: { updateContactTable: true, delegateToHuman: false }
+        urls: ["https://www.nike.com/men", "https://www.asos.com/men/"],
+        features: {
+          locationService: false,
+          searchTool: false,
+          knowledgeBase: true,
+        },
+        possibleActions: { updateContactTable: true, delegateToHuman: false },
       },
       {
         businessName: "Gadget Galaxy",
         industry: "E-commerce",
         businessURL: "https://www.gadgetgalaxy.example.com",
-        shortDescription: "Your one-stop shop for the latest electronics, phones, and smart home tech.",
+        shortDescription:
+          "Your one-stop shop for the latest electronics, phones, and smart home tech.",
         agentName: "Gizmo",
         triggerCode: "TECHIE",
         language: "English",
         tone: "Friendly",
-        greeting_message: "Beep boop! 🤖 I'm Gizmo. Need help finding the perfect gadget?",
+        greeting_message:
+          "Beep boop! 🤖 I'm Gizmo. Need help finding the perfect gadget?",
         persona: "You are a tech-savvy assistant who loves specs and features.",
         task: "Compare products, check stock availability, and explain technical specs.",
         model: "",
         route: "Messenger",
         urls: ["https://www.apple.com/iphone/", "https://www.samsung.com/us/"],
-        features: { locationService: false, searchTool: true, knowledgeBase: true },
-        possibleActions: { updateContactTable: true, delegateToHuman: true }
+        features: {
+          locationService: false,
+          searchTool: true,
+          knowledgeBase: true,
+        },
+        possibleActions: { updateContactTable: true, delegateToHuman: true },
       },
 
       // --- Insurance/Banks ---
@@ -764,37 +803,54 @@ export default function CreateAgentPage() {
         businessName: "Sentinel Insurance",
         industry: "Insurance/Banks",
         businessURL: "https://www.sentinel.example.com",
-        shortDescription: "Reliable home, auto, and life insurance for peace of mind.",
+        shortDescription:
+          "Reliable home, auto, and life insurance for peace of mind.",
         agentName: "Guardian",
         triggerCode: "SAFE",
         language: "English",
         tone: "Empathetic",
-        greeting_message: "Hello. I'm Guardian, here to help protect what matters most to you.",
-        persona: "You are a caring and trustworthy insurance agent focused on safety and security.",
+        greeting_message:
+          "Hello. I'm Guardian, here to help protect what matters most to you.",
+        persona:
+          "You are a caring and trustworthy insurance agent focused on safety and security.",
         task: "Guide users through claims processes, explain policy details, and provide quotes.",
         model: "",
         route: "WhatsApp",
-        urls: ["https://www.geico.com/claims/", "https://www.statefarm.com/insurance"],
-        features: { locationService: true, searchTool: false, knowledgeBase: true },
-        possibleActions: { updateContactTable: true, delegateToHuman: true }
+        urls: [
+          "https://www.geico.com/claims/",
+          "https://www.statefarm.com/insurance",
+        ],
+        features: {
+          locationService: true,
+          searchTool: false,
+          knowledgeBase: true,
+        },
+        possibleActions: { updateContactTable: true, delegateToHuman: true },
       },
       {
         businessName: "Future Trust Bank",
         industry: "Insurance/Banks",
         businessURL: "https://www.futuretrust.example.com",
-        shortDescription: "Modern banking solutions for personal and business finance.",
+        shortDescription:
+          "Modern banking solutions for personal and business finance.",
         agentName: "BankerBot",
         triggerCode: "BANK",
         language: "English",
         tone: "Formal",
-        greeting_message: "Welcome to Future Trust Bank. How may I assist with your finances today?",
-        persona: "You are a secure, formal banking assistant strictly adhering to privacy.",
+        greeting_message:
+          "Welcome to Future Trust Bank. How may I assist with your finances today?",
+        persona:
+          "You are a secure, formal banking assistant strictly adhering to privacy.",
         task: "Assist with account opening info, branch location, and general banking FAQs.",
         model: "",
         route: "WhatsApp",
         urls: ["https://www.chase.com/personal/banking"],
-        features: { locationService: true, searchTool: false, knowledgeBase: true },
-        possibleActions: { updateContactTable: false, delegateToHuman: true }
+        features: {
+          locationService: true,
+          searchTool: false,
+          knowledgeBase: true,
+        },
+        possibleActions: { updateContactTable: false, delegateToHuman: true },
       },
 
       // --- Clincs (using user typo "Clincs") ---
@@ -802,37 +858,50 @@ export default function CreateAgentPage() {
         businessName: "City Care Clinic",
         industry: "Clincs",
         businessURL: "https://www.citycare.example.com",
-        shortDescription: "Walk-in clinic providing general health and urgent care services.",
+        shortDescription:
+          "Walk-in clinic providing general health and urgent care services.",
         agentName: "NurseJoy",
         triggerCode: "CARE",
         language: "English",
         tone: "Empathetic",
-        greeting_message: "Hi there! I'm NurseJoy. Do you need to book an appointment or ask about services?",
-        persona: "You are a warm, triage-nurse persona who is calm and reassuring.",
+        greeting_message:
+          "Hi there! I'm NurseJoy. Do you need to book an appointment or ask about services?",
+        persona:
+          "You are a warm, triage-nurse persona who is calm and reassuring.",
         task: "Schedule appointments, list services, and provide opening hours.",
         model: "",
         route: "WhatsApp",
         urls: ["https://www.mayoclinic.org/patient-visitor-guide"],
-        features: { locationService: true, searchTool: false, knowledgeBase: true },
-        possibleActions: { updateContactTable: true, delegateToHuman: true }
+        features: {
+          locationService: true,
+          searchTool: false,
+          knowledgeBase: true,
+        },
+        possibleActions: { updateContactTable: true, delegateToHuman: true },
       },
       {
         businessName: "Bright Smile Dental",
         industry: "Clincs",
         businessURL: "https://www.brightsmile.example.com",
-        shortDescription: "Cosmetic and family dentistry specializing in smiles.",
+        shortDescription:
+          "Cosmetic and family dentistry specializing in smiles.",
         agentName: "ToothFairy",
         triggerCode: "SMILE",
         language: "English",
         tone: "Friendly",
-        greeting_message: "Keep smiling! 😁 I'm here to help with your dental appointments.",
+        greeting_message:
+          "Keep smiling! 😁 I'm here to help with your dental appointments.",
         persona: "You are a cheerful receptionist for a dental office.",
         task: "Book cleanings, explain procedures (like whitening), and handle cancellations.",
         model: "",
         route: "Viber",
         urls: ["https://www.colgate.com/en-us/oral-health"],
-        features: { locationService: true, searchTool: false, knowledgeBase: true },
-        possibleActions: { updateContactTable: true, delegateToHuman: false }
+        features: {
+          locationService: true,
+          searchTool: false,
+          knowledgeBase: true,
+        },
+        possibleActions: { updateContactTable: true, delegateToHuman: false },
       },
 
       // --- Education ---
@@ -840,37 +909,50 @@ export default function CreateAgentPage() {
         businessName: "Global Lang Academy",
         industry: "Education",
         businessURL: "https://www.globallang.example.com",
-        shortDescription: "Online language learning platform for professionals.",
+        shortDescription:
+          "Online language learning platform for professionals.",
         agentName: "TutorTom",
         triggerCode: "LEARN",
         language: "English",
         tone: "Professional",
-        greeting_message: "Bonjour! Hola! Hello! I'm TutorTom. Ready to learn a new language?",
-        persona: "You are an encouraging teacher who helps students find the right course.",
+        greeting_message:
+          "Bonjour! Hola! Hello! I'm TutorTom. Ready to learn a new language?",
+        persona:
+          "You are an encouraging teacher who helps students find the right course.",
         task: "Recommend courses, explain pricing, and troubleshoot login issues.",
         model: "",
         route: "WhatsApp",
         urls: ["https://www.duolingo.com/", "https://www.babel.com"],
-        features: { locationService: false, searchTool: true, knowledgeBase: true },
-        possibleActions: { updateContactTable: true, delegateToHuman: false }
+        features: {
+          locationService: false,
+          searchTool: true,
+          knowledgeBase: true,
+        },
+        possibleActions: { updateContactTable: true, delegateToHuman: false },
       },
       {
         businessName: "Ivy Prep Institute",
         industry: "Education",
         businessURL: "https://www.ivyprep.example.com",
-        shortDescription: "SAT/ACT preparation and college admissions counseling.",
+        shortDescription:
+          "SAT/ACT preparation and college admissions counseling.",
         agentName: "PrepMaster",
         triggerCode: "PREP",
         language: "English",
         tone: "Formal",
-        greeting_message: "Welcome to Ivy Prep. Let's secure your academic future.",
+        greeting_message:
+          "Welcome to Ivy Prep. Let's secure your academic future.",
         persona: "You are a knowledgeable academic counselor.",
         task: "Explain curriculum, schedule tutoring sessions, and provide study tips.",
         model: "",
         route: "WhatsApp",
         urls: ["https://www.collegeboard.org/"],
-        features: { locationService: false, searchTool: false, knowledgeBase: true },
-        possibleActions: { updateContactTable: true, delegateToHuman: true }
+        features: {
+          locationService: false,
+          searchTool: false,
+          knowledgeBase: true,
+        },
+        possibleActions: { updateContactTable: true, delegateToHuman: true },
       },
 
       // --- Travel Agency ---
@@ -878,19 +960,26 @@ export default function CreateAgentPage() {
         businessName: "Wanderlust Travels",
         industry: "Travel Agency",
         businessURL: "https://www.wanderlust.example.com",
-        shortDescription: "Boutique travel agency creating custom holiday packages.",
+        shortDescription:
+          "Boutique travel agency creating custom holiday packages.",
         agentName: "GlobeTrotter",
         triggerCode: "TRIP",
         language: "English",
         tone: "Friendly",
-        greeting_message: "Adventure awaits! ✈️ I'm GlobeTrotter. Where do you want to go?",
-        persona: "You are an enthusiastic travel agent who loves discovering new places.",
+        greeting_message:
+          "Adventure awaits! ✈️ I'm GlobeTrotter. Where do you want to go?",
+        persona:
+          "You are an enthusiastic travel agent who loves discovering new places.",
         task: "Suggest destinations, book flights/hotels, and check visa requirements.",
         model: "",
         route: "WhatsApp",
         urls: ["https://www.lonelyplanet.com/", "https://www.expedia.com/"],
-        features: { locationService: false, searchTool: true, knowledgeBase: true },
-        possibleActions: { updateContactTable: true, delegateToHuman: true }
+        features: {
+          locationService: false,
+          searchTool: true,
+          knowledgeBase: true,
+        },
+        possibleActions: { updateContactTable: true, delegateToHuman: true },
       },
 
       // --- Hospitality ---
@@ -898,25 +987,32 @@ export default function CreateAgentPage() {
         businessName: "Grand Horizon Hotel",
         industry: "Hospitality",
         businessURL: "https://www.grandhorizon.example.com",
-        shortDescription: "Luxury 5-star accommodation with spa and fine dining.",
+        shortDescription:
+          "Luxury 5-star accommodation with spa and fine dining.",
         agentName: "Concierge",
         triggerCode: "STAY",
         language: "English",
         tone: "Formal",
-        greeting_message: "Welcome to Grand Horizon. How may I serve you today?",
+        greeting_message:
+          "Welcome to Grand Horizon. How may I serve you today?",
         persona: "You are a polite, high-end hotel concierge.",
         task: "Room service orders, spa bookings, and local recommendations.",
         model: "",
         route: "WhatsApp",
         urls: ["https://www.marriott.com/default.mi"],
-        features: { locationService: true, searchTool: false, knowledgeBase: true },
-        possibleActions: { updateContactTable: false, delegateToHuman: true }
+        features: {
+          locationService: true,
+          searchTool: false,
+          knowledgeBase: true,
+        },
+        possibleActions: { updateContactTable: false, delegateToHuman: true },
       },
       {
         businessName: "Burger Bistro",
         industry: "Hospitality",
         businessURL: "https://www.burgerbistro.example.com",
-        shortDescription: "Gourmet burger joint serving locally sourced ingredients.",
+        shortDescription:
+          "Gourmet burger joint serving locally sourced ingredients.",
         agentName: "ChefMate",
         triggerCode: "YUM",
         language: "English",
@@ -927,8 +1023,12 @@ export default function CreateAgentPage() {
         model: "",
         route: "Messenger",
         urls: ["https://www.ubereats.com/"],
-        features: { locationService: true, searchTool: false, knowledgeBase: true },
-        possibleActions: { updateContactTable: true, delegateToHuman: false }
+        features: {
+          locationService: true,
+          searchTool: false,
+          knowledgeBase: true,
+        },
+        possibleActions: { updateContactTable: true, delegateToHuman: false },
       },
 
       // --- Others ---
@@ -936,20 +1036,28 @@ export default function CreateAgentPage() {
         businessName: "Solaris Energy",
         industry: "Others",
         businessURL: "https://www.solaris.example.com",
-        shortDescription: "Renewable solar energy solutions for residential homes.",
+        shortDescription:
+          "Renewable solar energy solutions for residential homes.",
         agentName: "Sunny",
         triggerCode: "SOLAR",
         language: "English",
         tone: "Professional",
-        greeting_message: "Let's go green! ☀️ I'm Sunny. Interested in solar panels?",
+        greeting_message:
+          "Let's go green! ☀️ I'm Sunny. Interested in solar panels?",
         persona: "You are an eco-friendly consultant.",
         task: "Calculate potential savings, explain installation, and schedule surveys.",
         model: "",
         route: "WhatsApp",
-        urls: ["https://www.energy.gov/eere/solar/homeowners-guide-going-solar"],
-        features: { locationService: true, searchTool: true, knowledgeBase: true },
-        possibleActions: { updateContactTable: true, delegateToHuman: true }
-      }
+        urls: [
+          "https://www.energy.gov/eere/solar/homeowners-guide-going-solar",
+        ],
+        features: {
+          locationService: true,
+          searchTool: true,
+          knowledgeBase: true,
+        },
+        possibleActions: { updateContactTable: true, delegateToHuman: true },
+      },
     ];
 
     const randomPreset = presets[Math.floor(Math.random() * presets.length)];
@@ -1142,9 +1250,9 @@ export default function CreateAgentPage() {
   };
 
   const handleContinue = () => {
-    setShowPopup(false)
+    setShowPopup(false);
     setTimeout(() => router.push("/dashboard"), 1000);
-  }
+  };
   return (
     <div className="max-w-4xl mx-auto pb-32 pt-6">
       <header className="text-center mb-12">
@@ -1176,10 +1284,11 @@ export default function CreateAgentPage() {
         {resultMessage && (
           <div
             className={`px-6 py-3 w-fit rounded-xl font-medium shadow-lg transition-all ease-in flex items-center justify-center gap-2
-            ${resultMessage.type === "success"
+            ${
+              resultMessage.type === "success"
                 ? "bg-green-100 text-green-800 border border-green-200"
                 : "bg-red-100 text-red-800 border border-red-200"
-              }`}
+            }`}
           >
             {resultMessage.type === "success" ? (
               <Check className="w-4 h-4" />
@@ -1296,14 +1405,17 @@ export default function CreateAgentPage() {
                 </div>
 
                 <div className="space-y-2">
-
                   <label className="text-sm font-semibold text-gray-700 dark:text-gray-300 ml-1 flex items-center justify-between gap-1">
-                    <span>Agent Features <span className="text-red-500 ml-1">*</span></span>
+                    <span>
+                      Agent Features{" "}
+                      <span className="text-red-500 ml-1">*</span>
+                    </span>
                     <div className="group relative ml-1">
                       <HelpCircle className="w-4 h-4 text-gray-400 hover:text-blue-500 cursor-help transition-colors" />
                       {/* Tooltip Popup */}
                       <div className="absolute bottom-full left-1/2 transform -translate-x-1/2 mb-2 hidden group-hover:block w-48 p-2 bg-gray-900 text-white text-xs rounded-lg shadow-lg z-50 pointer-events-none animate-in fade-in zoom-in-95 duration-200">
-                        Select additional features to enhance your agent&apos;s capabilities.
+                        Select additional features to enhance your agent&apos;s
+                        capabilities.
                         {/* Tiny arrow pointing down */}
                         <div className="absolute top-full left-1/2 transform -translate-x-1/2 -mt-1 border-4 border-transparent border-t-gray-900" />
                       </div>
@@ -1314,7 +1426,6 @@ export default function CreateAgentPage() {
                       label="Location Service"
                       checked={Boolean(config.features?.locationService)}
                       disabled={deployed}
-
                       onChange={(checked) =>
                         setConfig((prev) => ({
                           ...prev,
@@ -1333,7 +1444,6 @@ export default function CreateAgentPage() {
                       label="Search Tool"
                       checked={Boolean(config.features?.searchTool)}
                       disabled={deployed}
-
                       onChange={(checked) =>
                         setConfig((prev) => ({
                           ...prev,
@@ -1370,36 +1480,46 @@ export default function CreateAgentPage() {
                 </div>
 
                 <div
-                  onClick={() => handleIndustryAutoFill(!isIndustryAutoFillMode)}
+                  onClick={() =>
+                    handleIndustryAutoFill(!isIndustryAutoFillMode)
+                  }
                   className={`flex items-start p-4  rounded-2xl cursor-pointer transition-all mt-4
-                      ${isIndustryAutoFillMode
-                    // ? "bg-blue-50 border-blue-500 dark:bg-blue-900/20 dark:border-blue-500"
-                    // : "bg-white dark:bg-gray-800/50 border-gray-200 dark:border-gray-700 hover:border-gray-300"
-                    }`}
+                      ${
+                        isIndustryAutoFillMode
+                        // ? "bg-blue-50 border-blue-500 dark:bg-blue-900/20 dark:border-blue-500"
+                        // : "bg-white dark:bg-gray-800/50 border-gray-200 dark:border-gray-700 hover:border-gray-300"
+                      }`}
                 >
                   {/* The Checkbox Square */}
                   <div
                     className={`w-5 h-5 rounded border flex items-center justify-center mr-3 mt-0.5 transition-colors shrink-0 
-                        ${isIndustryAutoFillMode
-                        ? "bg-blue-600 border-blue-600"
-                        : "bg-white dark:bg-gray-700 border-gray-300 dark:border-gray-600"
-                      }`}
+                        ${
+                          isIndustryAutoFillMode
+                            ? "bg-blue-600 border-blue-600"
+                            : "bg-white dark:bg-gray-700 border-gray-300 dark:border-gray-600"
+                        }`}
                   >
-                    {isIndustryAutoFillMode && <Check className="w-3 h-3 text-white" />}
+                    {isIndustryAutoFillMode && (
+                      <Check className="w-3 h-3 text-white" />
+                    )}
                   </div>
 
                   {/* The Text Content */}
                   <div className="flex-1">
                     <div className="flex items-center gap-2 mb-1">
-
                       <p className="text-xs text-gray-500 dark:text-gray-400 select-none">
-                        Automatically populate Greeting, Persona, and Task based on
+                        Automatically populate Greeting, Persona, and Task based
+                        on
                         {/* <span className="font-semibold text-blue-600 dark:text-blue-400"> {config.industry || "Industry"}</span>. */}
                       </p>
                     </div>
                     <p className="text-xs text-gray-500 dark:text-gray-400 select-none">
                       {/* Automatically populate Greeting, Persona, and Task based on */}
-                      <span className="font-semibold text-blue-600 dark:text-blue-400"> {config.industry || "Industry"}</span>.
+                      <span className="font-semibold text-blue-600 dark:text-blue-400">
+                        {" "}
+                        {config.industry || "Industry"}
+                      </span>
+                      .
                     </p>
                   </div>
                 </div>
@@ -1508,7 +1628,8 @@ export default function CreateAgentPage() {
                     <HelpCircle className="w-4 h-4 text-gray-400 hover:text-blue-500 cursor-help transition-colors" />
                     {/* Tooltip Popup */}
                     <div className="absolute bottom-full left-1/2 transform -translate-x-1/2 mb-2 hidden group-hover:block w-48 p-2 bg-gray-900 text-white text-xs rounded-lg shadow-lg z-50 pointer-events-none animate-in fade-in zoom-in-95 duration-200">
-                      Add up to 3 URLs for the agent to reference when assisting users.
+                      Add up to 3 URLs for the agent to reference when assisting
+                      users.
                       {/* Tiny arrow pointing down */}
                       <div className="absolute top-full left-1/2 transform -translate-x-1/2 -mt-1 border-4 border-transparent border-t-gray-900" />
                     </div>
@@ -1532,7 +1653,8 @@ export default function CreateAgentPage() {
                       <Trash2 className="w-5 h-5" />
                     </button>
                   </div>
-                ))}<br />
+                ))}
+                <br />
                 {config.urls.length < 3 && (
                   <button
                     type="button"
@@ -1552,12 +1674,12 @@ export default function CreateAgentPage() {
                     <HelpCircle className="w-4 h-4 text-gray-400 hover:text-blue-500 cursor-help transition-colors" />
                     {/* Tooltip Popup */}
                     <div className="absolute bottom-full left-1/2 transform -translate-x-1/2 mb-2 hidden group-hover:block w-48 p-2 bg-gray-900 text-white text-xs rounded-lg shadow-lg z-50 pointer-events-none animate-in fade-in zoom-in-95 duration-200">
-                      Upload PDF documents for the agent to use as reference material.
+                      Upload PDF documents for the agent to use as reference
+                      material.
                       {/* Tiny arrow pointing down */}
                       <div className="absolute top-full left-1/2 transform -translate-x-1/2 -mt-1 border-4 border-transparent border-t-gray-900" />
                     </div>
                   </div>
-
                 </label>
                 <FileDropZone
                   files={config.documents}
@@ -1570,8 +1692,6 @@ export default function CreateAgentPage() {
           </section>
         )}
       </form>
-
-
 
       {/* Floating Footer */}
       <div className="fixed bottom-8 w-full left-40 right-0 flex justify-center z-50 pointer-events-none px-4 items-center">
@@ -1600,9 +1720,10 @@ export default function CreateAgentPage() {
               onClick={handleDeployAgent}
               disabled={deployed || isDeploying}
               className={`px-8 py-3 bg-linear-to-r from-blue-600 to-indigo-600 text-white rounded-xl font-semibold shadow-lg hover:shadow-xl transition-all flex items-center gap-2 
-                ${deployed
-                  ? "opacity-50 cursor-default"
-                  : "hover:from-blue-700 hover:to-indigo-700 hover:-translate-y-0.5"
+                ${
+                  deployed
+                    ? "opacity-50 cursor-default"
+                    : "hover:from-blue-700 hover:to-indigo-700 hover:-translate-y-0.5"
                 }`}
             >
               {isDeploying ? (
@@ -1615,13 +1736,12 @@ export default function CreateAgentPage() {
               {isDeploying
                 ? deployStep || "Deploying..."
                 : deployed
-                  ? "Deployed!"
-                  : "Deploy Agent"}
+                ? "Deployed!"
+                : "Deploy Agent"}
             </button>
           )}
         </div>
       </div>
-
 
       {showPopup && (
         <AgentPopup showPopup={showPopup} onClose={() => setShowPopup(false)} />
@@ -1650,7 +1770,6 @@ export default function CreateAgentPage() {
 
         // </div>
       )}
-
     </div>
   );
 }
