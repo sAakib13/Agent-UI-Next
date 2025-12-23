@@ -111,7 +111,15 @@ const industries = [
   "Technology/Software",
   "Others",
 ];
-const languages = ["English", "Spanish", "French", "German", "Portuguese"];
+const languages = [
+  "English",
+  "Nepali",
+  "Anglicized Nepali",
+  "Spanish",
+  "French",
+  "German",
+  "Portuguese",
+];
 const tones = ["Formal", "Casual", "Friendly", "Professional", "Empathetic"];
 const route = ["WhatsApp", "Viber", "Messenger"];
 
