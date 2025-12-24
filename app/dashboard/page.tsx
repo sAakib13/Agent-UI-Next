@@ -482,7 +482,7 @@ export default function DashboardPage() {
             transition={{ duration: 0.5, delay: 0.6 }}
           >
             <Card
-              className="h-full bg-gradient-to-b from-indigo-50/50 to-white dark:from-gray-900 dark:to-gray-950 flex flex-col relative overflow-hidden border-indigo-100 dark:border-indigo-500/20 p-0"
+              className="h-full bg-linear-to-b from-indigo-50/50 to-white dark:from-gray-900 dark:to-gray-950 flex flex-col relative overflow-hidden border-indigo-100 dark:border-indigo-500/20 p-0"
               noPadding
             >
               {/* Header */}
