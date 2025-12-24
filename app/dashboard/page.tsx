@@ -1,3 +1,5 @@
+/* eslint-disable @typescript-eslint/no-unused-vars */
+/* eslint-disable @typescript-eslint/no-explicit-any */
 "use client";
 
 import React, { useEffect, useState } from "react";
@@ -140,9 +142,9 @@ const StatCard = ({
 const PhonePreview = ({ agent }: { agent: AgentData | null }) => {
   return (
     // Fixed height container for the phone to prevent layout crash
-    <div className="relative mx-auto w-[280px] h-[550px] bg-gray-900 rounded-[2.5rem] border-[8px] border-gray-900 shadow-2xl overflow-hidden ring-1 ring-white/10 select-none flex flex-col shrink-0">
+    <div className="relative mx-auto w-[280px] h-[550px] bg-gray-900 rounded-[2.5rem] border-8 border-gray-900 shadow-2xl overflow-hidden ring-1 ring-white/10 select-none flex flex-col shrink-0">
       {/* Screen Content */}
-      <div className="flex-1 bg-white dark:bg-gray-950 flex flex-col w-full h-full relative overflow-hidden rounded-[2rem]">
+      <div className="flex-1 bg-white dark:bg-gray-950 flex flex-col w-full h-full relative overflow-hidden rounded-4xl">
         {/* Status Bar */}
         <div className="h-8 bg-gray-50 dark:bg-gray-900 flex items-center justify-between px-5 text-[10px] font-medium text-gray-400 shrink-0 border-b border-gray-100 dark:border-gray-800">
           <span>9:41</span>
@@ -154,7 +156,7 @@ const PhonePreview = ({ agent }: { agent: AgentData | null }) => {
 
         {/* App Header */}
         <div className="bg-gray-50 dark:bg-gray-900 px-4 py-3 border-b border-gray-100 dark:border-gray-800 shrink-0 flex items-center gap-3">
-          <div className="w-8 h-8 rounded-full bg-gradient-to-tr from-indigo-500 to-purple-500 flex items-center justify-center text-white font-bold text-sm shadow-sm">
+          <div className="w-8 h-8 rounded-full bg-linear-to-tr from-indigo-500 to-purple-500 flex items-center justify-center text-white font-bold text-sm shadow-sm">
             {agent ? agent.agent_name.charAt(0) : "A"}
           </div>
           <div>
@@ -188,18 +190,6 @@ const PhonePreview = ({ agent }: { agent: AgentData | null }) => {
                     Today
                   </span>
                 </div>
-
-                {/* Bot Greeting */}
-                <div className="self-start max-w-[90%] bg-white dark:bg-gray-800 rounded-xl rounded-tl-none p-3 shadow-sm mb-3 border border-gray-100 dark:border-gray-700/50">
-                  <p className="text-xs text-gray-800 dark:text-gray-200 leading-relaxed">
-                    {agent.greeting_message ||
-                      "Hello! How can I help you today?"}
-                  </p>
-                  <span className="text-[8px] text-gray-400 block text-right mt-1">
-                    10:00 AM
-                  </span>
-                </div>
-
                 {/* QR Code Card */}
                 <div className="self-center bg-white dark:bg-gray-800 p-3 rounded-xl shadow-md border border-gray-100 dark:border-gray-700 w-[180px]">
                   <p className="text-[9px] text-center text-gray-500 mb-2 uppercase tracking-wider font-bold">
@@ -211,7 +201,7 @@ const PhonePreview = ({ agent }: { agent: AgentData | null }) => {
                       agentName={agent.agent_name}
                       triggerCode={agent.trigger_code}
                       initialQrCode={agent.qr_code_base64}
-                      className="!border-none !shadow-none !bg-transparent !p-0 w-full h-full"
+                      className="border-none! shadow-none! bg-transparent! p-0! w-full h-full"
                     />
                   </div>
                   <div className="flex gap-2">
@@ -220,6 +210,19 @@ const PhonePreview = ({ agent }: { agent: AgentData | null }) => {
                     </button>
                   </div>
                 </div>
+
+                {/* Bot Greeting */}
+                <div className="self-start max-w-[90%] bg-white dark:bg-gray-800 rounded-xl rounded-tl-none p-3 shadow-sm mb-3 border border-gray-100 dark:border-gray-700/50 mt-4">
+                  <p className="text-xs text-gray-800 dark:text-gray-200 leading-relaxed">
+                    {agent.greeting_message ||
+                      "Hello! How can I help you today?"}
+                  </p>
+                  <span className="text-[8px] text-gray-400 block text-right mt-1">
+                    10:00 AM
+                  </span>
+                </div>
+
+
               </motion.div>
             ) : (
               <div className="h-full w-full flex flex-col items-center justify-center text-center p-4 text-gray-400">
@@ -237,7 +240,7 @@ const PhonePreview = ({ agent }: { agent: AgentData | null }) => {
           </div>
           <div className="flex-1 h-7 bg-white dark:bg-gray-800 rounded-full border border-gray-200 dark:border-gray-700" />
           <div className="w-7 h-7 rounded-full bg-indigo-500 flex items-center justify-center">
-            <div className="w-0 h-0 border-t-[4px] border-t-transparent border-l-[6px] border-l-white border-b-[4px] border-b-transparent ml-0.5" />
+            <div className="w-0 h-0 border-t-4 border-t-transparent border-l-[6px] border-l-white border-b-4 border-b-transparent ml-0.5" />
           </div>
         </div>
       </div>
@@ -479,7 +482,7 @@ export default function DashboardPage() {
             transition={{ duration: 0.5, delay: 0.6 }}
           >
             <Card
-              className="h-full bg-gradient-to-b from-indigo-50/50 to-white dark:from-gray-900 dark:to-gray-950 flex flex-col relative overflow-hidden border-indigo-100 dark:border-indigo-500/20 p-0"
+              className="h-full bg-linear-to-b from-indigo-50/50 to-white dark:from-gray-900 dark:to-gray-950 flex flex-col relative overflow-hidden border-indigo-100 dark:border-indigo-500/20 p-0"
               noPadding
             >
               {/* Header */}

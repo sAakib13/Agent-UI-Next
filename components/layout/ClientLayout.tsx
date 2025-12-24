@@ -13,7 +13,7 @@ export default function SideBarLayout({
     const pathname = usePathname();
 
     // Define which pages should NOT have a sidebar
-    const noSidebarRoutes = ["/login", "/logout", "/", "/register"];
+    const noSidebarRoutes = ["/login", "/logout", "/", "/register", "/blogs"];
     const showSidebar = !noSidebarRoutes.includes(pathname);
 
     return (
